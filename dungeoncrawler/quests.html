@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Peril to Profit — Quest Board</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    /* ==============================================
+       STORAGE / CONSTANTS / VERSION
+    ===============================================*/
+    const APP_KEY = "eightbit_quest_data_v2";
+    const SCHEMA_VERSION = 4; // aligns with index.html (debt/badges/ledger)
+
+    const STAT_KEYS = ["STR","DEX","CON","INT","WIS","CHR"];
+    const DIFFS = [
+      { id:"easy", label:"Easy" },
+      { id:"medium", label:"Medium" },
+      { id:"hard", label:"Hard" },
+    ];
+    const RUNESPARK_TICKER = [
+      "RuneSpark LIVE: ‘Escape Clause!’—we added more stairs.",
+      "Hexmart Deal: Two potions for the price of a compromised warranty.",
+      "Goldwater PSA: Debt builds character (mostly anxiety).",
+      "Kazrak update: The maze has been extended due to cost efficiencies."
+    ];
+
+    function uid(p="id"){ return `${p}_${Math.random().toString(36).slice(2,10)}`; }
+    function safeParseJSON(s){ try { return JSON.parse(s); } catch { return null; } }
+
+    function nextLevelXP(level){ if(level<1) level=1; return Math.ceil(50*Math.pow(1.35, level-1)); }
+    function levelFromTotalXP(totalXP){ let lvl=1,rem=totalXP; for(;;){ const need=nextLevelXP(lvl); if(rem>=need){ rem-=need; lvl+=1; } else return {level:lvl, intoLevelXP:rem, needXP:need}; } }
+
+    function defaultStats(){ return { STR:{totalXP:0}, DEX:{totalXP:0}, CON:{totalXP:0}, INT:{totalXP:0}, WIS:{totalXP:0}, CHR:{totalXP:0} }; }
+    function defaultData(){ return { version:SCHEMA_VERSION, player:null, stats:defaultStats(), quests:[], completions:[], economy:{ gold:0, debt:0, ledger:[] }, qLibrary:[], qMeta:{ dismissedTemplateIds:[] }, badges:{ owned:[], progress:{} } }; }
+
+    // Seed STR templates (same ladder used in index.html)
+    function seedSTRLibrary(){
+      const make = (id, lvl, name, desc, scheduleType, daysOfWeek, baseXP, difficulty, weights, repeatable, note) => ({
+        id, attribute:"STR", requiredLevel:lvl, name, description:desc, scheduleType, daysOfWeek, baseXP, difficulty,
+        weights: weights.map(([stat,pct])=>({stat,pct})), repeatable, programNote:note, builtIn:true, version:1
+      });
+      return [
+        make("str_l1_walk20",1,"Brisk Walk 20 min","Aerobic base + joint prep","daily",null,8,"easy",[["STR",40],["CON",60]],false,"Foundations"),
+        make("str_l1_bw_squats",1,"Bodyweight Squats 2×10","Movement patterning","daily",null,10,"easy",[["STR",60],["CON",40]],false,"Foundations"),
+        make("str_l3_push_ladder",3,"Push-up Ladder 3×max (90s rest)","Pressing strength","weekly",[1,3,5],12,"medium",[["STR",70],["CON",30]],false,"Early strength"),
+        make("str_l3_plank",3,"Plank 3×30s","Trunk stability","weekly",[1,3,5],10,"easy",[["STR",40],["CON",60]],false,"Early strength"),
+        make("str_l5_full_bodyA",5,"Full-Body A: Squat 3×8, Push-ups 3×max, Rows 3×8","Bands/dumbbells ok","weekly",[1,3,5],16,"medium",[["STR",70],["CON",30]],false,"Progressive overload"),
+        make("str_l5_swings",5,"Kettlebell Swings 5×15 (or band RDL 3×12)","Hip hinge power","weekly",[2,5],14,"medium",[["STR",70],["CON",30]],false,"Progressive overload"),
+        make("str_l7_five_by_five",7,"5×5 Compound Day (Squat/Push/Row)","Strength focus","weekly",[1,3,5],18,"hard",[["STR",80],["CON",20]],false,"Strength block"),
+        make("str_l7_hill_sprints",7,"Hill Sprints 8×20s","Power conditioning","weekly",[6],16,"hard",[["STR",60],["CON",40]],false,"Strength block"),
+        make("str_l9_upper_lower",9,"Upper/Lower Split (2+2 days)","Advanced split","weekly",[1,2,4,5],20,"hard",[["STR",80],["CON",20]],false,"Advanced"),
+        make("str_l9_power_session",9,"Power Session: Swings 10×10 EMOM + Push/Pull","Power + volume","weekly",[3],20,"hard",[["STR",80],["CON",20]],false,"Advanced"),
+      ];
+    }
+
+    function load(){
+      const raw = localStorage.getItem(APP_KEY);
+      if(!raw){
+        const d = defaultData();
+        d.qLibrary = seedSTRLibrary();
+        return d;
+      }
+      const parsed = safeParseJSON(raw) || defaultData();
+      parsed.version = SCHEMA_VERSION;
+      if(!parsed.stats) parsed.stats = defaultStats();
+      if(!parsed.economy) parsed.economy = { gold:0, debt:0, ledger:[] };
+      if(parsed.economy.debt===undefined) parsed.economy.debt = 0;
+      if(!Array.isArray(parsed.economy.ledger)) parsed.economy.ledger = [];
+      if(!parsed.qLibrary) parsed.qLibrary = seedSTRLibrary();
+      if(!parsed.qMeta) parsed.qMeta = { dismissedTemplateIds: [] };
+      if(!parsed.badges) parsed.badges = { owned: [], progress: {} };
+      if(parsed.player && parsed.player.highContrast===undefined) parsed.player.highContrast=false;
+      return parsed;
+    }
+    function save(d){ localStorage.setItem(APP_KEY, JSON.stringify(d)); }
+
+    /* ==============================================
+       THEME (shared tokens)
+    ===============================================*/
+    const THEME_CSS = `
+      @supports (font-variation-settings: normal) {
+        :root { --font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; }
+      }
+      .pixel { font-family: 'Press Start 2P', system-ui, sans-serif; letter-spacing: 0.03em; }
+      .theme-light { --bg:#F5F3E7; --surface:#FFFFFF; --text:#1F2937; --muted:#374151; --border:#E5E7EB; --primary:#0EA5A4; --primary-contrast:#ffffff; --secondary:#7C3AED; --accent:#D97706; --danger:#DC2626; --success:#059669; }
+      .theme-dark  { --bg:#0B0F14; --surface:#111827; --text:#F3F4F6; --muted:#D1D5DB; --border:#1F2937; --primary:#06B6D4; --primary-contrast:#0B0F14; --secondary:#C084FC; --accent:#F59E0B; --danger:#F87171; --success:#34D399; }
+      .theme-arcane{ --bg:#0D0A1A; --surface:#161329; --text:#F8FAFC; --muted:#E2E8F0; --border:#272341; --primary:#22D3EE; --primary-contrast:#0D0A1A; --secondary:#A78BFA; --accent:#FDE047; --danger:#FB7185; --success:#4ADE80; }
+      .theme-hc { --surface:#FFFFFF; --text:#111111; --border:#111111; }
+      .theme-dark.theme-hc, .theme-arcane.theme-hc { --surface:#000000; --text:#FFFFFF; --border:#FFFFFF; }
+      .app { background: var(--bg); color: var(--text); }
+      .card { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; }
+      .badge { background: color-mix(in srgb, var(--border) 60%, transparent); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; font-weight: 700; }
+      .btn { border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+      .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+      .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+      .btn-danger { background: var(--danger); color: #fff; }
+      .btn-success { background: var(--success); color: #062B1F; }
+      .kicker { color: var(--muted); font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+      .ticker { white-space: nowrap; overflow:hidden; }
+    `;
+    function useTheme(){
+      useEffect(()=>{
+        const link = document.createElement("link");
+        link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap";
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+        const style = document.createElement("style");
+        style.innerHTML = THEME_CSS;
+        document.head.appendChild(style);
+        return ()=>{ try{ document.head.removeChild(link); document.head.removeChild(style);}catch{} };
+      },[]);
+    }
+
+    /* ==============================================
+       UI SMALLS
+    ===============================================*/
+    function Button({children,onClick,kind="primary",disabled=false,className=""}){
+      const k = kind==="danger"?"btn-danger":kind==="ghost"?"btn-ghost":kind==="success"?"btn-success":"btn-primary";
+      return <button onClick={disabled?undefined:onClick} className={`btn ${k} ${disabled?"opacity-50 cursor-not-allowed":""} ${className}`}>{children}</button>;
+    }
+    function StatBadge({ stat }){
+      const icon = { STR:"💪", DEX:"🤸", CON:"🛡️", INT:"🧠", WIS:"📜", CHR:"🎭" };
+      return <span className="badge inline-flex items-center gap-1 text-xs"><span>{icon[stat]}</span><b>{stat}</b></span>;
+    }
+    function Tabs({ value, onChange }){
+      return (
+        <div className="flex gap-2 p-1" style={{ background:"color-mix(in srgb, var(--border) 50%, transparent)", border:"1px solid var(--border)", borderRadius:16 }}>
+          {[
+            {id:"recommended", label:"Recommended (STR)", icon:"🏋️"},
+            {id:"my", label:"My Quests", icon:"📋"},
+            {id:"library", label:"Library", icon:"📚"},
+          ].map(t=>(
+            <button key={t.id} onClick={()=>onChange(t.id)} className={`btn ${value===t.id?'btn-primary':'btn-ghost'}`}>{t.icon} {t.label}</button>
+          ))}
+        </div>
+      );
+    }
+    function Modal({ title, onClose, children }){
+      useEffect(()=>{ const onKey=e=> e.key==="Escape" && onClose(); document.addEventListener("keydown", onKey); return ()=>document.removeEventListener("keydown", onKey); },[onClose]);
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:"rgba(0,0,0,.6)"}}>
+          <div className="card w-full max-w-2xl">
+            <div className="flex items-center justify-between p-4 border-b" style={{borderColor:"var(--border)"}}>
+              <h3 className="font-extrabold text-lg">{title}</h3>
+              <button className="btn btn-ghost" onClick={onClose}>✕</button>
+            </div>
+            <div className="p-4">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ==============================================
+       QUEST EDITOR
+    ===============================================*/
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function QuestEditorModal({ initial, onSave, onClose }){
+      const [name, setName] = useState(initial?.name || "");
+      const [description, setDescription] = useState(initial?.description || "");
+      const [scheduleType, setScheduleType] = useState(initial?.scheduleType || "daily");
+      const [daysOfWeek, setDaysOfWeek] = useState(initial?.daysOfWeek || [1,3,5]);
+      const [baseXP, setBaseXP] = useState(initial?.baseXP ?? 10);
+      const [difficulty, setDifficulty] = useState(initial?.difficulty || "medium");
+      const [repeatable, setRepeatable] = useState(!!initial?.repeatable);
+      const [weights, setWeights] = useState(initial?.weights || STAT_KEYS.map(s=>({stat:s,pct:0})));
+
+      const pctSum = useMemo(()=> weights.reduce((a,w)=>a+(w.pct||0),0), [weights]);
+      const pctValid = pctSum===100 && weights.some(w=>w.pct>0);
+
+      function toggleDOW(i){
+        setDaysOfWeek(prev => prev.includes(i) ? prev.filter(x=>x!==i) : [...prev,i].sort());
+      }
+      function setPct(stat, v){
+        const n = clamp(parseInt(v||"0",10),0,100);
+        setWeights(prev=> prev.map(w=> w.stat===stat? {...w,pct:n} : w));
+      }
+      function saveQuest(){
+        if(!name.trim() || !pctValid) return;
+        const q = {
+          ...(initial||{}),
+          id: initial?.id || uid("q"),
+          name: name.trim(),
+          description: description.trim() || undefined,
+          scheduleType,
+          daysOfWeek: scheduleType==="weekly"? daysOfWeek : undefined,
+          baseXP: Math.max(1, Math.floor(baseXP)),
+          difficulty,
+          repeatable,
+          weights: weights.filter(w=>w.pct>0),
+          source: initial?.source || (initial?.templateId ? "recommended":"user"),
+          templateId: initial?.templateId,
+          isArchived: initial?.isArchived || false,
+          createdAt: initial?.createdAt || new Date().toISOString()
+        };
+        onSave(q);
+      }
+
+      return (
+        <Modal title={initial?.id? "Edit Quest" : "New Quest"} onClose={onClose}>
+          <div className="space-y-4">
+            <label className="block"><div className="kicker">Name</div>
+              <input className="input w-full" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g., Push-ups 3×max"/>
+            </label>
+            <label className="block"><div className="kicker">Description</div>
+              <textarea className="input w-full" rows={2} value={description} onChange={e=>setDescription(e.target.value)} placeholder="Short helper text"/>
+            </label>
+            <div className="grid md:grid-cols-3 gap-4">
+              <label className="block"><div className="kicker">Schedule</div>
+                <select className="input w-full" value={scheduleType} onChange={e=>setScheduleType(e.target.value)}>
+                  <option value="oneoff">One-off</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </label>
+              {scheduleType==="weekly" && (
+                <label className="block"><div className="kicker">Days (Sun..Sat)</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {["S","M","T","W","T","F","S"].map((d,i)=>(
+                      <button key={i} className={`btn ${daysOfWeek.includes(i)?'btn-success':'btn-ghost'} w-10 h-10`} onClick={()=>toggleDOW(i)}>{d}</button>
+                    ))}
+                  </div>
+                </label>
+              )}
+              <label className="block"><div className="kicker">Difficulty</div>
+                <select className="input w-full" value={difficulty} onChange={e=>setDifficulty(e.target.value)}>
+                  {DIFFS.map(d=><option key={d.id} value={d.id}>{d.label}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              <label className="block"><div className="kicker">Base XP</div>
+                <input className="input w-full" type="number" min="1" value={baseXP} onChange={e=>setBaseXP(parseInt(e.target.value||"0",10))}/>
+              </label>
+              <label className="block"><div className="kicker">Repeatable same day?</div>
+                <button className={`btn ${repeatable?'btn-success':'btn-ghost'} w-full`} onClick={()=>setRepeatable(!repeatable)}>{repeatable?"Yes":"No"}</button>
+              </label>
+            </div>
+            <div>
+              <div className="kicker mb-2">Stat Weights (sum to 100)</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {STAT_KEYS.map(s=>{
+                  const w = weights.find(x=>x.stat===s) || {stat:s,pct:0};
+                  return (
+                    <div key={s} className="card p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <StatBadge stat={s}/>
+                        <span className={`text-xs font-bold ${pctSum===100?'':'text-red-600'}`}>{w.pct}%</span>
+                      </div>
+                      <input type="range" min="0" max="100" value={w.pct} onChange={e=>setPct(s,e.target.value)} className="w-full"/>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-sm">Total: <b className={pctSum===100?'':'text-red-600'}>{pctSum}</b>%</div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button kind="ghost" onClick={onClose}>Cancel</Button>
+              <Button onClick={saveQuest} disabled={!name.trim() || !pctValid}>Save</Button>
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* ==============================================
+       QUEST BOARD SECTIONS
+    ===============================================*/
+    function RecommendedSTR({ data, setData }){
+      const STR_level = levelFromTotalXP(data.stats.STR.totalXP).level;
+      const dismissed = new Set(data.qMeta?.dismissedTemplateIds || []);
+      const addedIds = new Set(data.quests.map(q=>q.templateId).filter(Boolean));
+
+      const items = useMemo(()=> (data.qLibrary||[])
+        .filter(t=> t.attribute==="STR" && t.requiredLevel <= STR_level)
+        .filter(t=> !dismissed.has(t.id))
+        .sort((a,b)=> (a.requiredLevel-b.requiredLevel) || (a.difficulty>b.difficulty?1:-1)), [data, STR_level]);
+
+      function add(t){
+        if(addedIds.has(t.id)) return;
+        const q = {
+          id: uid("q"),
+          name: t.name,
+          description: t.description,
+          scheduleType: t.scheduleType,
+          daysOfWeek: t.daysOfWeek,
+          baseXP: t.baseXP,
+          difficulty: t.difficulty,
+          weights: t.weights,
+          repeatable: t.repeatable,
+          createdAt: new Date().toISOString(),
+          source: "recommended",
+          templateId: t.id
+        };
+        const next = { ...data, quests:[...data.quests, q] };
+        setData(next); save(next);
+      }
+      function dismiss(t){
+        const next = { ...data, qMeta:{ ...data.qMeta, dismissedTemplateIds:[...(data.qMeta?.dismissedTemplateIds||[]), t.id] } };
+        setData(next); save(next);
+      }
+      function openCustomize(template){
+        mountEditor({
+          initial: {
+            name: template.name, description: template.description,
+            scheduleType: template.scheduleType, daysOfWeek: template.daysOfWeek,
+            baseXP: template.baseXP, difficulty: template.difficulty, repeatable: template.repeatable,
+            weights: template.weights, templateId: template.id, source:"recommended"
+          },
+          onSave: (q)=>{
+            const next = { ...data, quests:[...data.quests, { ...q, templateId: template.id, source:"recommended" }] };
+            setData(next); save(next);
+          }
+        });
+      }
+
+      return (
+        <div className="space-y-3">
+          <div className="text-sm mb-1" style={{color:"var(--muted)"}}>
+            <span className="badge text-[10px] mr-2">Sponsored by Hexmart</span>
+            Hand-picked quests unlocked by your STR level.
+          </div>
+          {items.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>No new STR recommendations at Lv {STR_level}. Keep training to unlock more.</div>}
+          {items.map(t=>{
+            const added = addedIds.has(t.id);
+            return (
+              <div key={t.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-extrabold">
+                      {t.name} <span className="badge text-[10px]">Lv {t.requiredLevel}+</span> <span className="badge text-[10px]">Hexmart</span>
+                    </div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>
+                      {t.description || t.programNote}
+                      <br/>Schedule: {t.scheduleType==='weekly'? `Weekly (${(t.daysOfWeek||[]).map(d=>"SMTWTFS"[d]).join("")})` : t.scheduleType==='daily'?'Daily':'One-off'}
+                      &nbsp;· XP {t.baseXP} · {t.difficulty}
+                      <br/>Weights: {t.weights.map(w=>`${w.stat} ${w.pct}%`).join(" · ")}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button disabled={added} onClick={()=>add(t)}>{added?"Added":"Add to My Quests"}</Button>
+                    <Button kind="ghost" onClick={()=>openCustomize(t)}>Customize & Add</Button>
+                    <Button kind="ghost" onClick={()=>dismiss(t)}>Dismiss</Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {(data.qMeta?.dismissedTemplateIds||[]).length>0 && (
+            <div className="mt-2">
+              <Button kind="ghost" onClick={()=>{
+                const next = { ...data, qMeta:{ ...data.qMeta, dismissedTemplateIds: [] } };
+                setData(next); save(next);
+              }}>Reset Dismissed</Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function MyQuests({ data, setData, onEdit }){
+      function toggleArchive(q){
+        const next = { ...data, quests: data.quests.map(x=> x.id===q.id? {...x, isArchived:!x.isArchived}:x) };
+        setData(next); save(next);
+      }
+      function remove(q){
+        if(!confirm(`Soulspire Notice:\nRenegotiating away “${q.name}” may upset at least one minor demon.\n\nDelete anyway?`)) return;
+        const next = { ...data, quests: data.quests.filter(x=> x.id!==q.id) };
+        setData(next); save(next);
+      }
+      return (
+        <div className="space-y-2">
+          {data.quests.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>No quests yet. Add from Recommended or Library.</div>}
+          {data.quests.map(q=>(
+            <div key={q.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-extrabold">
+                    {q.name} {q.isArchived && <span className="badge text-[10px]">Archived</span>} {q.source==="recommended" && <span className="badge text-[10px]">Hexmart Suggested</span>}
+                  </div>
+                  <div className="text-xs" style={{color:"var(--muted)"}}>
+                    {q.description}
+                    <br/>Schedule: {q.scheduleType==='weekly'? `Weekly (${(q.daysOfWeek||[]).map(d=>"SMTWTFS"[d]).join("")})` : q.scheduleType==='daily'?'Daily':'One-off'}
+                    &nbsp;· XP {q.baseXP} · {q.difficulty}
+                    <br/>Weights: {q.weights.map(w=>`${w.stat} ${w.pct}%`).join(" · ")}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button kind="ghost" onClick={()=>onEdit(q)}>Edit</Button>
+                  <Button kind="ghost" onClick={()=>toggleArchive(q)}>{q.isArchived?"Unarchive":"Archive"}</Button>
+                  <Button kind="danger" onClick={()=>remove(q)}>Delete</Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function Library({ data, setData }){
+      const [attr, setAttr] = useState("STR");
+      const [minLv, setMinLv] = useState(1);
+      const [maxLv, setMaxLv] = useState(99);
+      const items = useMemo(()=> (data.qLibrary||[])
+        .filter(t=> (attr? t.attribute===attr : true))
+        .filter(t=> t.requiredLevel>=minLv && t.requiredLevel<=maxLv)
+        .sort((a,b)=> a.requiredLevel-b.requiredLevel), [data.qLibrary, attr, minLv, maxLv]);
+      const addedIds = new Set(data.quests.map(q=>q.templateId).filter(Boolean));
+
+      function add(t){
+        if(addedIds.has(t.id)) return;
+        const q = {
+          id: uid("q"),
+          name: t.name,
+          description: t.description,
+          scheduleType: t.scheduleType,
+          daysOfWeek: t.daysOfWeek,
+          baseXP: t.baseXP,
+          difficulty: t.difficulty,
+          weights: t.weights,
+          repeatable: t.repeatable,
+          createdAt: new Date().toISOString(),
+          source: "recommended",
+          templateId: t.id
+        };
+        const next = { ...data, quests:[...data.quests, q] };
+        setData(next); save(next);
+      }
+      function openCustomize(t){
+        mountEditor({
+          initial: {
+            name: t.name, description: t.description,
+            scheduleType: t.scheduleType, daysOfWeek: t.daysOfWeek,
+            baseXP: t.baseXP, difficulty: t.difficulty, repeatable: t.repeatable,
+            weights: t.weights, templateId: t.id, source:"recommended"
+          },
+          onSave: (q)=>{
+            const next = { ...data, quests:[...data.quests, { ...q, templateId: t.id, source:"recommended" }] };
+            setData(next); save(next);
+          }
+        });
+      }
+
+      return (
+        <div className="space-y-3">
+          <div className="card p-3">
+            <div className="grid md:grid-cols-3 gap-3">
+              <label className="block"><div className="kicker">Attribute</div>
+                <select className="input w-full" value={attr} onChange={e=>setAttr(e.target.value)}>
+                  <option value="STR">STR</option>
+                  {/* future: add INT/DEX libraries here */}
+                </select>
+              </label>
+              <label className="block"><div className="kicker">Min Level</div>
+                <input className="input w-full" type="number" min="1" value={minLv} onChange={e=>setMinLv(parseInt(e.target.value||"1",10))}/>
+              </label>
+              <label className="block"><div className="kicker">Max Level</div>
+                <input className="input w-full" type="number" min="1" value={maxLv} onChange={e=>setMaxLv(parseInt(e.target.value||"99",10))}/>
+              </label>
+            </div>
+          </div>
+
+          {items.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>No templates in range.</div>}
+          <div className="grid md:grid-cols-2 gap-3">
+            {items.map(t=>{
+              const added = addedIds.has(t.id);
+              return (
+                <div key={t.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-extrabold">
+                        {t.name} <span className="badge text-[10px]">Lv {t.requiredLevel}+</span> <span className="badge text-[10px]">Hexmart</span>
+                      </div>
+                      <div className="text-xs" style={{color:"var(--muted)"}}>
+                        {t.description || t.programNote}
+                        <br/>Schedule: {t.scheduleType==='weekly'? `Weekly (${(t.daysOfWeek||[]).map(d=>"SMTWTFS"[d]).join("")})` : t.scheduleType==='daily'?'Daily':'One-off'}
+                        &nbsp;· XP {t.baseXP} · {t.difficulty}
+                        <br/>Weights: {t.weights.map(w=>`${w.stat} ${w.pct}%`).join(" · ")}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button disabled={added} onClick={()=>add(t)}>{added?"Added":"Add to My Quests"}</Button>
+                      <Button kind="ghost" onClick={()=>openCustomize(t)}>Customize & Add</Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    /* ==============================================
+       EDITOR MOUNT HELPER
+    ===============================================*/
+    function mountEditor({ initial, onSave }){
+      const mount = document.createElement("div");
+      document.body.appendChild(mount);
+      function unmount(){ ReactDOM.unmountComponentAtNode(mount); mount.remove(); }
+      ReactDOM.render(
+        <QuestEditorModal
+          initial={initial}
+          onSave={(q)=>{ onSave(q); unmount(); }}
+          onClose={unmount}
+        />,
+        mount
+      );
+    }
+
+    /* ==============================================
+       ROOT
+    ===============================================*/
+    function App(){
+      useTheme();
+      const [data, setData] = useState(()=> load());
+      const [tab, setTab] = useState("recommended");
+      const [headline, setHeadline] = useState(RUNESPARK_TICKER[0]);
+
+      // rotate ticker copy
+      useEffect(()=>{
+        let i=0;
+        const t = setInterval(()=>{ i=(i+1)%RUNESPARK_TICKER.length; setHeadline(RUNESPARK_TICKER[i]); }, 6000);
+        return ()=>clearInterval(t);
+      },[]);
+
+      // Deep-links
+      useEffect(()=>{
+        const sp = new URLSearchParams(window.location.search);
+        const t = sp.get("tab"); if(t) setTab(t);
+        const editId = sp.get("edit");
+        const templateId = sp.get("template");
+        const action = sp.get("action");
+        if(editId){
+          const q = data.quests.find(x=>x.id===editId);
+          if(q) mountEditor({
+            initial: q,
+            onSave: (newQ)=>{
+              const exists = data.quests.some(x=>x.id===newQ.id);
+              const next = { ...data, quests: exists? data.quests.map(x=>x.id===newQ.id? newQ:x) : [...data.quests, newQ] };
+              setData(next); save(next);
+            }
+          });
+        } else if(templateId && action==="customize"){
+          const tpl = (data.qLibrary||[]).find(x=>x.id===templateId);
+          if(tpl) {
+            mountEditor({
+              initial: {
+                name: tpl.name, description: tpl.description,
+                scheduleType: tpl.scheduleType, daysOfWeek: tpl.daysOfWeek,
+                baseXP: tpl.baseXP, difficulty: tpl.difficulty, repeatable: tpl.repeatable,
+                weights: tpl.weights, templateId: tpl.id, source:"recommended"
+              },
+              onSave: (q)=>{
+                const next = { ...data, quests:[...data.quests, { ...q, templateId: tpl.id, source:"recommended" }] };
+                setData(next); save(next);
+              }
+            });
+          }
+        }
+        // eslint-disable-next-line
+      },[]);
+
+      if(!data.player){
+        return (
+          <div className="min-h-screen app theme-arcane" style={{fontFamily:"var(--font-body)"}}>
+            <div className="max-w-5xl mx-auto p-4 md:p-6">
+              <div className="card p-4">
+                <h1 className="pixel text-xl mb-2">Quest Board</h1>
+                <p className="text-sm">Open <a className="underline" href="index.html">index.html</a> first, complete onboarding, then come back.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function setAndSave(next){ setData(next); save(next); }
+
+      const themeClass = `theme-${data.player.theme||'arcane'} ${data.player.highContrast?'theme-hc':''}`;
+      const STR_level = levelFromTotalXP(data.stats.STR.totalXP).level;
+
+      function openNewQuest(){
+        mountEditor({
+          initial: null,
+          onSave: (q)=>{
+            const next = { ...data, quests:[...data.quests, q] };
+            setAndSave(next);
+          }
+        });
+      }
+
+      return (
+        <div className={`min-h-screen app ${themeClass}`} style={{fontFamily:"var(--font-body)"}}>
+          <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
+            {/* Header */}
+            <div className="card p-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl select-none">{data.player.avatar || "🎮"}</div>
+                  <div>
+                    <h1 className="pixel text-xl md:text-2xl">Quest Board</h1>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>
+                      {data.player.name} · STR Lv <b>{STR_level}</b> · Gold <b>{data.economy?.gold||0}</b>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a className="btn btn-ghost" href="index.html">← Back to Dashboard</a>
+                  <button className="btn btn-primary" onClick={openNewQuest}>+ New Quest</button>
+                </div>
+              </div>
+              <div className="mt-3 text-xs ticker" style={{color:"var(--muted)"}}>
+                <span>🎥 RuneSpark Broadcast · </span><span className="font-semibold">{headline}</span>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <Tabs value={tab} onChange={setTab}/>
+              <div className="text-xs" style={{color:"var(--muted)"}}>Add, edit, and manage your quests. Hexmart may whisper suggestions.</div>
+            </div>
+
+            {/* Panels */}
+            {tab==="recommended" && <div className="card p-4"><RecommendedSTR data={data} setData={setAndSave}/></div>}
+            {tab==="my" && (
+              <div className="card p-4">
+                <MyQuests data={data} setData={setAndSave} onEdit={(q)=> mountEditor({
+                  initial: q,
+                  onSave: (newQ)=>{
+                    const next = { ...data, quests: data.quests.map(x=>x.id===newQ.id? newQ:x) };
+                    setAndSave(next);
+                  }
+                })}/>
+              </div>
+            )}
+            {tab==="library" && (
+              <div className="card p-4">
+                <Library data={data} setData={setAndSave}/>
+              </div>
+            )}
+
+            <footer className="text-center text-xs" style={{color:"var(--muted)"}}>
+              Changes here update your Dashboard instantly (shared save).
+            </footer>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

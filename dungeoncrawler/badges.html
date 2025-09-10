@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Peril to Profit — Badges (RuneSpark)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    /* =========================================================
+       STORAGE / SCHEMA
+    ========================================================== */
+    const APP_KEY = "eightbit_quest_data_v2";
+    const SCHEMA_VERSION = 4; // align with other pages
+
+    function safeParseJSON(s){ try { return JSON.parse(s); } catch { return null; } }
+
+    function defaultStats(){ return { STR:{totalXP:0}, DEX:{totalXP:0}, CON:{totalXP:0}, INT:{totalXP:0}, WIS:{totalXP:0}, CHR:{totalXP:0} }; }
+    function defaultData(){
+      return {
+        version: SCHEMA_VERSION,
+        player: null,
+        stats: defaultStats(),
+        quests: [],
+        completions: [],
+        economy: { gold: 0, debt: 0, ledger: [] }, // ledger: {id,ts,kind,amt,note}
+        badges: { owned: [], progress: {} }        // progress: { bosses, goldExtracted, debtPaidTotal, ... }
+      };
+    }
+    function load(){
+      const raw = localStorage.getItem(APP_KEY);
+      if(!raw) return defaultData();
+      const d = safeParseJSON(raw) || defaultData();
+      d.version = SCHEMA_VERSION;
+      if(!d.stats) d.stats = defaultStats();
+      if(!d.economy) d.economy = { gold:0, debt:0, ledger:[] };
+      if(d.economy.debt===undefined) d.economy.debt = 0;
+      if(!Array.isArray(d.economy.ledger)) d.economy.ledger = [];
+      if(!d.badges) d.badges = { owned:[], progress:{} };
+      if(d.player && d.player.highContrast===undefined) d.player.highContrast=false;
+      return d;
+    }
+    function save(d){ localStorage.setItem(APP_KEY, JSON.stringify(d)); }
+
+    /* =========================================================
+       THEME (shared)
+    ========================================================== */
+    const THEME_CSS = `
+      @supports (font-variation-settings: normal) {
+        :root { --font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; }
+      }
+      .pixel { font-family: 'Press Start 2P', system-ui, sans-serif; letter-spacing: 0.03em; }
+      .theme-light { --bg:#F5F3E7; --surface:#FFFFFF; --text:#1F2937; --muted:#374151; --border:#E5E7EB; --primary:#0EA5A4; --primary-contrast:#ffffff; --secondary:#7C3AED; --accent:#D97706; --danger:#DC2626; --success:#059669; }
+      .theme-dark  { --bg:#0B0F14; --surface:#111827; --text:#F3F4F6; --muted:#D1D5DB; --border:#1F2937; --primary:#06B6D4; --primary-contrast:#0B0F14; --secondary:#C084FC; --accent:#F59E0B; --danger:#F87171; --success:#34D399; }
+      .theme-arcane{ --bg:#0D0A1A; --surface:#161329; --text:#F8FAFC; --muted:#E2E8F0; --border:#272341; --primary:#22D3EE; --primary-contrast:#0D0A1A; --secondary:#A78BFA; --accent:#FDE047; --danger:#FB7185; --success:#4ADE80; }
+      .theme-hc { --surface:#FFFFFF; --text:#111111; --border:#111111; }
+      .theme-dark.theme-hc, .theme-arcane.theme-hc { --surface:#000000; --text:#FFFFFF; --border:#FFFFFF; }
+      .app   { background: var(--bg); color: var(--text); }
+      .card  { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; }
+      .badgeui { background: color-mix(in srgb, var(--border) 60%, transparent); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; font-weight: 700; }
+      .btn   { border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+      .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+      .btn-ghost   { background: transparent; color: var(--text); border: 1px solid var(--border); }
+      .btn-success { background: var(--success); color: #062B1F; }
+      .kicker { color: var(--muted); font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+      .muted { color: var(--muted); }
+      .pill  { border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+      .progressTrack { background: color-mix(in srgb, var(--border) 55%, transparent); height: 8px; border-radius: 9999px; overflow: hidden; }
+      .progressFill { background: var(--primary); height: 8px; }
+    `;
+    function useTheme(){
+      useEffect(()=>{
+        const link = document.createElement("link");
+        link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap";
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+        const style = document.createElement("style");
+        style.innerHTML = THEME_CSS;
+        document.head.appendChild(style);
+        return ()=>{ try{ document.head.removeChild(link); document.head.removeChild(style); }catch{} };
+      },[]);
+    }
+
+    /* =========================================================
+       BADGE CATALOG
+    ========================================================== */
+    // Categories: Depth, Boss, Treasure, Streak, Ledger, (Special)
+    const CATS = ["All","Depth","Boss","Treasure","Streak","Ledger","Special"];
+
+    const BADGES = [
+      // Depth milestones (awarded in dungeon)
+      { id:"depth5",  name:"Depth Five",   cat:"Depth",    emoji:"⛏️", desc:"Reach Depth 5 in the Labyrinth." },
+      { id:"depth10", name:"Depth Ten",    cat:"Depth",    emoji:"🏰", desc:"Reach Depth 10 in the Labyrinth." },
+      { id:"depth20", name:"Depth Twenty", cat:"Depth",    emoji:"🐉", desc:"Reach Depth 20 in the Labyrinth." },
+      { id:"depth30", name:"Depth Thirty", cat:"Depth",    emoji:"🔥", desc:"Reach Depth 30 in the Labyrinth." },
+      { id:"depth50", name:"Depth Fifty",  cat:"Depth",    emoji:"💎", desc:"Reach Depth 50 in the Labyrinth." },
+
+      // Boss slayer (progress tracked in dungeon as progress.bosses)
+      { id:"boss1",   name:"Boss Breaker", cat:"Boss",     emoji:"🗡️", desc:"Defeat your first Boss Gate Warden.",  need:{ key:"bosses", value:1 } },
+      { id:"boss3",   name:"Gate Crusher", cat:"Boss",     emoji:"⚔️", desc:"Defeat 3 Bosses.",                     need:{ key:"bosses", value:3 } },
+      { id:"boss10",  name:"Kazrak’s Problem", cat:"Boss", emoji:"👑", desc:"Defeat 10 Bosses.",                    need:{ key:"bosses", value:10 } },
+
+      // Treasure haul (progress tracked in dungeon as progress.goldExtracted)
+      { id:"haul50",   name:"Treasure Haul I",  cat:"Treasure", emoji:"💰", desc:"Extract 50 total Gold across runs.",  need:{ key:"goldExtracted", value:50 } },
+      { id:"haul200",  name:"Treasure Haul II", cat:"Treasure", emoji:"💼", desc:"Extract 200 total Gold across runs.", need:{ key:"goldExtracted", value:200 } },
+      { id:"haul1000", name:"Treasure Haul III",cat:"Treasure", emoji:"🏆", desc:"Extract 1000 total Gold across runs.",need:{ key:"goldExtracted", value:1000 } },
+
+      // Streak (awarded in index when completing)
+      { id:"streak3",  name:"Steady Hands", cat:"Streak",   emoji:"🪙", desc:"Maintain a 3-day quest streak." },
+      { id:"streak7",  name:"Relentless",   cat:"Streak",   emoji:"⚔️", desc:"Maintain a 7-day quest streak." },
+      { id:"streak14", name:"Iron Oath",    cat:"Streak",   emoji:"🛡️", desc:"Maintain a 14-day quest streak." },
+
+      // Ledger / Debt
+      { id:"clean10",  name:"Clean Ledger", cat:"Ledger",   emoji:"📜", desc:"Pay down 10 Debt in total.", need:{ key:"debtPaidTotal", value:10 } },
+
+      // Special / future (placeholder so users see it)
+      { id:"comeback", name:"Comeback Kid", cat:"Special",  emoji:"🕯️", desc:"Die, then reach Depth 5 on your very next run. (Coming soon)", future:true },
+    ];
+
+    function findBadgeById(id){ return BADGES.find(b=>b.id===id); }
+
+    function findBadgeEarnTs(save, badgeId){
+      const meta = findBadgeById(badgeId);
+      if(!meta) return null;
+      const needle = `Badge earned: ${meta.name}`;
+      const entries = (save.economy?.ledger || []).filter(e=> (e.note||"").includes(needle));
+      if(entries.length===0) return null;
+      return entries[0].ts;
+    }
+
+    /* =========================================================
+       AUTO-AWARD AUDIT
+    ========================================================== */
+    function awardBadge(save, id){
+      if(save.badges.owned.includes(id)) return save;
+      const meta = findBadgeById(id);
+      const next = { ...save, badges: { ...save.badges, owned:[...save.badges.owned, id], lastEarnedAt:new Date().toISOString() } };
+      next.economy.ledger = [...(next.economy.ledger||[]), { id:`l_${Math.random().toString(36).slice(2,9)}`, ts:new Date().toISOString(), kind:"note", amt:0, note:`Badge earned: ${meta?.name||id}` }];
+      return next;
+    }
+
+    // On page load, sanity-check progress-based badges and grant any missed awards.
+    function auditAndAutoAward(save){
+      let next = { ...save };
+      const prog = next.badges?.progress || {};
+      // Boss
+      if((prog.bosses||0) >= 1)  next = awardBadge(next, "boss1");
+      if((prog.bosses||0) >= 3)  next = awardBadge(next, "boss3");
+      if((prog.bosses||0) >= 10) next = awardBadge(next, "boss10");
+      // Treasure
+      if((prog.goldExtracted||0) >= 50)   next = awardBadge(next, "haul50");
+      if((prog.goldExtracted||0) >= 200)  next = awardBadge(next, "haul200");
+      if((prog.goldExtracted||0) >= 1000) next = awardBadge(next, "haul1000");
+      // Clean ledger
+      if((prog.debtPaidTotal||0) >= 10)   next = awardBadge(next, "clean10");
+      return next;
+    }
+
+    /* =========================================================
+       UI ATOMS
+    ========================================================== */
+    function Button({children,onClick,kind="primary",className="",disabled=false}){
+      const k = kind==="success"?"btn-success":kind==="ghost"?"btn-ghost":"btn-primary";
+      return <button onClick={disabled?undefined:onClick} className={`btn ${k} ${disabled?"opacity-50 cursor-not-allowed":""} ${className}`}>{children}</button>;
+    }
+    function Pill({children}){ return <span className="pill">{children}</span>; }
+
+    function Progress({ value, max }){
+      const pct = Math.max(0, Math.min(100, Math.round((value/max)*100)));
+      return (
+        <div className="progressTrack w-full">
+          <div className="progressFill" style={{ width: pct + "%" }} />
+        </div>
+      );
+    }
+
+    /* =========================================================
+       BADGE CARD
+    ========================================================== */
+    function BadgeCard({ badge, owned, progress, earnedAt }){
+      const locked = !owned;
+      return (
+        <div className="card p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">{locked ? "🔒" : badge.emoji}</div>
+              <div>
+                <div className="font-extrabold">{badge.name}</div>
+                <div className="text-sm muted">{badge.desc}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <Pill>{badge.cat}</Pill>
+              <div className="text-xs mt-1">{owned ? "Earned" : (badge.future ? "Coming soon" : "Locked")}</div>
+            </div>
+          </div>
+
+          {/* Progress bar if it has a numeric requirement */}
+          {badge.need && !badge.future && (
+            <div className="mt-3">
+              <div className="text-xs mb-1">Progress: <b>{Math.min(progress.curr, badge.need.value)}</b> / <b>{badge.need.value}</b></div>
+              <Progress value={progress.curr} max={badge.need.value}/>
+            </div>
+          )}
+
+          {owned && earnedAt && (
+            <div className="text-xs mt-2 muted">Earned on {earnedAt.slice(0,19).replace("T"," ")}</div>
+          )}
+        </div>
+      );
+    }
+
+    /* =========================================================
+       ROOT APP
+    ========================================================== */
+    function App(){
+      useTheme();
+      const [data, setData] = useState(()=> load());
+      const [cat, setCat] = useState("All");
+      const [show, setShow] = useState("all"); // all | earned | locked
+
+      useEffect(()=>{
+        if(!data.player) return;
+        const audited = auditAndAutoAward(data);
+        if(audited !== data){ setData(audited); save(audited); }
+      },[]); // run once
+
+      if(!data.player){
+        return (
+          <div className="min-h-screen app theme-arcane" style={{fontFamily:"var(--font-body)"}}>
+            <div className="max-w-5xl mx-auto p-4 md:p-6">
+              <div className="card p-4">
+                <h1 className="pixel text-xl mb-2">Badges (RuneSpark)</h1>
+                <p className="text-sm">Open <a className="underline" href="index.html">index.html</a> first to create your Adventurer.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const themeClass = `theme-${data.player.theme||'arcane'} ${data.player.highContrast?'theme-hc':''}`;
+
+      const ownedSet = new Set(data.badges?.owned || []);
+      const progress = data.badges?.progress || {};
+
+      const filtered = useMemo(()=>{
+        return BADGES
+          .filter(b => cat==="All" ? true : b.cat===cat)
+          .filter(b => show==="all" ? true : show==="earned" ? ownedSet.has(b.id) : !ownedSet.has(b.id));
+      }, [cat, show, data.badges]);
+
+      function progFor(b){
+        if(!b.need) return { curr: 0 };
+        const v = progress[b.need.key] || 0;
+        return { curr: v };
+      }
+      function earnedAtFor(b){
+        // Try to find timestamp from ledger
+        return ownedSet.has(b.id) ? (findBadgeEarnTs(data, b.id) || data.badges.lastEarnedAt || null) : null;
+      }
+
+      // Header counts
+      const total = BADGES.length - BADGES.filter(b=>b.future).length;
+      const earned = [...ownedSet].filter(id => !findBadgeById(id)?.future).length;
+
+      return (
+        <div className={`min-h-screen app ${themeClass}`} style={{fontFamily:"var(--font-body)"}}>
+          <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
+            {/* Header */}
+            <div className="card p-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl select-none">{data.player.avatar || "🎮"}</div>
+                  <div>
+                    <h1 className="pixel text-xl md:text-2xl">Badges (RuneSpark)</h1>
+                    <div className="text-xs muted">{data.player.name} · {earned}/{total} earned</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a href="index.html" className="btn btn-ghost">← Back to Dashboard</a>
+                  <a href="dungeon.html" className="btn btn-primary">Enter Dungeon</a>
+                </div>
+              </div>
+              <div className="mt-3 text-xs muted">“LIVE TONIGHT: ‘Escape Clause!’—will anyone find the end? (They won’t.)” — RuneSpark Entertainment</div>
+            </div>
+
+            {/* Filters */}
+            <div className="card p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {CATS.map(c => (
+                  <button key={c} onClick={()=>setCat(c)} className={`btn ${cat===c?'btn-primary':'btn-ghost'}`}>{c}</button>
+                ))}
+                <div className="ml-auto flex gap-2">
+                  <button onClick={()=>setShow("all")}    className={`btn ${show==='all'?'btn-success':'btn-ghost'}`}>All</button>
+                  <button onClick={()=>setShow("earned")} className={`btn ${show==='earned'?'btn-success':'btn-ghost'}`}>Earned</button>
+                  <button onClick={()=>setShow("locked")} className={`btn ${show==='locked'?'btn-success':'btn-ghost'}`}>Locked</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Gallery */}
+            <div className="grid md:grid-cols-2 gap-3">
+              {filtered.map(b => (
+                <BadgeCard
+                  key={b.id}
+                  badge={b}
+                  owned={ownedSet.has(b.id)}
+                  progress={progFor(b)}
+                  earnedAt={earnedAtFor(b)}
+                />
+              ))}
+              {filtered.length===0 && (
+                <div className="card p-4">
+                  <div className="text-sm muted">No badges in this filter yet.</div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <footer className="text-center text-xs muted">
+              Depth & Boss badges are awarded during Dungeon runs. Streak & Clean Ledger come from daily play and payments. Treasure Haul tracks total extracted gold.
+            </footer>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

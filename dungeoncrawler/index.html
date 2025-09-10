@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Peril to Profit — Adventurer Control Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    /* =========================================================
+       APP ID / VERSION
+    ========================================================== */
+    const APP_KEY = "eightbit_quest_data_v2";
+    const SCHEMA_VERSION = 4; // aligns with dungeon/shop/quests
+
+    /* =========================================================
+       CONSTANTS
+    ========================================================== */
+    const STAT_KEYS = ["STR","DEX","CON","INT","WIS","CHR"];
+    const DIFFS = [
+      { id:"easy", label:"Easy", mult:0.5, debt:1 },
+      { id:"medium", label:"Medium", mult:1.0, debt:2 },
+      { id:"hard", label:"Hard", mult:2.0, debt:3 }
+    ];
+    const AVATARS = ["🗡️","🛡️","📜","🧭","🧠","🏹","⚗️","🐉"];
+
+    const RUNESPARK_TICKER = [
+      "RuneSpark LIVE: ‘Escape Clause!’—will anyone find the end? (They won’t.)",
+      "Tonight: ‘Compliance Idol’—sing for your stipend!",
+      "Hexmart Deal: Buy two healing poultices, regret one later.",
+      "Kazrak memo: ‘Remember, danger is a deliverable.’",
+      "Goldwater tip: Compound interest compounds your character."
+    ];
+
+    // Badge catalog (IDs we may award on this page)
+    const BADGE_META = {
+      streak3:  { name:"Steady Hands",    desc:"3-day quest streak",      emoji:"🪙" },
+      streak7:  { name:"Relentless",      desc:"7-day quest streak",      emoji:"⚔️" },
+      streak14: { name:"Iron Oath",       desc:"14-day quest streak",     emoji:"🛡️" },
+      clean10:  { name:"Clean Ledger",    desc:"Paid down 10 Debt total", emoji:"📜" },
+    };
+
+    /* =========================================================
+       HELPERS
+    ========================================================== */
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+    function uid(p="id"){ return `${p}_${Math.random().toString(36).slice(2,10)}`; }
+    function safeParseJSON(s){ try { return JSON.parse(s); } catch { return null; } }
+
+    function todayISO(d = new Date()){
+      const tz = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+      return tz.toISOString().slice(0,10);
+    }
+    function addDaysISO(iso, days){
+      const d = new Date(iso+"T00:00:00");
+      d.setDate(d.getDate()+days);
+      return todayISO(d);
+    }
+
+    // Level / XP
+    function nextLevelXP(level){ if(level<1) level=1; return Math.ceil(50*Math.pow(1.35, level-1)); }
+    function levelFromTotalXP(totalXP){
+      let lvl=1, rem=totalXP;
+      for(;;){
+        const need = nextLevelXP(lvl);
+        if(rem >= need){ rem -= need; lvl += 1; }
+        else return { level:lvl, intoLevelXP:rem, needXP:need };
+      }
+    }
+    function difficultyMult(id){ return (DIFFS.find(d=>d.id===id)||{}).mult ?? 1; }
+    function streakMultiplier(n){ return 1 + Math.min(n,7)*0.05; }
+    function awardedXP(base, diff, streak){ return Math.floor(base * difficultyMult(diff) * streakMultiplier(streak)); }
+
+    // Scheduling
+    function isScheduledDay(quest, dISO){
+      if(quest.scheduleType==="oneoff") return true;
+      if(quest.scheduleType==="daily")  return true;
+      if(quest.scheduleType==="weekly"){
+        const dow = new Date(dISO+"T00:00:00").getDay(); // 0..6
+        return new Set(quest.daysOfWeek||[]).has(dow);
+      }
+      return true;
+    }
+    function previousScheduledDateISO(quest, fromISO){
+      const date = new Date(fromISO+"T00:00:00");
+      for(let i=1;i<=60;i++){
+        const prev = new Date(date); prev.setDate(prev.getDate()-i);
+        const iso = todayISO(prev);
+        if(isScheduledDay(quest, iso)) return iso;
+      }
+      return null;
+    }
+    function computeStreakCount(quest, completions, onISO){
+      const set = new Set(completions.filter(c=>c.questId===quest.id).map(c=>c.completedAt));
+      let streak=0, cursor=onISO;
+      for(;;){
+        const prev = previousScheduledDateISO(quest, cursor);
+        if(!prev) break;
+        if(set.has(prev)){ streak++; cursor=prev; } else break;
+      }
+      return streak;
+    }
+    function allocateRounded(total, weights){
+      if(total<=0 || !weights.length) return [];
+      const raw = weights.map(w=>({ stat:w.stat, v: total*(w.pct/100) }));
+      const floor = raw.map(r=>({ stat:r.stat, xp:Math.floor(r.v), frac:r.v-Math.floor(r.v) }));
+      let sum = floor.reduce((a,b)=>a+b.xp,0), diff = total - sum;
+      const sorted = [...floor].sort((a,b)=>b.frac-a.frac);
+      for(let i=0;i<diff;i++){ sorted[i%sorted.length].xp+=1; }
+      return sorted.map(s=>({ stat:s.stat, xp:s.xp }));
+    }
+
+    /* =========================================================
+       STORAGE / MIGRATION
+    ========================================================== */
+    function defaultStats(){ return { STR:{totalXP:0}, DEX:{totalXP:0}, CON:{totalXP:0}, INT:{totalXP:0}, WIS:{totalXP:0}, CHR:{totalXP:0} }; }
+    function defaultData(){
+      return {
+        version: SCHEMA_VERSION,
+        player: null,
+        stats: defaultStats(),
+        quests: [],
+        completions: [],
+        economy: { gold: 0, debt: 0, ledger: [] }, // ledger: {id,ts,kind,amt,note}
+        qLibrary: [],
+        qMeta: { dismissedTemplateIds: [] },
+        badges: { owned: [], progress: {} },       // progress.debtPaidTotal, etc.
+        // NEW: inventory/insurance/shop to match shop.html & dungeon.html
+        inventory: { items: [], equipped: { weaponId:null, shieldId:null } },
+        insurance: { activeUntil: null },
+        shop: { lastRestock: null, stock: {} }
+      };
+    }
+    function seedSTRLibrary(){
+      const make = (id, lvl, name, desc, scheduleType, daysOfWeek, baseXP, difficulty, weights, repeatable, note) => ({
+        id, attribute:"STR", requiredLevel:lvl, name, description:desc, scheduleType, daysOfWeek, baseXP, difficulty,
+        weights: weights.map(([stat,pct])=>({stat,pct})), repeatable, programNote:note, builtIn:true, version:1
+      });
+      return [
+        make("str_l1_walk20",1,"Brisk Walk 20 min","Aerobic base + joint prep","daily",null,8,"easy",[["STR",40],["CON",60]],false,"Foundations"),
+        make("str_l1_bw_squats",1,"Bodyweight Squats 2×10","Movement patterning","daily",null,10,"easy",[["STR",60],["CON",40]],false,"Foundations"),
+        make("str_l3_push_ladder",3,"Push-up Ladder 3×max (90s rest)","Pressing strength","weekly",[1,3,5],12,"medium",[["STR",70],["CON",30]],false,"Early strength"),
+        make("str_l3_plank",3,"Plank 3×30s","Trunk stability","weekly",[1,3,5],10,"easy",[["STR",40],["CON",60]],false,"Early strength"),
+        make("str_l5_full_bodyA",5,"Full-Body A: Squat 3×8, Push-ups 3×max, Rows 3×8","Bands/dumbbells ok","weekly",[1,3,5],16,"medium",[["STR",70],["CON",30]],false,"Progressive overload"),
+        make("str_l5_swings",5,"Kettlebell Swings 5×15 (or band RDL 3×12)","Hip hinge power","weekly",[2,5],14,"medium",[["STR",70],["CON",30]],false,"Progressive overload"),
+        make("str_l7_five_by_five",7,"5×5 Compound Day (Squat/Push/Row)","Strength focus","weekly",[1,3,5],18,"hard",[["STR",80],["CON",20]],false,"Strength block"),
+        make("str_l7_hill_sprints",7,"Hill Sprints 8×20s","Power conditioning","weekly",[6],16,"hard",[["STR",60],["CON",40]],false,"Strength block"),
+        make("str_l9_upper_lower",9,"Upper/Lower Split (2+2 days)","Advanced split","weekly",[1,2,4,5],20,"hard",[["STR",80],["CON",20]],false,"Advanced"),
+        make("str_l9_power_session",9,"Power Session: Swings 10×10 EMOM + Push/Pull","Power + volume","weekly",[3],20,"hard",[["STR",80],["CON",20]],false,"Advanced"),
+      ];
+    }
+
+    function load(){
+      const raw = localStorage.getItem(APP_KEY);
+      if(!raw){
+        const d = defaultData();
+        d.qLibrary = seedSTRLibrary();
+        return d;
+      }
+      const parsed = safeParseJSON(raw) || defaultData();
+      // migrations
+      parsed.version = SCHEMA_VERSION;
+      if(!parsed.stats) parsed.stats = defaultStats();
+      if(!parsed.economy) parsed.economy = { gold: 0, debt: 0, ledger: [] };
+      if(parsed.economy.debt === undefined) parsed.economy.debt = 0;
+      if(!Array.isArray(parsed.economy.ledger)) parsed.economy.ledger = [];
+      if(!parsed.qLibrary) parsed.qLibrary = seedSTRLibrary();
+      if(!parsed.qMeta) parsed.qMeta = { dismissedTemplateIds: [] };
+      if(!parsed.badges) parsed.badges = { owned: [], progress: {} };
+      if(parsed.player && parsed.player.highContrast === undefined) parsed.player.highContrast = false;
+      // NEW fields to align with shop/dungeon
+      if(!parsed.inventory) parsed.inventory = { items: [], equipped: { weaponId:null, shieldId:null } };
+      if(!parsed.inventory.equipped) parsed.inventory.equipped = { weaponId:null, shieldId:null };
+      if(!parsed.insurance) parsed.insurance = { activeUntil: null };
+      if(!parsed.shop) parsed.shop = { lastRestock: null, stock: {} };
+      return parsed;
+    }
+    function save(data){ localStorage.setItem(APP_KEY, JSON.stringify(data)); }
+
+    /* =========================================================
+       THEME
+    ========================================================== */
+    const THEME_CSS = `
+    @supports (font-variation-settings: normal) {
+      :root { --font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; }
+    }
+    .pixel { font-family: 'Press Start 2P', system-ui, sans-serif; letter-spacing: 0.03em; }
+    .theme-light { --bg:#F5F3E7; --surface:#FFFFFF; --text:#1F2937; --muted:#374151; --border:#E5E7EB; --primary:#0EA5A4; --primary-contrast:#ffffff; --secondary:#7C3AED; --accent:#D97706; --danger:#DC2626; --success:#059669; }
+    .theme-dark  { --bg:#0B0F14; --surface:#111827; --text:#F3F4F6; --muted:#D1D5DB; --border:#1F2937; --primary:#06B6D4; --primary-contrast:#0B0F14; --secondary:#C084FC; --accent:#F59E0B; --danger:#F87171; --success:#34D399; }
+    .theme-arcane{ --bg:#0D0A1A; --surface:#161329; --text:#F8FAFC; --muted:#E2E8F0; --border:#272341; --primary:#22D3EE; --primary-contrast:#0D0A1A; --secondary:#A78BFA; --accent:#FDE047; --danger:#FB7185; --success:#4ADE80; }
+    .theme-hc { --surface:#FFFFFF; --text:#111111; --border:#111111; }
+    .theme-dark.theme-hc, .theme-arcane.theme-hc { --surface:#000000; --text:#FFFFFF; --border:#FFFFFF; }
+    .app   { background: var(--bg); color: var(--text); }
+    .card  { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; }
+    .badge { background: color-mix(in srgb, var(--border) 60%, transparent); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; font-weight: 700; }
+    .btn   { border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+    .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+    .btn-ghost   { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success); color: #062B1F; }
+    .xpbar { background: color-mix(in srgb, var(--border) 55%, transparent); height: 10px; border-radius: 9999px; overflow: hidden; }
+    .xpbar > div { background: var(--primary); height: 10px; }
+    .kicker { color: var(--muted); font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    .ticker { white-space: nowrap; overflow:hidden; }
+    `;
+    function useTheme(){
+      useEffect(()=>{
+        const link = document.createElement("link");
+        link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap";
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+        const style = document.createElement("style");
+        style.innerHTML = THEME_CSS;
+        document.head.appendChild(style);
+        return ()=>{ try{ document.head.removeChild(link); document.head.removeChild(style);}catch{} };
+      },[]);
+    }
+
+    /* =========================================================
+       UI ATOMS
+    ========================================================== */
+    function Button({ children, onClick, kind="primary", className="", disabled=false }){
+      const k = kind==="danger"?"btn-danger":kind==="ghost"?"btn-ghost":kind==="success"?"btn-success":"btn-primary";
+      return <button onClick={disabled?undefined:onClick} className={`btn ${k} ${disabled?"opacity-50 cursor-not-allowed":""} ${className}`}>{children}</button>;
+    }
+    function StatBadge({ stat }){
+      const icon = { STR:"💪", DEX:"🤸", CON:"🛡️", INT:"🧠", WIS:"📜", CHR:"🎭" };
+      return <span className="badge inline-flex items-center gap-1 text-xs"><span>{icon[stat]}</span><b>{stat}</b></span>;
+    }
+    function XPBar({ totalXP }){
+      const { level, intoLevelXP, needXP } = levelFromTotalXP(totalXP);
+      const pct = Math.round((intoLevelXP/needXP)*100);
+      return (
+        <div>
+          <div className="text-[11px] font-semibold mb-1">Lvl {level} · {intoLevelXP}/{needXP} XP</div>
+          <div className="xpbar"><div style={{ width: pct+"%" }}/></div>
+        </div>
+      );
+    }
+    function Modal({ title, onClose, children }){
+      useEffect(()=>{ const onKey=e=> e.key==="Escape" && onClose(); document.addEventListener("keydown", onKey); return ()=>document.removeEventListener("keydown", onKey); },[onClose]);
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:"rgba(0,0,0,.6)"}}>
+          <div className="card w-full max-w-2xl">
+            <div className="flex items-center justify-between p-4 border-b" style={{borderColor:"var(--border)"}}>
+              <h3 className="font-extrabold text-lg">{title}</h3>
+              <button className="btn btn-ghost" onClick={onClose}>✕</button>
+            </div>
+            <div className="p-4">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       TOASTS (simple) — fixed style prop
+    ========================================================== */
+    function useToasts(){
+      const [toasts, setToasts] = useState([]);
+      function pushToast(text){
+        const id = uid("t");
+        setToasts(arr => [...arr, { id, text }]);
+        setTimeout(()=> setToasts(arr => arr.filter(t=>t.id!==id)), 5200);
+      }
+      function view(){ return (
+        <div className="fixed top-3 right-3 z-50 space-y-2">
+          {toasts.map(t=>(
+            <div key={t.id} className="card px-3 py-2 text-sm shadow-lg" style={{maxWidth: "22rem"}}>
+              {t.text}
+            </div>
+          ))}
+        </div>
+      );}
+      return { pushToast, Toasts:view };
+    }
+
+    /* =========================================================
+       BADGE HELPERS
+    ========================================================== */
+    function awardBadge(save, id){
+      if(save.badges.owned.includes(id)) return save;
+      const entry = BADGE_META[id];
+      const withBadge = { ...save, badges: { ...save.badges, owned:[...save.badges.owned, id], lastEarnedAt: new Date().toISOString() } };
+      withBadge.economy.ledger = [...(withBadge.economy.ledger||[]), { id: uid("l"), ts:new Date().toISOString(), kind:"note", amt:0, note:`Badge earned: ${entry?.name||id}` }];
+      return withBadge;
+    }
+
+    /* =========================================================
+       COMPLIANCE SWEEP (missed scheduled days → Debt)
+    ========================================================== */
+    function doComplianceSweep(save, pushToast){
+      const today = todayISO();
+      if(!save.player.lastSeenISO){
+        save.player.lastSeenISO = today;
+        return save;
+      }
+      if(save.player.lastSeenISO >= today) return save;
+
+      let next = { ...save };
+      let cursor = addDaysISO(save.player.lastSeenISO, 1);
+      const completions = save.completions || [];
+
+      while(cursor < today){
+        for(const q of next.quests.filter(q=>!q.isArchived)){
+          if(!isScheduledDay(q, cursor)) continue;
+          const done = completions.some(c=> c.questId===q.id && c.completedAt===cursor);
+          if(done) continue;
+          const diff = DIFFS.find(d=>d.id===q.difficulty) || DIFFS[1];
+          const delta = diff.debt || 1;
+          next.economy.debt = (next.economy.debt||0) + delta;
+          next.economy.ledger = [...next.economy.ledger, { id:uid("l"), ts: new Date().toISOString(), kind:"debt", amt: delta, note:`Missed quest (${q.name}) on ${cursor}` }];
+          pushToast(`🪶 Compliance Notice — Missed “${q.name}”. Debt +${delta}.`);
+        }
+        cursor = addDaysISO(cursor, 1);
+      }
+      next.player.lastSeenISO = today;
+      return next;
+    }
+
+    /* =========================================================
+       INVENTORY MODAL (view + equip; matches shop.html)
+    ========================================================== */
+    function InventoryModal({ data, setData, onClose }){
+      const inv = data.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+      const equipped = inv.equipped || { weaponId:null, shieldId:null };
+
+      function unequip(slot){
+        const next = { ...data, inventory: { ...inv, equipped: { ...equipped, [slot]: null } } };
+        setData(next); save(next);
+      }
+      function equip(slot, itemId){
+        const item = inv.items.find(i=>i.id===itemId);
+        if(!item) return;
+        const next = { ...data, inventory: { ...inv, equipped: { ...equipped, [slot]: (equipped[slot]===itemId? null : itemId) } } };
+        setData(next); save(next);
+      }
+      function findItem(id){ return inv.items.find(i=>i.id===id); }
+
+      const potions = inv.items.filter(i=>i.type==="potion");
+      const weapons = inv.items.filter(i=>i.type==="weapon");
+      const shields = inv.items.filter(i=>i.type==="shield");
+
+      function SlotBox({ slot }){
+        const item = findItem(equipped[slot]);
+        const label = slot==="weaponId" ? "Weapon" : "Shield";
+        return (
+          <div className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+            <div className="text-sm font-bold">{label}</div>
+            {item ? (
+              <div className="text-sm">
+                {item.name} <span className="badge text-[10px]">{item.quality}</span>
+                <div className="text-xs" style={{color:"var(--muted)"}}>
+                  {item.type==="weapon" && <>Hit +{item.hitMod} · Uses {item.usesLeft}/{item.maxUses}</>}
+                  {item.type==="shield" && <>Defense +{item.defMod} · Uses {item.usesLeft}/{item.maxUses}</>}
+                </div>
+                <div className="mt-2">
+                  <Button kind="ghost" onClick={()=>unequip(slot)}>Unequip</Button>
+                </div>
+              </div>
+            ) : <div className="text-xs" style={{color:"var(--muted)"}}>Nothing equipped.</div>}
+          </div>
+        );
+      }
+
+      return (
+        <Modal title="Inventory" onClose={onClose}>
+          <div className="space-y-4">
+            <div className="card p-3">
+              <div className="kicker mb-1">Equipped</div>
+              <div className="grid md:grid-cols-2 gap-3">
+                <SlotBox slot="weaponId"/>
+                <SlotBox slot="shieldId"/>
+              </div>
+            </div>
+
+            <div className="card p-3">
+              <div className="kicker mb-2">Weapons</div>
+              {weapons.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {weapons.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badge text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Hit +{it.hitMod} · Uses {it.usesLeft}/{it.maxUses}</div>
+                    <div className="mt-2"><Button kind="success" onClick={()=>equip("weaponId", it.id)}>{inv.equipped.weaponId===it.id?"Equipped":"Equip"}</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card p-3">
+              <div className="kicker mb-2">Shields</div>
+              {shields.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {shields.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badge text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Defense +{it.defMod} · Uses {it.usesLeft}/{it.maxUses}</div>
+                    <div className="mt-2"><Button kind="success" onClick={()=>equip("shieldId", it.id)}>{inv.equipped.shieldId===it.id?"Equipped":"Equip"}</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card p-3">
+              <div className="kicker mb-2">Potions</div>
+              {potions.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {potions.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badge text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Heals {it.healMin}-{it.healMax} HP · Success {Math.round(it.successChance*100)}% · Qty {it.qty}</div>
+                    <div className="mt-2"><Button kind="ghost" disabled title="Use inside the dungeon from the Inventory modal">Use (Dungeon only)</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-xs" style={{color:"var(--muted)"}}>
+              Equipping is effective immediately. Using potions & consuming uses happens in the dungeon.
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       COMPLETE QUEST MODAL
+    ========================================================== */
+    function CompleteModal({ quest, data, onConfirm, onClose }){
+      const [dateISO, setDateISO] = useState(todayISO());
+      const streakCount = useMemo(()=> computeStreakCount(quest, data.completions, dateISO), [quest, data.completions, dateISO]);
+      const total = useMemo(()=> awardedXP(quest.baseXP, quest.difficulty, streakCount), [quest, streakCount]);
+      const breakdown = useMemo(()=> allocateRounded(total, quest.weights), [total, quest.weights]);
+
+      return (
+        <Modal title={"Complete: " + quest.name} onClose={onClose}>
+          <div className="space-y-4">
+            <label className="block">
+              <div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Date</div>
+              <input className="input w-full" type="date" value={dateISO} onChange={e=>setDateISO(e.target.value)} />
+            </label>
+            <div className="text-sm">Streak: <b>{streakCount}</b> → Multiplier: <b>{streakMultiplier(streakCount).toFixed(2)}×</b></div>
+            <div className="card p-4">
+              <div className="text-sm font-bold mb-2">XP Award</div>
+              <div className="text-2xl font-black mb-2">{total} XP</div>
+              <div className="space-y-1">
+                {breakdown.map(b=>(
+                  <div key={b.stat} className="flex items-center justify-between text-sm">
+                    <StatBadge stat={b.stat} />
+                    <b>+{b.xp} XP</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button kind="ghost" onClick={onClose}>Cancel</Button>
+              <Button kind="success" onClick={()=>onConfirm({ dateISO, total, breakdown, streakCount })}>Confirm</Button>
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       LEDGER MODAL & PAY DEBT
+    ========================================================== */
+    function LedgerModal({ data, onClose }){
+      const entries = [...(data.economy?.ledger||[])].slice(-20).reverse();
+      return (
+        <Modal title="Ledger (latest 20)" onClose={onClose}>
+          <div className="space-y-2 max-h-[60vh] overflow-auto">
+            {entries.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>No entries yet.</div>}
+            {entries.map(e=>(
+              <div key={e.id} className="p-2" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-bold">{e.kind==="debt" ? "Debt change" : "Note"}</div>
+                  <div className="text-xs" style={{color:"var(--muted)"}}>{e.ts.slice(0,19).replace("T"," ")}</div>
+                </div>
+                <div className="text-sm">
+                  {e.amt ? (e.amt>0 ? `+${e.amt}` : `${e.amt}`) : ""} {e.note? `— ${e.note}`:""}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      );
+    }
+    function PayDebtModal({ data, onPay, onClose }){
+      const gold = data.economy?.gold || 0;
+      const debt = data.economy?.debt || 0;
+      const [amt, setAmt] = useState(Math.min(gold, debt));
+      return (
+        <Modal title="Pay Down Debt" onClose={onClose}>
+          <div className="space-y-4">
+            <div className="text-sm">Gold: <b>{gold}</b> · Debt: <b>{debt}</b></div>
+            <label className="block">
+              <div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Amount</div>
+              <input className="input w-full" type="number" min="0" max={Math.min(gold,debt)} value={amt} onChange={e=>setAmt(clamp(parseInt(e.target.value||"0",10),0,Math.min(gold,debt)))} />
+            </label>
+            <div className="flex justify-end gap-2">
+              <Button kind="ghost" onClick={onClose}>Cancel</Button>
+              <Button kind="success" onClick={()=> onPay(amt)} disabled={amt<=0}>Pay {amt}</Button>
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       DASHBOARD
+    ========================================================== */
+    function StatCard({ stat, totalXP }){
+      const { level, intoLevelXP, needXP } = levelFromTotalXP(totalXP);
+      const pct = Math.round((intoLevelXP/needXP)*100);
+      return (
+        <div className="card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <StatBadge stat={stat} />
+            <div className="text-xs font-bold">Lvl {level}</div>
+          </div>
+          <div className="xpbar"><div style={{ width: pct+"%" }}/></div>
+          <div className="text-xs mt-1" style={{color:"var(--muted)"}}>{intoLevelXP}/{needXP} XP</div>
+        </div>
+      );
+    }
+
+    function Dashboard({ data, setData, pushToast }){
+      const [completeQuest, setCompleteQuest] = useState(null);
+      const [showLedger, setShowLedger] = useState(false);
+      const [showPay, setShowPay] = useState(false);
+      const [showInv, setShowInv] = useState(false);
+
+      const player = data.player;
+      const statLvls = STAT_KEYS.map(s=> levelFromTotalXP(data.stats[s].totalXP).level);
+      const globalLevel = Math.round(statLvls.reduce((a,b)=>a+b,0) / STAT_KEYS.length);
+
+      // RuneSpark ticker
+      const [headline, setHeadline] = useState(RUNESPARK_TICKER[0]);
+      useEffect(()=>{
+        let i=0;
+        const t = setInterval(()=>{ i=(i+1)%RUNESPARK_TICKER.length; setHeadline(RUNESPARK_TICKER[i]); }, 6000);
+        return ()=>clearInterval(t);
+      },[]);
+
+      // Quick STR recommendations
+      function addFromTemplate(t){
+        if(data.quests.some(q=> q.templateId===t.id || q.name.trim().toLowerCase()===t.name.trim().toLowerCase())){
+          alert("Already added.");
+          return;
+        }
+        const q = {
+          id: uid("q"),
+          name: t.name,
+          description: t.description,
+          scheduleType: t.scheduleType,
+          daysOfWeek: t.daysOfWeek,
+          baseXP: t.baseXP,
+          difficulty: t.difficulty,
+          weights: t.weights,
+          repeatable: t.repeatable,
+          createdAt: new Date().toISOString(),
+          source: "recommended",
+          templateId: t.id
+        };
+        const next = { ...data, quests:[...data.quests, q] };
+        setData(next); save(next);
+      }
+
+      const STR_level = levelFromTotalXP(data.stats.STR.totalXP).level;
+      const recommended = useMemo(()=>{
+        const lib = data.qLibrary || [];
+        const addedIds = new Set(data.quests.map(q=>q.templateId).filter(Boolean));
+        return lib
+          .filter(t=> t.attribute==="STR" && t.requiredLevel <= STR_level)
+          .filter(t=> !addedIds.has(t.id))
+          .sort((a,b)=> (a.requiredLevel-b.requiredLevel) || (a.difficulty>b.difficulty?1:-1))
+          .slice(0,5);
+      }, [data.qLibrary, data.quests, STR_level]);
+
+      const today = todayISO();
+      function isAlreadyCompleted(q, d){ if(q.repeatable) return false; return data.completions.some(c=> c.questId===q.id && c.completedAt===d); }
+
+      // Confirm completion
+      function confirmComplete(payload){
+        if(!completeQuest) return;
+        const q = completeQuest;
+        if(!q.repeatable && isAlreadyCompleted(q, payload.dateISO)){ alert("Already completed for selected day."); return; }
+
+        const nextStats = { ...data.stats };
+        payload.breakdown.forEach(b=>{ nextStats[b.stat] = { totalXP: nextStats[b.stat].totalXP + b.xp }; });
+
+        let next = { ...data, stats: nextStats, completions:[...data.completions, { id:uid("c"), questId:q.id, completedAt:payload.dateISO, awardedXP:payload.total, breakdown:payload.breakdown, streakCount:payload.streakCount }] };
+
+        if(payload.streakCount===3)  next = awardBadge(next, "streak3");
+        if(payload.streakCount===7)  next = awardBadge(next, "streak7");
+        if(payload.streakCount===14) next = awardBadge(next, "streak14");
+
+        setData(next); save(next);
+        setCompleteQuest(null);
+        pushToast(`✅ Deliverable approved — +${payload.total} XP`);
+      }
+
+      // Badges strip (latest 3)
+      const recentBadges = [...(data.badges?.owned||[])].slice(-3).reverse();
+
+      // Gold/Debt
+      const gold = data.economy?.gold || 0;
+      const debt = data.economy?.debt || 0;
+      const net  = gold - debt;
+
+      function payDebt(amount){
+        if(amount<=0) return;
+        let next = { ...data };
+        next.economy.gold -= amount;
+        next.economy.debt -= amount;
+        if(next.economy.debt < 0) next.economy.debt = 0;
+        next.economy.ledger = [...next.economy.ledger, { id:uid("l"), ts:new Date().toISOString(), kind:"debt", amt:-amount, note:"Debt payment" }];
+
+        const curr = next.badges?.progress?.debtPaidTotal || 0;
+        const prog = { ...(next.badges.progress||{}), debtPaidTotal: curr + amount };
+        next.badges = { ...next.badges, progress: prog };
+        if(prog.debtPaidTotal >= 10) next = awardBadge(next, "clean10");
+
+        setData(next); save(next);
+        setShowPay(false);
+        pushToast(`📜 Payment processed — Debt ${amount>0?`-${amount}`:"0"}`);
+      }
+
+      // Equipment quick view
+      const inv = data.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+      const eq = inv.equipped || { weaponId:null, shieldId:null };
+      const findItem = (id)=> inv.items.find(i=>i.id===id);
+      const eqWeapon = findItem(eq.weaponId);
+      const eqShield = findItem(eq.shieldId);
+
+      return (
+        <div className="space-y-4">
+          {/* Corporate Frame Header */}
+          <div className="card p-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl select-none">{player.avatar || "🎮"}</div>
+                <div>
+                  <h1 className="pixel text-xl md:text-2xl">Adventurer Control Panel</h1>
+                  <div className="text-xs" style={{color:"var(--muted)"}}>
+                    {player.name} · Global Level <b>{globalLevel}</b> · Gold <b>{gold}</b>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href="quests.html" className="btn btn-primary">Open Quest Board</a>
+                <a href="dungeon.html" className="btn btn-ghost">Start Dungeon Raid</a>
+                <a href="shop.html" className="btn btn-primary">Open Hexmart™ Shop</a>
+                <button className="btn btn-ghost" onClick={()=>setShowInv(true)}>View Inventory</button>
+              </div>
+            </div>
+            <div className="mt-3 text-xs ticker" style={{color:"var(--muted)"}}>
+              <span>🎥 RuneSpark Broadcast · </span><span className="font-semibold">{headline}</span>
+            </div>
+          </div>
+
+          {/* Gold & Debt / Badges */}
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="card p-4">
+              <div className="kicker mb-1">Gold & Debt</div>
+              <div className="text-sm">Gold: <b>{gold}</b> · Debt: <b>{debt}</b> · Net: <b>{net}</b></div>
+              <div className="mt-3 flex gap-2">
+                <Button onClick={()=>setShowPay(true)} disabled={gold<=0 || debt<=0}>Pay Down Debt</Button>
+                <Button kind="ghost" onClick={()=>setShowLedger(true)}>View Ledger</Button>
+              </div>
+              <p className="text-xs mt-2" style={{color:"var(--muted)"}}>
+                Missed scheduled quests add a tiny Debt. Pay it down with Gold whenever.
+              </p>
+            </div>
+
+            <div className="card p-4 md:col-span-2">
+              <div className="kicker mb-2">Badges (RuneSpark)</div>
+              {recentBadges.length===0 ? (
+                <div className="text-sm" style={{color:"var(--muted)"}}>No badges yet. Earn them by streaking quests, delving deeper, and paying down Debt.</div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {recentBadges.map(id=>{
+                    const b = BADGE_META[id] || { name:id, emoji:"🏅" };
+                    return <div key={id} className="badge flex items-center gap-2 text-sm">{b.emoji}<b>{b.name}</b></div>;
+                  })}
+                </div>
+              )}
+              <div className="mt-2 flex gap-2 flex-wrap">
+                <a className="btn btn-ghost" href="badges.html">View All Badges</a>
+                <a className="btn btn-ghost" href="shop.html">Visit Hexmart™</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Equipment quick card */}
+          <div className="card p-4">
+            <div className="kicker mb-2">Equipment</div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                <div className="text-sm font-bold">Weapon</div>
+                <div className="text-sm">
+                  {eqWeapon ? (
+                    <>
+                      {eqWeapon.name} <span className="badge text-[10px]">{eqWeapon.quality}</span>
+                      <div className="text-xs" style={{color:"var(--muted)"}}>Hit +{eqWeapon.hitMod} · Uses {eqWeapon.usesLeft}/{eqWeapon.maxUses}</div>
+                    </>
+                  ) : <span className="text-xs" style={{color:"var(--muted)"}}>None equipped</span>}
+                </div>
+              </div>
+              <div className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                <div className="text-sm font-bold">Shield</div>
+                <div className="text-sm">
+                  {eqShield ? (
+                    <>
+                      {eqShield.name} <span className="badge text-[10px]">{eqShield.quality}</span>
+                      <div className="text-xs" style={{color:"var(--muted)"}}>Defense +{eqShield.defMod} · Uses {eqShield.usesLeft}/{eqShield.maxUses}</div>
+                    </>
+                  ) : <span className="text-xs" style={{color:"var(--muted)"}}>None equipped</span>}
+                </div>
+              </div>
+            </div>
+            <div className="mt-3">
+              <button className="btn btn-ghost" onClick={()=>setShowInv(true)}>Manage Inventory</button>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {STAT_KEYS.map(s=> <StatCard key={s} stat={s} totalXP={data.stats[s].totalXP} />)}
+          </div>
+
+          {/* Recommended (STR) */}
+          <div className="card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Quest Board · Recommended (STR Lv {levelFromTotalXP(data.stats.STR.totalXP).level})</div>
+              <a className="btn btn-ghost" href="quests.html?tab=recommended">View All</a>
+            </div>
+            {recommended.length===0 ? (
+              <div className="text-sm" style={{color:"var(--muted)"}}>No new recommendations right now. Keep training STR to unlock more.</div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-3">
+                {recommended.map(t=>(
+                  <div key={t.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-extrabold">{t.name} <span className="badge text-[10px]">Lv {t.requiredLevel}+</span></div>
+                        <div className="text-xs" style={{color:"var(--muted)"}}>
+                          {t.description || t.programNote}
+                          <br/>Schedule: {t.scheduleType==='weekly' ? `Weekly (${(t.daysOfWeek||[]).map(d=>"SMTWTFS"[d]).join("")})` : t.scheduleType==='daily'?'Daily':'One-off'}
+                          &nbsp;· XP {t.baseXP} · {t.difficulty}
+                          <br/>Weights: {t.weights.map(w=>`${w.stat} ${w.pct}%`).join(" · ")}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button onClick={()=>addFromTemplate(t)}>Add</Button>
+                        <a className="btn btn-ghost" href={`quests.html?template=${encodeURIComponent(t.id)}&action=customize`}>Customize</a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Today's Quests */}
+          <div className="card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Today’s Quests</div>
+              <a className="btn btn-ghost" href="quests.html?tab=my">Manage Quests</a>
+            </div>
+            <div className="space-y-2">
+              {data.quests.filter(q=>!q.isArchived).map(q=>{
+                const already = (!q.repeatable) && data.completions.some(c=> c.questId===q.id && c.completedAt===today);
+                return (
+                  <div key={q.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="font-extrabold flex items-center gap-2">
+                          {q.name}
+                          {q.scheduleType!=='oneoff' && <span className="badge text-[10px]">{q.scheduleType==='daily'?'Daily':'Weekly'}</span>}
+                          {q.source==="recommended" && <span className="badge text-[10px]">Suggested</span>}
+                        </div>
+                        <div className="text-xs" style={{color:"var(--muted)"}}>
+                          XP {q.baseXP} · {(DIFFS.find(d=>d.id===q.difficulty)||{}).label} · {q.weights.map(w=>`${w.stat} ${w.pct}%`).join(" · ")}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a className="btn btn-ghost" href={`quests.html?edit=${encodeURIComponent(q.id)}`}>Edit</a>
+                        <Button kind="success" onClick={()=>setCompleteQuest(q)} disabled={already && !q.repeatable}>
+                          {already && !q.repeatable ? 'Done Today' : 'Complete'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {data.quests.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>No quests yet. Open the Quest Board to add some.</div>}
+            </div>
+          </div>
+
+          {completeQuest && <CompleteModal quest={completeQuest} data={data} onConfirm={confirmComplete} onClose={()=>setCompleteQuest(null)} />}
+          {showLedger && <LedgerModal data={data} onClose={()=>setShowLedger(false)} />}
+          {showPay && <PayDebtModal data={data} onPay={payDebt} onClose={()=>setShowPay(false)} />}
+          {showInv && <InventoryModal data={data} setData={setData} onClose={()=>setShowInv(false)} />}
+
+          <footer className="text-center text-xs" style={{color:"var(--muted)"}}>
+            Quests live in the <a className="underline" href="quests.html">Quest Board</a>. Dungeons award gold only. Shop at <a className="underline" href="shop.html">Hexmart™</a>.
+          </footer>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       HISTORY
+    ========================================================== */
+    function HistoryView({ data }){
+      const [qFilter, setQFilter] = useState('all');
+      const [fromISO, setFromISO] = useState('');
+      const [toISO, setToISO] = useState('');
+      const items = useMemo(()=> data.completions
+        .filter(c=> qFilter==='all' ? true : c.questId===qFilter)
+        .filter(c=> fromISO? c.completedAt>=fromISO : true)
+        .filter(c=> toISO? c.completedAt<=toISO : true)
+        .sort((a,b)=> a.completedAt < b.completedAt ? 1 : -1), [data.completions, qFilter, fromISO, toISO]);
+      return (
+        <div className="space-y-4">
+          <div className="card p-4">
+            <div className="grid md:grid-cols-4 gap-3">
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Quest</div>
+                <select className="input w-full" value={qFilter} onChange={e=>setQFilter(e.target.value)}>
+                  <option value="all">All</option>
+                  {data.quests.map(q=> <option key={q.id} value={q.id}>{q.name}</option>)}
+                </select>
+              </label>
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>From</div>
+                <input type="date" className="input w-full" value={fromISO} onChange={e=>setFromISO(e.target.value)} />
+              </label>
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>To</div>
+                <input type="date" className="input w-full" value={toISO} onChange={e=>setToISO(e.target.value)} />
+              </label>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {items.map(c=>{ const q=data.quests.find(x=>x.id===c.questId); return (
+              <div key={c.id} className="card p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-extrabold text-base">{q?.name || "[deleted quest]"}</div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>{c.completedAt}</div>
+                  </div>
+                  <div className="text-xl font-black">+{c.awardedXP} XP</div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {c.breakdown.map(b=> <span key={b.stat} className="text-sm"><StatBadge stat={b.stat}/> <b>+{b.xp}</b></span>)}
+                </div>
+              </div>
+            );})}
+            {items.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>No completions yet.</div>}
+          </div>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       SETTINGS
+    ========================================================== */
+    function SettingsView({ data, setData }){
+      const p = data.player;
+      const [name, setName] = useState(p.name);
+      const [theme, setTheme] = useState(p.theme);
+      const [hc, setHC] = useState(p.highContrast);
+      const [avatar, setAvatar] = useState(p.avatar||AVATARS[0]);
+      const [sfx, setSfx] = useState(p.sfxEnabled);
+      const [backdate, setBackdate] = useState(p.allowBackdate);
+
+      function apply(){
+        const next = { ...data, player:{ ...p, name:name.trim()||p.name, theme, highContrast:hc, avatar, sfxEnabled:sfx, allowBackdate:backdate } };
+        setData(next); save(next);
+      }
+
+      return (
+        <div className="space-y-4">
+          <div className="card p-4">
+            <div className="grid md:grid-cols-3 gap-4">
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Display Name</div><input className="input w-full" value={name} onChange={e=>setName(e.target.value)} /></label>
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Theme</div>
+                <div className="flex flex-col gap-2">
+                  {["light","dark","arcane"].map(t=> <button key={t} className={`btn ${theme===t?'btn-success':'btn-ghost'}`} onClick={()=>setTheme(t)}>{t==='light'?'Parchment Light':t==='dark'?'Obsidian Dark':'Arcane Violet'}</button>)}
+                </div>
+              </label>
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Avatar</div>
+                <div className="flex gap-2 flex-wrap">
+                  {AVATARS.map(a=> <button key={a} onClick={()=>setAvatar(a)} className={`btn ${a===avatar?'btn-success':'btn-ghost'} w-12 h-12 text-xl`}>{a}</button>)}
+                </div>
+              </label>
+            </div>
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <button className={`btn ${hc?'btn-success':'btn-ghost'}`} onClick={()=>setHC(!hc)}>High-Contrast {hc?'On':'Off'}</button>
+              <button className={`btn ${sfx?'btn-success':'btn-ghost'}`} onClick={()=>setSfx(!sfx)}>Level-up Sound {sfx?'On':'Off'}</button>
+              <button className={`btn ${backdate?'btn-success':'btn-ghost'}`} onClick={()=>setBackdate(!backdate)}>Allow Backdating {backdate?'Yes':'No'}</button>
+            </div>
+            <div className="flex justify-end mt-3"><Button onClick={apply}>Save Settings</Button></div>
+          </div>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       ROOT APP
+    ========================================================== */
+    function Tabs({ tabs, value, onChange }){
+      return (
+        <div className="flex gap-2 p-1" style={{ background:"color-mix(in srgb, var(--border) 50%, transparent)", border:"1px solid var(--border)", borderRadius:16 }}>
+          {tabs.map(t=>(
+            <button key={t.id} onClick={()=>onChange(t.id)} className={`btn ${value===t.id?'btn-primary':'btn-ghost'}`}>{t.icon} {t.label}</button>
+          ))}
+        </div>
+      );
+    }
+
+    function Onboarding({ onDone }){
+      const [name, setName] = useState("");
+      const [theme, setTheme] = useState("arcane");
+      const [avatar, setAvatar] = useState(AVATARS[0]);
+      const [seed, setSeed] = useState(true);
+      return (
+        <div className="max-w-xl mx-auto">
+          <div className="card p-4 mb-4">
+            <h1 className="pixel text-xl mb-1">Welcome, Adventurer</h1>
+            <p className="text-sm" style={{color:"var(--muted)"}}>Pick a readable theme. You can change it later in Settings.</p>
+          </div>
+          <div className="card p-4 space-y-4">
+            <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Display Name</div><input className="input w-full" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g., Kyle"/></label>
+            <div className="grid md:grid-cols-2 gap-4">
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Theme</div>
+                <div className="flex flex-col gap-2">{["light","dark","arcane"].map(t=> <button key={t} className={`btn ${theme===t?'btn-success':'btn-ghost'}`} onClick={()=>setTheme(t)}>{t==='light'?'Parchment Light':t==='dark'?'Obsidian Dark':'Arcane Violet'}</button>)}</div>
+              </label>
+              <label className="block"><div className="text-[10px] font-black uppercase tracking-widest" style={{color:"var(--muted)"}}>Avatar</div>
+                <div className="flex gap-2 flex-wrap">{AVATARS.map(a=> <button key={a} className={`btn ${a===avatar?'btn-success':'btn-ghost'} w-12 h-12 text-xl`} onClick={()=>setAvatar(a)}>{a}</button>)}</div>
+              </label>
+            </div>
+            <button className={`btn ${seed?'btn-success':'btn-ghost'}`} onClick={()=>setSeed(!seed)}>Start with recommended quests: {seed?'Yes':'No'}</button>
+            <div className="flex justify-end"><Button onClick={()=> onDone({ id:uid('p'), name:name.trim()||'Adventurer', theme, highContrast:false, avatar, sfxEnabled:true, allowBackdate:true, lastSeenISO: todayISO() })}>Begin Journey</Button></div>
+          </div>
+        </div>
+      );
+    }
+
+    function App(){
+      useTheme();
+      const { pushToast, Toasts } = useToasts();
+      const [data, setData] = useState(()=> load());
+      const [tab, setTab] = useState('dashboard');
+
+      function setAndSave(next){ setData(next); save(next); }
+
+      // First-run compliance sweep once player exists
+      useEffect(()=>{
+        if(!data.player) return;
+        const swept = doComplianceSweep({ ...data }, pushToast);
+        if(swept !== data){ setAndSave(swept); }
+      }, [!!data.player]); // eslint-disable-line
+
+      if(!data.player){
+        return (
+          <div className={`min-h-screen app theme-arcane`} style={{fontFamily:"var(--font-body)"}}>
+            <div className="max-w-5xl mx-auto p-4 md:p-6">
+              <Onboarding onDone={(player)=>{
+                const next={...data, player};
+                if(next.qLibrary?.length===0) next.qLibrary=seedSTRLibrary();
+                setAndSave(next);
+              }} />
+            </div>
+          </div>
+        );
+      }
+
+      const themeClass = `theme-${data.player.theme||'arcane'} ${data.player.highContrast?'theme-hc':''}`;
+
+      return (
+        <div className={`min-h-screen app ${themeClass}`} style={{fontFamily:"var(--font-body)"}}>
+          <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <Tabs value={tab} onChange={setTab} tabs={[
+                {id:'dashboard', label:'Dashboard', icon:'🏠'},
+                {id:'history', label:'History', icon:'📜'},
+                {id:'settings', label:'Settings', icon:'⚙️'},
+              ]}/>
+              <div className="text-xs" style={{color:"var(--muted)"}}>v{SCHEMA_VERSION}</div>
+            </div>
+
+            {tab==='dashboard' && <Dashboard data={data} setData={setAndSave} pushToast={pushToast} />}
+            {tab==='history' && <HistoryView data={data} />}
+            {tab==='settings' && <SettingsView data={data} setData={setAndSave} />}
+
+            <footer className="text-center text-xs" style={{color:"var(--muted)"}}>
+              Quests managed in <a className="underline" href="quests.html">Quest Board</a>. Dungeons award gold only. Shop at <a className="underline" href="shop.html">Hexmart™</a>.
+            </footer>
+          </div>
+
+          <Toasts/>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

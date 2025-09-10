@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Peril to Profit — Dungeon</title>
+
+  <!-- Same CDNs as the other files -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    /* =========================================================
+       SHARED CONSTANTS / HELPERS
+    ========================================================== */
+    const APP_KEY = "eightbit_quest_data_v2";
+    const SCHEMA_VERSION = 4; // align with index/quests/shop
+    const STAT_KEYS=["STR","DEX","CON","INT","WIS","CHR"];
+    const ICON = { STR:"💪", DEX:"🤸", CON:"🛡️", INT:"🧠", WIS:"📜", CHR:"🎭" };
+
+    function safeParseJSON(t){ try{return JSON.parse(t);}catch{return null;} }
+    function rand(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function rollD(sides){ return 1 + Math.floor(Math.random()*sides); }
+    function choice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    function nextLevelXP(level){ if(level<1) level=1; return Math.ceil(50*Math.pow(1.35,level-1)); }
+    function levelFromTotalXP(totalXP){
+      let lvl=1, remaining=totalXP;
+      for(;;){
+        const need=nextLevelXP(lvl);
+        if(remaining>=need){ remaining-=need; lvl+=1; }
+        else return {level:lvl, intoLevelXP:remaining, needXP:need};
+      }
+    }
+
+    /* =========================================================
+       THEME (matches other pages)
+    ========================================================== */
+    const THEME_CSS = `
+    @supports (font-variation-settings: normal) {
+      :root { --font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; }
+    }
+    .pixel { font-family: 'Press Start 2P', system-ui, sans-serif; letter-spacing: 0.03em; }
+    .theme-light { --bg:#F5F3E7; --surface:#FFFFFF; --text:#1F2937; --muted:#374151; --border:#E5E7EB; --primary:#0EA5A4; --primary-contrast:#ffffff; --secondary:#7C3AED; --accent:#D97706; --danger:#DC2626; --success:#059669; }
+    .theme-dark  { --bg:#0B0F14; --surface:#111827; --text:#F3F4F6; --muted:#D1D5DB; --border:#1F2937; --primary:#06B6D4; --primary-contrast:#0B0F14; --secondary:#C084FC; --accent:#F59E0B; --danger:#F87171; --success:#34D399; }
+    .theme-arcane{ --bg:#0D0A1A; --surface:#161329; --text:#F8FAFC; --muted:#E2E8F0; --border:#272341; --primary:#22D3EE; --primary-contrast:#0D0A1A; --secondary:#A78BFA; --accent:#FDE047; --danger:#FB7185; --success:#4ADE80; }
+    .theme-hc { --surface:#FFFFFF; --text:#111111; --border:#111111; }
+    .theme-dark.theme-hc, .theme-arcane.theme-hc { --surface:#000000; --text:#FFFFFF; --border:#FFFFFF; }
+    .app   { background: var(--bg); color: var(--text); }
+    .card  { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; }
+    .btn   { border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+    .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+    .btn-ghost   { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-danger  { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success); color: #062B1F; }
+    .badge { background: color-mix(in srgb, var(--border) 60%, transparent); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; font-weight: 700; }
+    .kicker { color: var(--muted); font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    .logline { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+    `;
+    function useThemeCSS(){
+      useEffect(()=>{
+        const link = document.createElement("link");
+        link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap";
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+        const style = document.createElement("style");
+        style.innerHTML = THEME_CSS;
+        document.head.appendChild(style);
+        return ()=>{ try{ document.head.removeChild(link); document.head.removeChild(style);}catch(e){} };
+      },[]);
+    }
+
+    /* =========================================================
+       SAVE DATA (includes inventory / insurance / shop)
+    ========================================================== */
+    function defaultStats(){ return { STR:{totalXP:0}, DEX:{totalXP:0}, CON:{totalXP:0}, INT:{totalXP:0}, WIS:{totalXP:0}, CHR:{totalXP:0} }; }
+    function defaultData(){
+      return {
+        version:SCHEMA_VERSION,
+        player:null,
+        stats:defaultStats(),
+        quests:[],
+        completions:[],
+        economy:{ gold:0, debt:0, ledger:[] },
+        badges:{ owned:[], progress:{} },
+        inventory:{ items:[], equipped:{ weaponId:null, shieldId:null } },
+        insurance:{ activeUntil:null },
+        shop:{ lastRestock:null, stock:{} }
+      };
+    }
+    function loadSave(){
+      const raw = localStorage.getItem(APP_KEY);
+      if(!raw) return defaultData();
+      const parsed = safeParseJSON(raw) || defaultData();
+      parsed.version = SCHEMA_VERSION;
+      if(!parsed.economy) parsed.economy = { gold:0, debt:0, ledger:[] };
+      if(parsed.economy.debt===undefined) parsed.economy.debt = 0;
+      if(!Array.isArray(parsed.economy.ledger)) parsed.economy.ledger = [];
+      if(!parsed.badges) parsed.badges = { owned:[], progress:{} };
+      if(!parsed.inventory) parsed.inventory = { items:[], equipped:{ weaponId:null, shieldId:null } };
+      if(!parsed.inventory.equipped) parsed.inventory.equipped = { weaponId:null, shieldId:null };
+      if(!parsed.insurance) parsed.insurance = { activeUntil:null };
+      if(!parsed.shop) parsed.shop = { lastRestock:null, stock:{} };
+      if(parsed.player && parsed.player.highContrast===undefined) parsed.player.highContrast=false;
+      return parsed;
+    }
+    function writeSave(d){ localStorage.setItem(APP_KEY, JSON.stringify(d)); return d; }
+    function addLedger(d, kind, amt, note){
+      const entry = { id:`l_${Math.random().toString(36).slice(2,9)}`, ts:new Date().toISOString(), kind, amt, note };
+      d.economy.ledger = [...(d.economy.ledger||[]), entry];
+    }
+
+    /* =========================================================
+       BADGES (depth/boss)
+    ========================================================== */
+    const BADGE_META = {
+      depth5:  { name:"Depth Five",  emoji:"⛏️" },
+      depth10: { name:"Depth Ten",   emoji:"🏰" },
+      depth20: { name:"Depth Twenty",emoji:"🐉" },
+      depth30: { name:"Depth Thirty",emoji:"🔥" },
+      depth50: { name:"Depth Fifty", emoji:"💎" },
+      boss1:   { name:"Boss Breaker",emoji:"🗡️" },
+      boss3:   { name:"Gate Crusher", emoji:"⚔️" },
+      boss10:  { name:"Kazrak’s Problem", emoji:"👑" },
+    };
+    function awardBadge(save, id){
+      if(save.badges.owned.includes(id)) return save;
+      const next = { ...save, badges:{ ...save.badges, owned:[...save.badges.owned, id], lastEarnedAt:new Date().toISOString() } };
+      addLedger(next, "note", 0, `Badge earned: ${BADGE_META[id]?.name||id}`);
+      return next;
+    }
+
+    /* =========================================================
+       DERIVED PLAYER SHEET
+    ========================================================== */
+    function statLevel(d, key){ return levelFromTotalXP(d.stats[key].totalXP).level; }
+    function derivePlayerSheet(data){
+      const L = Object.fromEntries(STAT_KEYS.map(s=>[s, statLevel(data, s)]));
+      const maxHP = 10 + L.CON * 5;
+      const power = L.STR*1.0 + L.DEX*0.7 + L.CON*0.6 + L.INT*0.5 + L.WIS*0.4 + L.CHR*0.3;
+      return { levels:L, maxHP, power };
+    }
+
+    /* =========================================================
+       DUNGEON GENERATION (Depth-driven scaling)
+    ========================================================== */
+    const ENEMY_NAMES = ["Ratling","Slime","Goblin","Skeleton","Cultist","Imp","Warg","Golem Shard"];
+    const BOSS_NAMES  = ["Ogre Brute","Lich Acolyte","Drake","Arcane Sentinel","Shadow Knight"];
+
+    function spawnEnemy(depth){
+      const base = depth * 4 + 6;
+      const jitter = rand(-2,3);
+      const power = Math.max(5, base + jitter);
+      const damage = Math.max(2, Math.floor(power * 0.5));
+      const gold   = Math.max(2, Math.floor(power * 0.65));
+      return { name: choice(ENEMY_NAMES), power, damage, gold, kind:"enemy" };
+    }
+    function spawnBoss(depth){
+      const base = depth * 7 + 16;
+      const power = base + rand(0,5);
+      const damage = Math.max(6, Math.floor(power * 0.6));
+      const gold   = Math.max(25, Math.floor(power * 1.2));
+      return { name: choice(BOSS_NAMES), power, damage, gold, kind:"boss" };
+    }
+    function spawnChest(depth){
+      const gold = Math.max(4, rand(3,7) + Math.floor(depth * 2.0));
+      return { kind:"chest", gold };
+    }
+
+    /* ======== NEW: Mystery/Trap room generator ======== */
+    function spawnMystery(depth){
+      // Depth-scaled trap “power” (used to derive opposing mod), damage, and gold range
+      const power = Math.max(5, depth * 4 + 5 + rand(-1,2));
+      const damage = Math.max(2, Math.floor(depth * 2.2) + rand(0,3));
+      const goldMin = Math.max(2, 2 + depth * 2);
+      const goldMax = goldMin + (3 + depth * 2);
+      // Loot tier by depth (maps to product quality)
+      let tier = "Poor";
+      if (depth >= 3 && depth <= 4) tier = "Common";
+      else if (depth >= 5) tier = "Fine";
+      return { kind:"mystery", power, damage, goldMin, goldMax, tier };
+    }
+
+    // Random Hexmart Kiosk rooms (never on room 10)
+    function shouldSpawnShopRoom(depth, roomInDepth){
+      if(roomInDepth >= 10) return false;
+      if(depth < 1) return false;
+      return Math.random() < 0.15; // ~15%
+    }
+
+    // NEW: Chance for Mystery room (rooms 1–9 only)
+    function shouldSpawnMysteryRoom(depth, roomInDepth){
+      if(roomInDepth >= 10) return false;
+      return Math.random() < 0.22; // ~22% of non-gate rooms
+    }
+
+    // RuneSpark milestones by Depth
+    function isMilestoneDepth(d){ return d===1 || d===3 || d===5 || d===10 || (d>=10 && d%10===0); }
+
+    /* =========================================================
+       DICE MODS (base) — equipment added later
+    ========================================================== */
+    function playerAttackMod(levels){ return Math.max(0, Math.floor((levels.STR - 1)/2)); }
+    function playerPerceptionMod(levels){ return Math.max(0, Math.floor((levels.WIS - 1)/2)); } // NEW
+    function enemyDefenseMod(enemy){ return Math.max(0, Math.floor(enemy.power / 5)); }
+    function trapOpposedModExplore(power){ return Math.max(0, Math.floor(power / 5)); } // higher DC when exploring
+    function trapOpposedModMove(power){ return Math.max(0, Math.floor(power / 6) - 1); } // easier when moving on
+    function playerFleeMod(levels){ return Math.max(0, Math.floor((levels.DEX - 1)/2) + Math.floor((levels.CHR - 1)/4)); }
+    function enemyFleeResist(enemy){ return Math.max(0, Math.floor(enemy.power / 6)); }
+
+    /* =========================================================
+       HEXMART PRODUCTS (subset mirror for kiosks/loot)
+    ========================================================== */
+    const PRODUCTS = [
+      // Potions
+      { id:"pot_lesser",  cat:"Potions", name:"Lesser Health Potion",  quality:"Poor",   price:5,  heal:[4,8],  success:0.65 },
+      { id:"pot_standard",cat:"Potions", name:"Standard Health Potion",quality:"Common", price:12, heal:[8,14], success:0.80 },
+      { id:"pot_greater", cat:"Potions", name:"Greater Health Potion", quality:"Fine",   price:25, heal:[14,24],success:0.92 },
+      // Weapons
+      { id:"wep_dagger",  cat:"Weapons", name:"Rusty Dagger",     quality:"Poor",   price:20, hitMod:1, maxUses:12 },
+      { id:"wep_sword",   cat:"Weapons", name:"Iron Sword",       quality:"Common", price:45, hitMod:2, maxUses:20 },
+      { id:"wep_longsword",cat:"Weapons",name:"Fine Longsword",   quality:"Fine",   price:90, hitMod:3, maxUses:28 },
+      // Shields
+      { id:"sh_buckler",  cat:"Shields", name:"Splintered Buckler", quality:"Poor",   price:18, defMod:1, maxUses:12 },
+      { id:"sh_shield",   cat:"Shields", name:"Sturdy Shield",      quality:"Common", price:40, defMod:2, maxUses:22 },
+      { id:"sh_tower",    cat:"Shields", name:"Tower Shield",       quality:"Fine",   price:85, defMod:3, maxUses:30 },
+    ];
+    const PRODUCT_MAP = Object.fromEntries(PRODUCTS.map(p=>[p.id,p]));
+
+    function sampleKioskStock(){
+      const pool = [...PRODUCTS];
+      const count = rand(3,5);
+      const picked = [];
+      for(let i=0;i<count;i++){
+        if(pool.length===0) break;
+        const idx = Math.floor(Math.random()*pool.length);
+        const p = pool.splice(idx,1)[0];
+        picked.push({
+          productId: p.id,
+          name: p.name,
+          type: p.cat==="Potions" ? "potion" : (p.cat==="Weapons" ? "weapon" : "shield"),
+          quality: p.quality,
+          price: Math.ceil(p.price * 1.35),
+          qty: p.cat==="Potions" ? rand(1,3) : 1,
+          heal: p.heal, success: p.success,
+          hitMod: p.hitMod, defMod: p.defMod, maxUses: p.maxUses
+        });
+      }
+      return picked;
+    }
+
+    // NEW: Loot pool by tier (depth)
+    function lootPoolForTier(tier){
+      return PRODUCTS.filter(p=>p.quality===tier);
+    }
+    function randomLootForDepth(depth){
+      const tier = depth <= 2 ? "Poor" : (depth <= 4 ? "Common" : "Fine");
+      const pool = lootPoolForTier(tier);
+      if(pool.length===0) return null;
+      return choice(pool);
+    }
+
+    /* =========================================================
+       UI ATOMS
+    ========================================================== */
+    function Pill({children}){ return <span className="badge text-xs">{children}</span>; }
+    function Button({children, onClick, kind="primary", className="", disabled=false}){
+      const k = kind==="danger" ? "btn-danger" : kind==="ghost" ? "btn-ghost" : kind==="success" ? "btn-success" : "btn-primary";
+      const extra = disabled ? " opacity-50 cursor-not-allowed" : "";
+      return <button onClick={!disabled?onClick:undefined} className={`btn ${k} ${className}${extra}`}>{children}</button>;
+    }
+    function HPBar({ hp, max }){
+      const pct = Math.max(0, Math.min(100, Math.round((hp/max)*100)));
+      return (
+        <div>
+          <div className="text-[11px] font-semibold mb-1">HP {hp}/{max}</div>
+          <div className="w-full h-3 rounded-full" style={{background:"color-mix(in srgb, var(--border) 55%, transparent)"}}>
+            <div className="h-3 rounded-full" style={{width:`${pct}%`, background:"var(--success)"}}/>
+          </div>
+        </div>
+      );
+    }
+    function Modal({ title, children, onClose }){
+      useEffect(()=>{ const onKey=e=> e.key==="Escape" && onClose?.(); document.addEventListener("keydown", onKey); return ()=>document.removeEventListener("keydown", onKey); },[onClose]);
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:"rgba(0,0,0,.6)"}}>
+          <div className="card w-full max-w-2xl">
+            <div className="flex items-center justify-between p-4 border-b" style={{borderColor:"var(--border)"}}>
+              <h3 className="font-extrabold text-lg">{title||"Notice"}</h3>
+              <button className="btn btn-ghost" onClick={onClose}>✕</button>
+            </div>
+            <div className="p-4">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    /* =========================================================
+       INVENTORY MODAL (equip + use potions)
+    ========================================================== */
+    function InventoryModal({ save, setSave, hp, setHP, maxHP, inDungeon, onClose, logLine }){
+      const inv = save.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+      const equipped = inv.equipped || { weaponId:null, shieldId:null };
+
+      function setAndWrite(next){ setSave(next); writeSave(next); }
+      function findItem(id){ return inv.items.find(i=>i.id===id); }
+
+      function equip(slot, itemId){
+        const item = inv.items.find(i=>i.id===itemId);
+        if(!item) return;
+        const next = { ...save, inventory:{ ...inv, equipped:{ ...equipped, [slot]: (equipped[slot]===itemId? null : itemId) } } };
+        setAndWrite(next);
+      }
+      function unequip(slot){
+        const next = { ...save, inventory:{ ...inv, equipped:{ ...equipped, [slot]: null } } };
+        setAndWrite(next);
+      }
+
+      function usePotion(stackId){
+        if(!inDungeon){ return; }
+        const idx = inv.items.findIndex(i=> i.id===stackId && i.type==="potion");
+        if(idx<0) return;
+        const it = inv.items[idx];
+        if(it.qty<=0) return;
+
+        const qty = it.qty - 1;
+        const succeed = Math.random() < (it.successChance ?? 0.7);
+        let healed = 0;
+        if(succeed){
+          healed = rand(it.healMin, it.healMax);
+          const newHP = Math.min(maxHP, hp + healed);
+          setHP(newHP);
+        }
+        const items = [...inv.items];
+        if(qty<=0){ items.splice(idx,1); }
+        else { items[idx] = { ...it, qty }; }
+        const next = { ...save, inventory:{ ...inv, items } };
+        setAndWrite(next);
+        logLine?.(succeed ? `Potion: healed ${healed} HP.` : `Potion fizzled. (Thanks, Hexmart.)`);
+      }
+
+      const weapons = inv.items.filter(i=>i.type==="weapon");
+      const shields = inv.items.filter(i=>i.type==="shield");
+      const potions = inv.items.filter(i=>i.type==="potion");
+
+      return (
+        <Modal title="Inventory" onClose={onClose}>
+          <div className="space-y-4">
+            {/* Equipped summary */}
+            <div className="card p-3">
+              <div className="kicker mb-1">Equipped</div>
+              <div className="grid md:grid-cols-2 gap-3">
+                {["weaponId","shieldId"].map(slot=>{
+                  const item = findItem(equipped[slot]);
+                  const label = slot==="weaponId"?"Weapon":"Shield";
+                  return (
+                    <div key={slot} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                      <div className="text-sm font-bold">{label}</div>
+                      {item ? (
+                        <div className="text-sm">
+                          {item.name} <span className="badge text-[10px]">{item.quality}</span>
+                          <div className="text-xs" style={{color:"var(--muted)"}}>
+                            {item.type==="weapon" && <>Hit +{item.hitMod} · Uses {item.usesLeft}/{item.maxUses}</>}
+                            {item.type==="shield" && <>Defense +{item.defMod} · Uses {item.usesLeft}/{item.maxUses}</>}
+                          </div>
+                          <div className="mt-2"><Button kind="ghost" onClick={()=>unequip(slot)}>Unequip</Button></div>
+                        </div>
+                      ) : <div className="text-xs" style={{color:"var(--muted)"}}>Nothing equipped.</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Weapons */}
+            <div className="card p-3">
+              <div className="kicker mb-2">Weapons</div>
+              {weapons.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {weapons.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badge text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Hit +{it.hitMod} · Uses {it.usesLeft}/{it.maxUses}</div>
+                    <div className="mt-2"><Button kind="success" onClick={()=>equip("weaponId", it.id)}>{equipped.weaponId===it.id?"Equipped":"Equip"}</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Shields */}
+            <div className="card p-3">
+              <div className="kicker mb-2">Shields</div>
+              {shields.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {shields.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badge text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Defense +{it.defMod} · Uses {it.usesLeft}/{it.maxUses}</div>
+                    <div className="mt-2"><Button kind="success" onClick={()=>equip("shieldId", it.id)}>{equipped.shieldId===it.id?"Equipped":"Equip"}</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Potions */}
+            <div className="card p-3">
+              <div className="kicker mb-2">Potions</div>
+              {potions.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {potions.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badge text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Heals {it.healMin}-{it.healMax} HP · Success {Math.round((it.successChance??0.7)*100)}% · Qty {it.qty}</div>
+                    <div className="mt-2">
+                      <Button kind="success" onClick={()=>usePotion(it.id)} disabled={!inDungeon}>Use Now</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-xs" style={{color:"var(--muted)"}}>Weapons consume 1 use each attack; shields consume 1 use when you take damage. Items break at 0 and are unequipped.</div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       SHOP KIOSK MODAL (in-dungeon)
+    ========================================================== */
+    function KioskModal({ runGold, setRunGold, save, setSave, onClose, title="Hexmart™ Kiosk", note, logLine }){
+      const [stock, setStock] = useState(()=> sampleKioskStock());
+
+      function setAndWrite(next){ setSave(next); writeSave(next); }
+      function canAfford(price){ return (runGold + (save.economy?.gold||0)) >= price; }
+      function spend(price){
+        let remaining = price;
+        const useRun = Math.min(runGold, remaining);
+        remaining -= useRun;
+        setRunGold(rg => rg - useRun);
+        if(remaining>0){
+          const next = { ...save, economy:{ ...save.economy, gold: (save.economy.gold||0) - remaining } };
+          setAndWrite(next);
+        }
+      }
+      function addItem(spec){
+        const inv = save.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+        const items = [...inv.items];
+        if(spec.type==="potion"){
+          const stack = items.find(i=> i.type==="potion" && i.productId===spec.productId);
+          if(stack){ stack.qty += 1; }
+          else {
+            items.push({
+              id:`it_${Math.random().toString(36).slice(2,9)}`,
+              productId: spec.productId,
+              name: PRODUCT_MAP[spec.productId].name,
+              type:"potion",
+              quality: spec.quality,
+              qty:1,
+              healMin: spec.heal[0],
+              healMax: spec.heal[1],
+              successChance: spec.success ?? 0.7,
+              createdAt: new Date().toISOString()
+            });
+          }
+        } else if(spec.type==="weapon"){
+          items.push({
+            id:`it_${Math.random().toString(36).slice(2,9)}`,
+            productId: spec.productId,
+            name: PRODUCT_MAP[spec.productId].name,
+            type:"weapon",
+            quality: spec.quality,
+            hitMod: spec.hitMod,
+            maxUses: spec.maxUses,
+            usesLeft: spec.maxUses,
+            createdAt: new Date().toISOString()
+          });
+        } else if(spec.type==="shield"){
+          items.push({
+            id:`it_${Math.random().toString(36).slice(2,9)}`,
+            productId: spec.productId,
+            name: PRODUCT_MAP[spec.productId].name,
+            type:"shield",
+            quality: spec.quality,
+            defMod: spec.defMod,
+            maxUses: spec.maxUses,
+            usesLeft: spec.maxUses,
+            createdAt: new Date().toISOString()
+          });
+        }
+        const next = { ...save, inventory:{ ...inv, items } };
+        setAndWrite(next);
+      }
+      function purchase(i){
+        if(i.qty<=0) return;
+        if(!canAfford(i.price)){ alert("Insufficient funds. Please consult Goldwater about a life-long microloan."); return; }
+        spend(i.price);
+        addItem(i);
+        setStock(arr => arr.map(x=> x===i ? { ...x, qty: Math.max(0, x.qty-1) } : x));
+        logLine?.(`Purchased ${i.name} at the kiosk for ${i.price} gold.`);
+      }
+
+      return (
+        <Modal title={title} onClose={onClose}>
+          {note && <div className="text-xs mb-2" style={{color:"var(--muted)"}}>{note}</div>}
+          <div className="grid md:grid-cols-2 gap-3">
+            {stock.map((s,idx)=>(
+              <div key={idx} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                <div className="font-bold">
+                  {s.name} <span className="badge text-[10px]">{s.quality}</span>
+                </div>
+                <div className="text-xs" style={{color:"var(--muted)"}}>
+                  {s.type==="potion" && <>Heals {s.heal[0]}–{s.heal[1]} · Success {Math.round((s.success??0.7)*100)}%</>}
+                  {s.type==="weapon" && <>Hit +{s.hitMod} · Uses {s.maxUses}</>}
+                  {s.type==="shield" && <>Defense +{s.defMod} · Uses {s.maxUses}</>}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="text-sm font-extrabold">{s.price} Gold</div>
+                  <div className="text-xs" style={{color:"var(--muted)"}}>{s.type==="potion" ? `${s.qty} in crate` : (s.qty>0? "1 available":"Sold")}</div>
+                </div>
+                <div className="mt-2"><Button onClick={()=>purchase(s)} disabled={s.qty<=0 || !canAfford(s.price)}>{s.qty<=0?"Sold Out":"Purchase"}</Button></div>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs mt-3" style={{color:"var(--muted)"}}>Prices include RuneSpark Venue Fee, Kazrak Surface Rights, and a Hexmart “Convenience” Multiplier (35%).</div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       DUNGEON APP — 10 Rooms == 1 Depth + Mystery Rooms
+    ========================================================== */
+    function App(){
+      useThemeCSS();
+
+      const [save, setSave] = useState(()=>loadSave());
+      if(!save.player){
+        return (
+          <div className="min-h-screen app theme-arcane" style={{fontFamily:"var(--font-body)"}}>
+            <div className="max-w-xl mx-auto p-6">
+              <div className="card p-4">
+                <h1 className="pixel text-xl mb-2">No Character Found</h1>
+                <p className="text-sm">Open <a className="underline" href="index.html">index.html</a> first, finish onboarding, then come back.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const themeClass = `theme-${save.player.theme || 'arcane'} ${save.player.highContrast ? 'theme-hc' : ''}`;
+      const sheet = useMemo(()=> derivePlayerSheet(save), [save]);
+
+      // Run state
+      const [state, setState]     = useState("idle");   // idle | running
+      const [depth, setDepth]     = useState(1);        // starts at 1 when run starts
+      const [roomNum, setRoomNum] = useState(1);        // 1..10 within current depth
+      const [hp, setHP]           = useState(sheet.maxHP);
+      const [room, setRoom]       = useState(null);     // { type:'fight'|'chest'|'gate'|'shop'|'mystery', data?, isBoss?, resolved? outcome? }
+      const [runGold, setRunGold] = useState(0);
+      const [log, setLog]         = useState([]);
+      const [modal, setModal]     = useState(null);     // generic modal
+      const [invOpen, setInvOpen] = useState(false);
+      const [kioskOpen, setKioskOpen] = useState(false);
+
+      function logLine(t){ setLog(l=>[...l, t]); }
+
+      // Equipped items & modifiers
+      function inv(){ return save.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } }; }
+      function findItem(id){ return (inv().items || []).find(i=>i.id===id); }
+      const eqWeapon = findItem(inv().equipped?.weaponId);
+      const eqShield = findItem(inv().equipped?.shieldId);
+      const weaponHitMod = eqWeapon?.hitMod || 0;
+      const shieldDefMod = eqShield?.defMod || 0;
+
+      // Insurance
+      const insuranceActive = !!(save.insurance?.activeUntil && new Date(save.insurance.activeUntil) > new Date());
+
+      /* --------- room generation per (depth, roomNum) --------- */
+      function showMilestone(d){
+        let next = loadSave();
+        if(d>=5)  next = awardBadge(next, "depth5");
+        if(d>=10) next = awardBadge(next, "depth10");
+        if(d>=20) next = awardBadge(next, "depth20");
+        if(d>=30) next = awardBadge(next, "depth30");
+        if(d>=50) next = awardBadge(next, "depth50");
+        setSave(next); writeSave(next);
+        setModal(<Modal title="🎥 RuneSpark LIVE" onClose={()=>setModal(null)}>
+          <div className="text-sm">Depth {d} reached. Please waive away the existential dread.</div>
+          <div className="mt-3 text-xs" style={{color:"var(--muted)"}}>Sponsored by RuneSpark Entertainment™.</div>
+        </Modal>);
+      }
+
+      function generateRoom(d, r, isFirstOfDepth=false){
+        setDepth(d);
+        setRoomNum(r);
+
+        if(r===10){
+          setRoom({ type:"gate", atDepth:d });
+          if(isFirstOfDepth) showMilestone(d);
+          return;
+        }
+
+        if(shouldSpawnShopRoom(d, r)){
+          setRoom({ type:"shop", data: sampleKioskStock() });
+          if(isFirstOfDepth) showMilestone(d);
+          return;
+        }
+
+        if(shouldSpawnMysteryRoom(d, r)){
+          setRoom({ type:"mystery", data: spawnMystery(d), resolved:false });
+          if(isFirstOfDepth) showMilestone(d);
+          return;
+        }
+
+        if(Math.random() < 0.65){
+          setRoom({ type:"fight", data: spawnEnemy(d), isBoss:false });
+        }else{
+          setRoom({ type:"chest", data: spawnChest(d) });
+        }
+        if(isFirstOfDepth) showMilestone(d);
+      }
+
+      function startRun(){
+        setState("running");
+        setDepth(1);
+        setRoomNum(1);
+        setHP(sheet.maxHP);
+        setRunGold(0);
+        setLog([`Clocked in with ${sheet.maxHP} HP. Equipment online.`]);
+        generateRoom(1,1,true);
+      }
+
+      // advance within a depth (rooms 1..9); room 10 is always the gate
+      function goToNextRoom(){
+        const nextR = Math.min(10, roomNum + 1);
+        generateRoom(depth, nextR, false);
+      }
+
+      // after Boss gate (skip or win), move to next depth, room 1
+      function completeDepth(){
+        const nextD = depth + 1;
+        generateRoom(nextD, 1, true);
+      }
+
+      /* ========= SAVE HELPERS ========= */
+      function writeAndSet(next){ setSave(next); writeSave(next); }
+      function addGameGold(amount, note){
+        setRunGold(x=>x+amount);
+        logLine(`${note} (+${amount} gold, run: ${runGold + amount})`);
+      }
+
+      /* ========= BANK / EXIT ========= */
+      function bankGold(amount, note){
+        const next = loadSave();
+        next.economy.gold = (next.economy.gold||0) + amount;
+        addLedger(next,"note", amount, note);
+        const prog = next.badges?.progress || {};
+        const total = (prog.goldExtracted||0) + amount;
+        next.badges = { ...next.badges, progress:{ ...prog, goldExtracted: total } };
+        writeAndSet(next);
+      }
+
+      function exitAliveBankAll(){
+        const bank = runGold;
+        bankGold(bank, `Extracted from Labyrinth (Depth ${depth}, Room ${roomNum}/10)`);
+        setModal(<Modal title="📣 RuneSpark Wrap" onClose={()=>{ window.location.href="index.html"; }}>
+          <div className="text-sm">You extracted <b>{bank}</b> gold at Depth {depth}, Room {roomNum}/10. The orbs applaud politely.</div>
+        </Modal>);
+      }
+
+      function onDeathUninsured(){
+        const bank = Math.floor(runGold/2);
+        const next = loadSave();
+        next.economy.gold = (next.economy.gold||0) + bank;
+        next.economy.debt = (next.economy.debt||0) + 5;
+        addLedger(next, "note", bank, `Soulspire salvage (half) after death at Depth ${depth}, Room ${roomNum}/10`);
+        addLedger(next, "debt", +5, `Soulspire™ Resurrection Invoice`);
+        writeAndSet(next);
+        setModal(<Modal title="☠️ Soulspire™ Invoice" onClose={()=>{ window.location.href="index.html"; }}>
+          <div className="text-sm">You fell at Depth {depth}, Room {roomNum}/10. Half your assets (<b>{bank}</b> gold) were recovered. Administrative inconvenience applied: <b>+5 Debt</b>.</div>
+        </Modal>);
+      }
+
+      function onDeathWithInsurance(){
+        const restore = Math.max(1, Math.ceil(sheet.maxHP * 0.6));
+        setHP(restore);
+        setLog(l=>[...l, `Soulspire Insurance kicks in — resurrected with ${restore} HP. Back to Depth ${depth}, Room ${roomNum}.`]);
+        setModal(<Modal title="🕯️ Soulspire™ Coverage" onClose={()=>setModal(null)}>
+          <div className="text-sm">Policy active. You are restored to <b>{restore}</b> HP and may continue your run.</div>
+          <div className="text-xs mt-2" style={{color:"var(--muted)"}}>Coverage provided by Soulspire Solutions™. Terms recursive.</div>
+        </Modal>);
+      }
+
+      function leaveAndBankAll(){
+        const inFight = state==="running" && room && room.type==="fight";
+        if(!inFight){ exitAliveBankAll(); }
+      }
+
+      /* ========= CHEST ========= */
+      function collectChestAndContinue(){
+        const g = room.data.gold;
+        addGameGold(g, "Chest");
+        goToNextRoom();
+      }
+      function collectChestAndLeave(){
+        const g = room.data.gold;
+        addGameGold(g, "Chest");
+        setTimeout(()=> exitAliveBankAll(), 100);
+      }
+
+      /* ========= INVENTORY ITEM ADD (for mystery loot) ========= */
+      function addItemByProduct(product){
+        const invState = save.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+        const items = [...(invState.items||[])];
+        if(product.cat==="Potions"){
+          const stack = items.find(i=> i.type==="potion" && i.productId===product.id);
+          if(stack){ stack.qty += 1; }
+          else {
+            items.push({
+              id:`it_${Math.random().toString(36).slice(2,9)}`,
+              productId: product.id,
+              name: product.name,
+              type:"potion",
+              quality: product.quality,
+              qty:1,
+              healMin: product.heal[0],
+              healMax: product.heal[1],
+              successChance: product.success ?? 0.7,
+              createdAt: new Date().toISOString()
+            });
+          }
+        } else if(product.cat==="Weapons"){
+          items.push({
+            id:`it_${Math.random().toString(36).slice(2,9)}`,
+            productId: product.id,
+            name: product.name,
+            type:"weapon",
+            quality: product.quality,
+            hitMod: product.hitMod,
+            maxUses: product.maxUses,
+            usesLeft: product.maxUses,
+            createdAt: new Date().toISOString()
+          });
+        } else if(product.cat==="Shields"){
+          items.push({
+            id:`it_${Math.random().toString(36).slice(2,9)}`,
+            productId: product.id,
+            name: product.name,
+            type:"shield",
+            quality: product.quality,
+            defMod: product.defMod,
+            maxUses: product.maxUses,
+            usesLeft: product.maxUses,
+            createdAt: new Date().toISOString()
+          });
+        }
+        const next = { ...save, inventory:{ ...invState, items } };
+        setSave(next); writeSave(next);
+      }
+
+      /* ========= KIOSK ROOM (shop type) ========= */
+      function buyFromRoomKiosk(){ setKioskOpen(true); }
+      function continueAfterKiosk(){ setKioskOpen(false); goToNextRoom(); }
+
+      /* ========= BOSS GATE ========= */
+      function enterBossGate(){
+        setRoom({ type:"fight", data: spawnBoss(depth), isBoss:true });
+        setKioskOpen(false);
+        logLine("Gate Warden appears!");
+      }
+      function skipBossGate(){
+        setKioskOpen(false);
+        setTimeout(()=> completeDepth(), 100);
+      }
+
+      /* ========= FIGHT (dice + equipment) ========= */
+      function consumeWeaponUse(){
+        if(!eqWeapon) return;
+        const invState = inv();
+        const idx = invState.items.findIndex(i=>i.id===eqWeapon.id);
+        if(idx<0) return;
+        const item = invState.items[idx];
+        const left = (item.usesLeft||0) - 1;
+        const items = [...invState.items];
+        if(left<=0){
+          items.splice(idx,1);
+          const next = { ...save, inventory:{ ...invState, items, equipped:{ ...invState.equipped, weaponId: (invState.equipped.weaponId===item.id ? null : invState.equipped.weaponId) } } };
+          setSave(next); writeSave(next);
+          logLine(`${item.name} breaks! (0 uses)`);
+        }else{
+          items[idx] = { ...item, usesLeft:left };
+          const next = { ...save, inventory:{ ...invState, items } };
+          setSave(next); writeSave(next);
+        }
+      }
+      function consumeShieldUse(){
+        if(!eqShield) return;
+        const invState = inv();
+        const idx = invState.items.findIndex(i=>i.id===eqShield.id);
+        if(idx<0) return;
+        const item = invState.items[idx];
+        const left = (item.usesLeft||0) - 1;
+        const items = [...invState.items];
+        if(left<=0){
+          items.splice(idx,1);
+          const next = { ...save, inventory:{ ...invState, items, equipped:{ ...invState.equipped, shieldId: (invState.equipped.shieldId===item.id ? null : invState.equipped.shieldId) } } };
+          setSave(next); writeSave(next);
+          logLine(`${item.name} splinters! (0 uses)`);
+        }else{
+          items[idx] = { ...item, usesLeft:left };
+          const next = { ...save, inventory:{ ...invState, items } };
+          setSave(next); writeSave(next);
+        }
+      }
+
+      function resolveFightClick(){
+        const foe = room.data;
+        const pModBase = playerAttackMod(sheet.levels);
+        const eModBase = enemyDefenseMod(foe);
+        const pRoll = rollD(20);
+        const eRoll = rollD(20);
+        const pTotal = pRoll + pModBase + weaponHitMod;
+        const eTotal = eRoll + eModBase - shieldDefMod;
+
+        logLine(`Attack: d20(${pRoll}) + ${pModBase}${weaponHitMod?` + Wpn(${weaponHitMod})`:""} = ${pTotal} ▸ ${foe.name} d20(${eRoll}) + ${eModBase}${shieldDefMod?` - Shld(${shieldDefMod})`:""} = ${eTotal}`);
+
+        consumeWeaponUse();
+
+        if(pTotal >= eTotal){
+          const g = foe.gold;
+          addGameGold(g, room.isBoss ? "Boss defeated" : "Enemy defeated");
+
+          if(room.isBoss){
+            let next = loadSave();
+            const count = (next.badges?.progress?.bosses||0) + 1;
+            next.badges = { ...next.badges, progress:{ ...(next.badges.progress||{}), bosses: count } };
+            if(count>=1) next = awardBadge(next, "boss1");
+            if(count>=3) next = awardBadge(next, "boss3");
+            if(count>=10) next = awardBadge(next, "boss10");
+            writeAndSet(next);
+            setTimeout(()=> completeDepth(), 120);
+          } else {
+            setTimeout(()=> goToNextRoom(), 120);
+          }
+        } else {
+          const dmg = foe.damage;
+          consumeShieldUse();
+          const newHP = Math.max(0, hp - dmg);
+          setHP(newHP);
+          logLine(`${room.isBoss ? "Boss" : "Enemy"} hits you for ${dmg}. HP: ${newHP}/${sheet.maxHP}`);
+          if(newHP <= 0){
+            if(insuranceActive){
+              onDeathWithInsurance();
+            }else{
+              logLine(`You fell… salvaging 50% of run gold.`);
+              onDeathUninsured();
+            }
+          }
+        }
+      }
+
+      function attemptFlee(){
+        const foe = room.data;
+        const pMod = playerFleeMod(sheet.levels);
+        const eMod = enemyFleeResist(foe);
+        const pRoll = rollD(20);
+        const eRoll = rollD(20);
+        const pTotal = pRoll + pMod;
+        const eTotal = eRoll + eMod;
+        logLine(`Flee: d20(${pRoll}) + ${pMod} = ${pTotal} ▸ ${foe.name} d20(${eRoll}) + ${eMod} = ${eTotal}`);
+
+        if(pTotal >= eTotal){
+          logLine(`Flee succeeded. Leaving with ${runGold} gold.`);
+          exitAliveBankAll();
+        } else {
+          const dmg = foe.damage;
+          consumeShieldUse();
+          const newHP = Math.max(0, hp - dmg);
+          setHP(newHP);
+          logLine(`Flee failed! Took ${dmg} damage. HP: ${newHP}/${sheet.maxHP}`);
+          if(newHP <= 0){
+            if(insuranceActive){
+              onDeathWithInsurance();
+            }else{
+              logLine(`You fell while fleeing… salvaging 50% of run gold.`);
+              onDeathUninsured();
+            }
+          }
+        }
+      }
+
+      /* ========= NEW: MYSTERY ROOM RESOLUTION ========= */
+      function resolvePerception(mode){ // mode: 'explore' | 'move'
+        const trap = room.data;
+        const pMod = playerPerceptionMod(sheet.levels);
+        const tMod = mode==="explore" ? trapOpposedModExplore(trap.power) : trapOpposedModMove(trap.power);
+        const pRoll = rollD(20);
+        const tRoll = rollD(20);
+        const pTotal = pRoll + pMod;
+        const tTotal = tRoll + tMod;
+
+        logLine(`${mode==="explore"?"Explore":"Quick Scan"}: d20(${pRoll}) + WIS(${pMod}) = ${pTotal} ▸ Trap d20(${tRoll}) + DC(${tMod}) = ${tTotal}`);
+
+        if(pTotal >= tTotal){
+          if(mode==="explore"){
+            // Success explore: loot chances
+            const roll = Math.random();
+            let foundGold = 0, foundItem = null;
+            if(roll < 0.10){ // both
+              foundGold = rand(trap.goldMin, trap.goldMax);
+              foundItem = randomLootForDepth(depth);
+            } else if(roll < 0.40){ // item only (30%)
+              foundItem = randomLootForDepth(depth);
+            } else { // gold only (60%)
+              foundGold = rand(trap.goldMin, trap.goldMax);
+            }
+            if(foundGold>0){ addGameGold(foundGold, "Hidden cache"); }
+            if(foundItem){
+              addItemByProduct(foundItem);
+              logLine(`Found item: ${foundItem.name} (${foundItem.quality}). Added to inventory.`);
+            }
+            setRoom(r=> ({...r, resolved:true, outcome:{ kind:"success", mode, foundGold, foundItemName: foundItem?.name || null }}));
+          } else {
+            // Success move: nothing happens, just proceed
+            setRoom(r=> ({...r, resolved:true, outcome:{ kind:"clear", mode }}));
+          }
+        } else {
+          // Trap triggers → damage
+          const dmg = trap.damage;
+          consumeShieldUse();
+          const newHP = Math.max(0, hp - dmg);
+          setHP(newHP);
+          logLine(`Trap triggers! You take ${dmg} damage. HP: ${newHP}/${sheet.maxHP}`);
+          setRoom(r=> ({...r, resolved:true, outcome:{ kind:"trap", mode, dmg }}));
+          if(newHP<=0){
+            if(insuranceActive){ onDeathWithInsurance(); }
+            else { onDeathUninsured(); }
+          }
+        }
+      }
+
+      // ========= HEADER / COUNTERS =========
+      const headerGold = (save.economy?.gold || 0) + (state==="running" ? runGold : 0);
+
+      // ========= UI =========
+      const themeStyle = { fontFamily: "var(--font-body)" };
+      const STR_lv = sheet.levels.STR, DEX_lv = sheet.levels.DEX, CON_lv = sheet.levels.CON;
+
+      return (
+        <div className={`min-h-screen app ${themeClass}`} style={themeStyle}>
+          <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4">
+
+            {/* Header */}
+            <div className="card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl select-none">{save.player.avatar || "🎮"}</div>
+                  <div>
+                    <h1 className="pixel text-xl md:text-2xl">Kazrak’s Labyrinth — Trials of Worth™</h1>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>
+                      {save.player.name} · STR Lv <b>{STR_lv}</b> · DEX Lv <b>{DEX_lv}</b> · CON Lv <b>{CON_lv}</b> · Gold <b>{headerGold}</b>
+                      {state==="running" && runGold>0 && <span> (+{runGold} this run)</span>}
+                      {insuranceActive && <span className="ml-2 badge text-[10px]">Soulspire Insurance: Active</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {state==="running"
+                    ? <Button kind="ghost" disabled>← Return to Dashboard</Button>
+                    : <a href="index.html" className="btn btn-ghost">← Return to Dashboard</a>}
+                  {state==="running"
+                    ? <Button kind="danger" disabled={room?.type==="fight"} onClick={leaveAndBankAll}>Leave (bank all)</Button>
+                    : <Button onClick={startRun}>Clock-In (Start Run)</Button>}
+                </div>
+              </div>
+              <div className="mt-3 text-xs" style={{color:"var(--muted)"}}>
+                🎥 RuneSpark Broadcast · “Welcome to the Trials. Smile for the orbs!”
+              </div>
+            </div>
+
+            {/* Pre-run prep */}
+            {state==="idle" && (
+              <div className="card p-4">
+                <div className="kicker mb-1">Pre-Run Prep</div>
+                <div className="flex flex-wrap gap-2">
+                  <a className="btn btn-primary" href="shop.html">Open Hexmart™ Shop</a>
+                  <Button kind="ghost" onClick={()=>setInvOpen(true)}>View Inventory & Equip</Button>
+                </div>
+                <p className="text-xs mt-2" style={{color:"var(--muted)"}}>
+                  Tip: Stock up on potions and equip a weapon/shield before clocking in.
+                </p>
+              </div>
+            )}
+
+            {/* Player stats */}
+            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {STAT_KEYS.map(s=>(
+                <div key={s} className="card p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="badge text-xs"><span className="mr-1">{ICON[s]}</span><b>{s}</b></span>
+                    <span className="text-xs font-bold">Lvl {sheet.levels[s]}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Vital + depth/room */}
+            {state==="running" && (
+              <div className="card p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <HPBar hp={hp} max={sheet.maxHP}/>
+                  <div className="flex items-center gap-2">
+                    <Pill>Depth {depth}</Pill>
+                    <Pill>Room {roomNum}/10</Pill>
+                    <Pill>Power {Math.round(sheet.power)}</Pill>
+                    {!!weaponHitMod && <Pill>Weapon +{weaponHitMod} hit</Pill>}
+                    {!!shieldDefMod && <Pill>Shield +{shieldDefMod} def</Pill>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Idle help */}
+            {state==="idle" && (
+              <div className="card p-6">
+                <p className="text-sm" style={{color:"var(--muted)"}}>
+                  Depth increases every <b>10 Rooms</b>. Rooms 1–9: fights, treasure, kiosks, and now <b>mystery rooms</b> (perception checks).
+                  Room 10: optional <b>Boss Gate</b>. Insurance revives you mid-run if active.
+                </p>
+              </div>
+            )}
+
+            {/* Room */}
+            {state==="running" && room && (
+              <div className="card p-6 space-y-3">
+                {/* Boss Gate (Room 10) */}
+                {room.type==="gate" && (
+                  <>
+                    <div className="kicker">Official Evaluation Gate</div>
+                    <h3 className="font-extrabold text-lg">Depth {depth} — Room 10: Boss Gate</h3>
+                    <p className="text-sm" style={{color:"var(--muted)"}}>
+                      RuneSpark: “Optional Boss fight available. Fame and mildly-inflated payouts await.”
+                      Hexmart whispers: “Perhaps a last-minute purchase?”
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button onClick={enterBossGate}>Enter Boss Gate</Button>
+                      <Button kind="ghost" onClick={skipBossGate}>Skip Gate (Next Depth)</Button>
+                      <Button kind="ghost" onClick={()=>setKioskOpen(true)}>Open Hexmart Kiosk</Button>
+                    </div>
+                  </>
+                )}
+
+                {/* Enemy fight */}
+                {room.type==="fight" && (
+                  <>
+                    <div className="kicker">Enemy Encounter</div>
+                    <h3 className="font-extrabold text-lg">
+                      {room.data.name} · Power {room.data.power}
+                    </h3>
+                    <p className="text-sm" style={{color:"var(--muted)"}}>
+                      If you lose a round: -{room.data.damage} HP · If you win the encounter: +{room.data.gold} gold
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button kind="success" onClick={resolveFightClick}>Fight (Resolve Round)</Button>
+                      <Button kind="ghost" onClick={attemptFlee}>Flee (risk parting blow)</Button>
+                      <Button kind="ghost" disabled>Leave & Bank All (disabled in fight)</Button>
+                      <Button kind="ghost" onClick={()=>setInvOpen(true)}>Open Inventory</Button>
+                    </div>
+                  </>
+                )}
+
+                {/* Treasure room */}
+                {room.type==="chest" && (
+                  <>
+                    <div className="kicker">Treasure Room</div>
+                    <h3 className="font-extrabold text-lg">A Chest Gleams</h3>
+                    <p className="text-sm" style={{color:"var(--muted)"}}>You found <b>{room.data.gold}</b> gold.</p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button kind="success" onClick={collectChestAndContinue}>Collect & Continue</Button>
+                      <Button kind="danger" onClick={collectChestAndLeave}>Collect & Leave (Bank All)</Button>
+                      <Button kind="ghost" onClick={()=>setInvOpen(true)}>Open Inventory</Button>
+                    </div>
+                  </>
+                )}
+
+                {/* Kiosk room */}
+                {room.type==="shop" && (
+                  <>
+                    <div className="kicker">Hexmart™ In-Run Kiosk</div>
+                    <h3 className="font-extrabold text-lg">A suspiciously convenient storefront appears.</h3>
+                    <p className="text-sm" style={{color:"var(--muted)"}}>
+                      “Limited selection, unlimited markups.” — Hexmart. Spend run gold or banked gold. Items go straight to your inventory.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button onClick={buyFromRoomKiosk}>Shop Now</Button>
+                      <Button kind="ghost" onClick={continueAfterKiosk}>Ignore & Continue</Button>
+                      <Button kind="ghost" onClick={()=>setInvOpen(true)}>Open Inventory</Button>
+                      <Button kind="danger" onClick={leaveAndBankAll}>Leave (bank all)</Button>
+                    </div>
+                  </>
+                )}
+
+                {/* NEW: Mystery room */}
+                {room.type==="mystery" && (
+                  <>
+                    <div className="kicker">Unscheduled Evaluation</div>
+                    <h3 className="font-extrabold text-lg">A Quiet Chamber</h3>
+                    {!room.resolved ? (
+                      <>
+                        <p className="text-sm" style={{color:"var(--muted)"}}>
+                          It looks empty. RuneSpark’s orbs pan dramatically. You may <b>Explore</b> (harder check, potential loot)
+                          or <b>Keep Moving</b> (easier check, no loot). Either way, a trap might bite.
+                        </p>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button kind="success" onClick={()=>resolvePerception("explore")}>Explore (Perception — WIS)</Button>
+                          <Button kind="ghost" onClick={()=>resolvePerception("move")}>Keep Moving (Quick Scan)</Button>
+                          <Button kind="ghost" onClick={()=>setInvOpen(true)}>Open Inventory</Button>
+                          <Button kind="danger" onClick={leaveAndBankAll}>Leave (bank all)</Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {room.outcome.kind==="success" && (
+                          <p className="text-sm" style={{color:"var(--muted)"}}>
+                            You notice hairline seams in the stone… <b>Hidden cache!</b>
+                            {room.outcome.foundGold>0 && <> Gained <b>{room.outcome.foundGold}</b> gold.</>}
+                            {room.outcome.foundItemName && <> Found <b>{room.outcome.foundItemName}</b> (added to inventory).</>}
+                          </p>
+                        )}
+                        {room.outcome.kind==="clear" && (
+                          <p className="text-sm" style={{color:"var(--muted)"}}>
+                            All clear. The chamber truly is empty. You press on.
+                          </p>
+                        )}
+                        {room.outcome.kind==="trap" && (
+                          <p className="text-sm" style={{color:"var(--muted)"}}>
+                            You miss the pressure plate by… not enough. <b>Trap springs!</b> You take <b>{room.outcome.dmg}</b> damage.
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <Button kind="success" onClick={goToNextRoom}>Continue</Button>
+                          <Button kind="ghost" onClick={()=>setInvOpen(true)}>Open Inventory</Button>
+                          <Button kind="danger" onClick={leaveAndBankAll}>Leave (bank all)</Button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Log */}
+            <div className="card p-4">
+              <div className="kicker mb-2">Trials of Worth™ Ledger (dice shown)</div>
+              {log.length===0 ? (
+                <div className="text-sm" style={{color:"var(--muted)"}}>The orbs are rolling…</div>
+              ) : (
+                <ul className="list-disc pl-6 space-y-1 text-sm">
+                  {log.map((l,i)=><li key={i}>{l}</li>)}
+                </ul>
+              )}
+            </div>
+
+            <footer className="text-center text-xs" style={{color:"var(--muted)"}}>
+              Tip: Mystery rooms use WIS. Explore for loot (riskier), or keep moving (safer, no loot).
+            </footer>
+          </div>
+
+          {/* Floating Inventory button (anytime) */}
+          <div className="fixed bottom-4 right-4 z-40">
+            <button className="btn btn-primary shadow-lg" onClick={()=>setInvOpen(true)}>🎒 Inventory</button>
+          </div>
+
+          {/* Modals */}
+          {invOpen && (
+            <InventoryModal
+              save={save} setSave={setSave}
+              hp={hp} setHP={setHP} maxHP={sheet.maxHP}
+              inDungeon={state==="running"}
+              onClose={()=>setInvOpen(false)}
+              logLine={logLine}
+            />
+          )}
+
+          {kioskOpen && room?.type!=="gate" && (
+            <KioskModal
+              runGold={runGold} setRunGold={setRunGold}
+              save={save} setSave={setSave}
+              onClose={()=>setKioskOpen(false)}
+              title="Hexmart™ Kiosk"
+              note="Selection may vary. Prices guaranteed to be inconvenient."
+              logLine={logLine}
+            />
+          )}
+
+          {/* Pre-boss kiosk (when gate open) */}
+          {kioskOpen && room?.type==="gate" && (
+            <KioskModal
+              runGold={runGold} setRunGold={setRunGold}
+              save={save} setSave={setSave}
+              onClose={()=>setKioskOpen(false)}
+              title="Hexmart™ Boss-Gate Kiosk"
+              note="Special event pricing. No refunds for dramatic defeats."
+              logLine={logLine}
+            />
+          )}
+
+          {/* Generic modal host */}
+          {modal}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Peril to Profit — Hexmart™ Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    /* =========================================================
+       SAVE / SCHEMA
+    ========================================================== */
+    const APP_KEY = "eightbit_quest_data_v2";
+    const SCHEMA_VERSION = 4;
+
+    function safeParseJSON(s){ try{ return JSON.parse(s); }catch{ return null; } }
+    function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+    function todayKey(){ const d=new Date(); return d.toISOString().slice(0,10); }
+
+    function defaultStats(){ return { STR:{totalXP:0}, DEX:{totalXP:0}, CON:{totalXP:0}, INT:{totalXP:0}, WIS:{totalXP:0}, CHR:{totalXP:0} }; }
+    function defaultData(){
+      return {
+        version: SCHEMA_VERSION,
+        player: null,
+        stats: defaultStats(),
+        quests: [],
+        completions: [],
+        economy: { gold: 0, debt: 0, ledger: [] },
+        badges: { owned: [], progress: {} },
+        inventory: { items: [], equipped: { weaponId:null, shieldId:null } },
+        insurance: { activeUntil: null },
+        shop: { lastRestock: null, stock: {} }
+      };
+    }
+    function load(){
+      const raw = localStorage.getItem(APP_KEY);
+      if(!raw) return defaultData();
+      const d = safeParseJSON(raw) || defaultData();
+      d.version = SCHEMA_VERSION;
+      if(!d.stats) d.stats = defaultStats();
+      if(!d.economy) d.economy = { gold:0, debt:0, ledger:[] };
+      if(d.economy.debt===undefined) d.economy.debt = 0;
+      if(!Array.isArray(d.economy.ledger)) d.economy.ledger = [];
+      if(!d.badges) d.badges = { owned:[], progress:{} };
+      if(!d.inventory) d.inventory = { items:[], equipped:{ weaponId:null, shieldId:null } };
+      if(!d.inventory.equipped) d.inventory.equipped = { weaponId:null, shieldId:null };
+      if(!d.insurance) d.insurance = { activeUntil:null };
+      if(!d.shop) d.shop = { lastRestock:null, stock:{} };
+      if(d.player && d.player.highContrast===undefined) d.player.highContrast=false;
+      return d;
+    }
+    function save(d){ localStorage.setItem(APP_KEY, JSON.stringify(d)); }
+    function addLedger(d, kind, amt, note){
+      d.economy.ledger = [...(d.economy.ledger||[]), { id:`l_${Math.random().toString(36).slice(2,9)}`, ts:new Date().toISOString(), kind, amt, note }];
+    }
+
+    /* =========================================================
+       THEME
+    ========================================================== */
+    const THEME_CSS = `
+      @supports (font-variation-settings: normal) {
+        :root { --font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji"; }
+      }
+      .pixel { font-family: 'Press Start 2P', system-ui, sans-serif; letter-spacing: 0.03em; }
+      .theme-light { --bg:#F5F3E7; --surface:#FFFFFF; --text:#1F2937; --muted:#374151; --border:#E5E7EB; --primary:#0EA5A4; --primary-contrast:#ffffff; --secondary:#7C3AED; --accent:#D97706; --danger:#DC2626; --success:#059669; }
+      .theme-dark  { --bg:#0B0F14; --surface:#111827; --text:#F3F4F6; --muted:#D1D5DB; --border:#1F2937; --primary:#06B6D4; --primary-contrast:#0B0F14; --secondary:#C084FC; --accent:#F59E0B; --danger:#F87171; --success:#34D399; }
+      .theme-arcane{ --bg:#0D0A1A; --surface:#161329; --text:#F8FAFC; --muted:#E2E8F0; --border:#272341; --primary:#22D3EE; --primary-contrast:#0D0A1A; --secondary:#A78BFA; --accent:#FDE047; --danger:#FB7185; --success:#4ADE80; }
+      .theme-hc { --surface:#FFFFFF; --text:#111111; --border:#111111; }
+      .theme-dark.theme-hc, .theme-arcane.theme-hc { --surface:#000000; --text:#FFFFFF; --border:#FFFFFF; }
+      .app   { background: var(--bg); color: var(--text); }
+      .card  { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; }
+      .btn   { border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+      .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+      .btn-ghost   { background: transparent; color: var(--text); border: 1px solid var(--border); }
+      .btn-danger  { background: var(--danger); color: #fff; }
+      .btn-success { background: var(--success); color: #062B1F; }
+      .badgeui { background: color-mix(in srgb, var(--border) 60%, transparent); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 2px 8px; font-weight: 700; }
+      .pill  { border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+      .kicker { color: var(--muted); font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    `;
+    function useTheme(){
+      useEffect(()=>{
+        const link=document.createElement("link");
+        link.href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap";
+        link.rel="stylesheet";
+        document.head.appendChild(link);
+        const style=document.createElement("style");
+        style.innerHTML=THEME_CSS;
+        document.head.appendChild(style);
+        return ()=>{ try{ document.head.removeChild(link); document.head.removeChild(style);}catch{} };
+      },[]);
+    }
+
+    /* =========================================================
+       CATALOG
+    ========================================================== */
+    const CATS = ["All","Potions","Weapons","Shields","Services"];
+    const PRODUCTS = [
+      // Potions
+      { id:"pot_lesser",  cat:"Potions", name:"Lesser Health Potion",  quality:"Poor",   price:5,  baseStock:10, heal:[4,8],  success:0.65, desc:"“Restores *some* vitality.*” *Some conditions apply. Conditions include: existence." },
+      { id:"pot_standard",cat:"Potions", name:"Standard Health Potion",quality:"Common", price:12, baseStock:8,  heal:[8,14], success:0.80, desc:"Popular among interns. May contain traces of optimism." },
+      { id:"pot_greater", cat:"Potions", name:"Greater Health Potion", quality:"Fine",   price:25, baseStock:6,  heal:[14,24],success:0.92, desc:"Now with extra red shimmer. Likely not blood." },
+      { id:"pot_grand",   cat:"Potions", name:"Grand Health Draught", quality:"Rare",   price:45, baseStock:4,  heal:[22,36],success:0.98, desc:"Hexmart’s “best.” Guaranteed to not explode.* *Guarantee void where observed." },
+      // Weapons
+      { id:"wep_dagger",  cat:"Weapons", name:"Rusty Dagger",     quality:"Poor",   price:20, baseStock:3, hitMod:1, maxUses:12, desc:"Adds +1 to hit. May also add tetanus." },
+      { id:"wep_sword",   cat:"Weapons", name:"Iron Sword",       quality:"Common", price:45, baseStock:3, hitMod:2, maxUses:20, desc:"Adds +2 to hit. Classic corporate cutlery." },
+      { id:"wep_longsword",cat:"Weapons",name:"Fine Longsword",   quality:"Fine",   price:90, baseStock:2, hitMod:3, maxUses:28, desc:"Adds +3 to hit. Polished on employee tears." },
+      { id:"wep_hammer",  cat:"Weapons", name:"Enchanted Warhammer",quality:"Rare", price:160,baseStock:1, hitMod:4, maxUses:36, desc:"Adds +4 to hit. Emits faint managerial laughter." },
+      // Shields
+      { id:"sh_buckler",  cat:"Shields", name:"Splintered Buckler", quality:"Poor",   price:18, baseStock:3, defMod:1, maxUses:12, desc:"+1 defense. Smells like last quarter’s memo." },
+      { id:"sh_shield",   cat:"Shields", name:"Sturdy Shield",      quality:"Common", price:40, baseStock:3, defMod:2, maxUses:22, desc:"+2 defense. OSHA adjacent." },
+      { id:"sh_tower",    cat:"Shields", name:"Tower Shield",       quality:"Fine",   price:85, baseStock:2, defMod:3, maxUses:30, desc:"+3 defense. Doubles as panic room." },
+      { id:"sh_aegis",    cat:"Shields", name:"Aegis of Compliance",quality:"Rare",   price:150,baseStock:1, defMod:4, maxUses:36, desc:"+4 defense. HR-approved protection aura." },
+      // Services
+      { id:"svc_insurance",cat:"Services", name:"Soulspire™ Run Insurance (30d)", quality:"Policy", price:60, baseStock:999, insuranceDays:30, desc:"On death in dungeon: immediate resurrection to continue the same run. Fine print recursive." },
+    ];
+    const PRODUCT_MAP = Object.fromEntries(PRODUCTS.map(p=>[p.id,p]));
+
+    /* =========================================================
+       RESTOCK
+    ========================================================== */
+    function restockIfNeeded(data){
+      const today = todayKey();
+      if(data.shop.lastRestock === today) return data;
+      const stock = { ...(data.shop.stock||{}) };
+      PRODUCTS.forEach(p=>{
+        stock[p.id] = p.cat==="Services" ? 999 : p.baseStock;
+      });
+      data.shop = { lastRestock: today, stock };
+      return data;
+    }
+
+    /* =========================================================
+       UI BASICS
+    ========================================================== */
+    function Button({children,onClick,kind="primary",className="",disabled=false}){
+      const k = kind==="success"?"btn-success":kind==="danger"?"btn-danger":kind==="ghost"?"btn-ghost":"btn-primary";
+      return <button onClick={!disabled?onClick:undefined} className={`btn ${k} ${disabled?"opacity-50 cursor-not-allowed":""} ${className}`}>{children}</button>;
+    }
+    function Pill({children}){ return <span className="pill">{children}</span>; }
+    function Modal({ title, children, onClose }){
+      useEffect(()=>{ const onKey=e=> e.key==="Escape" && onClose?.(); document.addEventListener("keydown", onKey); return ()=>document.removeEventListener("keydown", onKey); },[onClose]);
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:"rgba(0,0,0,.6)"}}>
+          <div className="card w-full max-w-3xl">
+            <div className="flex items-center justify-between p-4 border-b" style={{borderColor:"var(--border)"}}>
+              <h3 className="font-extrabold text-lg">{title}</h3>
+              <button className="btn btn-ghost" onClick={onClose}>✕</button>
+            </div>
+            <div className="p-4">{children}</div>
+          </div>
+        </div>
+      );
+    }
+    function useToasts(){
+      const [toasts,setToasts]=useState([]);
+      function push(t){ const id=Math.random().toString(36).slice(2,9); setToasts(v=>[...v,{id,t}]); setTimeout(()=>setToasts(v=>v.filter(x=>x.id!==id)), 3000); }
+      return { toasts, push };
+    }
+
+    /* =========================================================
+       INVENTORY MODAL (view + equip; “Use” disabled here)
+    ========================================================== */
+    function InventoryModal({ data, setData, onClose }){
+      const inv = data.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+      const equipped = inv.equipped || { weaponId:null, shieldId:null };
+      function setAndSave(next){ setData(next); save(next); }
+      function findItem(id){ return inv.items.find(i=>i.id===id); }
+      function unequip(slot){
+        const next = { ...data, inventory:{ ...inv, equipped:{ ...equipped, [slot]: null } } };
+        setAndSave(next);
+      }
+      function equip(slot, itemId){
+        const item = inv.items.find(i=>i.id===itemId);
+        if(!item) return;
+        const next = { ...data, inventory:{ ...inv, equipped:{ ...equipped, [slot]: (equipped[slot]===itemId? null : itemId) } } };
+        setAndSave(next);
+      }
+      const potions = inv.items.filter(i=>i.type==="potion");
+      const weapons = inv.items.filter(i=>i.type==="weapon");
+      const shields = inv.items.filter(i=>i.type==="shield");
+
+      return (
+        <Modal title="Inventory" onClose={onClose}>
+          <div className="space-y-4">
+            <div className="card p-3">
+              <div className="kicker mb-1">Equipped</div>
+              <div className="grid md:grid-cols-2 gap-3">
+                {["weaponId","shieldId"].map(slot=>{
+                  const it = findItem(equipped[slot]);
+                  const label = slot==="weaponId"?"Weapon":"Shield";
+                  return (
+                    <div key={slot} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                      <div className="text-sm font-bold">{label}</div>
+                      {it ? (
+                        <div className="text-sm">
+                          {it.name} <span className="badgeui text-[10px]">{it.quality}</span>
+                          <div className="text-xs" style={{color:"var(--muted)"}}>
+                            {it.type==="weapon" && <>Hit +{it.hitMod} · Uses {it.usesLeft}/{it.maxUses}</>}
+                            {it.type==="shield" && <>Defense +{it.defMod} · Uses {it.usesLeft}/{it.maxUses}</>}
+                          </div>
+                          <div className="mt-2"><Button kind="ghost" onClick={()=>unequip(slot)}>Unequip</Button></div>
+                        </div>
+                      ) : <div className="text-xs" style={{color:"var(--muted)"}}>Nothing equipped.</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="card p-3">
+              <div className="kicker mb-2">Weapons</div>
+              {weapons.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {weapons.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badgeui text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Hit +{it.hitMod} · Uses {it.usesLeft}/{it.maxUses}</div>
+                    <div className="mt-2"><Button kind="success" onClick={()=>equip("weaponId", it.id)}>{equipped.weaponId===it.id?"Equipped":"Equip"}</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card p-3">
+              <div className="kicker mb-2">Shields</div>
+              {shields.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {shields.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badgeui text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Defense +{it.defMod} · Uses {it.usesLeft}/{it.maxUses}</div>
+                    <div className="mt-2"><Button kind="success" onClick={()=>equip("shieldId", it.id)}>{equipped.shieldId===it.id?"Equipped":"Equip"}</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card p-3">
+              <div className="kicker mb-2">Potions</div>
+              {potions.length===0 && <div className="text-sm" style={{color:"var(--muted)"}}>None owned.</div>}
+              <div className="grid md:grid-cols-2 gap-3">
+                {potions.map(it=>(
+                  <div key={it.id} className="p-3" style={{border:"1px solid var(--border)", borderRadius:12}}>
+                    <div className="font-bold">{it.name} <span className="badgeui text-[10px]">{it.quality}</span></div>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>Heals {it.healMin}-{it.healMax} · Success {Math.round((it.successChance??0.7)*100)}% · Qty {it.qty}</div>
+                    <div className="mt-2"><Button kind="ghost" disabled title="Use inside the dungeon">Use (Dungeon only)</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       CONFIRM PURCHASE MODAL
+    ========================================================== */
+    function ConfirmModal({ product, price, gold, onConfirm, onCancel }){
+      return (
+        <Modal title="Confirm Purchase" onClose={onCancel}>
+          <div className="space-y-3 text-sm">
+            <div><b>{product.name}</b> — {price} Gold</div>
+            <div className="text-xs" style={{color:"var(--muted)"}}>Current Gold: {gold}</div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button kind="ghost" onClick={onCancel}>Cancel</Button>
+              <Button kind="success" onClick={onConfirm} disabled={gold < price}>Buy</Button>
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
+    /* =========================================================
+       SHOP PAGE
+    ========================================================== */
+    const CATS_EMOJI = { All:"🛒", Potions:"🧪", Weapons:"🗡️", Shields:"🛡️", Services:"🕯️" };
+
+    function App(){
+      useTheme();
+
+      const [data, setData] = useState(()=> restockIfNeeded(load()));
+      useEffect(()=> save(data), [data]); // keep in sync
+
+      const themeClass = `theme-${data.player?.theme||'arcane'} ${data.player?.highContrast?'theme-hc':''}`;
+      const gold = data.economy?.gold || 0, debt = data.economy?.debt || 0;
+
+      // transactional state helper to avoid stale overwrites
+      function transact(mutator){
+        setData(prev=>{
+          const next = deepClone(prev);
+          mutator(next);
+          save(next);
+          return next;
+        });
+      }
+
+      // restock countdown
+      function restockCountdown(){
+        const now = new Date();
+        const next = new Date(now); next.setHours(24,0,0,0);
+        const ms = next - now; const hh=Math.floor(ms/3600000); const mm=Math.floor((ms%3600000)/60000);
+        return `${hh}h ${mm}m`;
+      }
+
+      const [tab, setTab] = useState("All");
+      const filtered = useMemo(()=> PRODUCTS.filter(p => tab==="All" ? true : p.cat===tab), [tab]);
+
+      const { toasts, push } = useToasts();
+      const [invOpen, setInvOpen] = useState(false);
+
+      // Confirm flow
+      const [confirm, setConfirm] = useState(null); // { product }
+
+      function stockOf(pid){ return data.shop?.stock?.[pid] ?? 0; }
+
+      function addItemMut(d, p){
+        const inv = d.inventory || { items:[], equipped:{ weaponId:null, shieldId:null } };
+        const items = [...inv.items];
+        if(p.cat==="Potions"){
+          const stack = items.find(i=> i.type==="potion" && i.productId===p.id);
+          if(stack){ stack.qty += 1; }
+          else {
+            items.push({
+              id:`it_${Math.random().toString(36).slice(2,9)}`,
+              productId: p.id,
+              name: p.name,
+              type:"potion",
+              quality: p.quality,
+              qty: 1,
+              healMin: p.heal[0],
+              healMax: p.heal[1],
+              successChance: p.success,
+              createdAt: new Date().toISOString()
+            });
+          }
+          d.inventory = { ...inv, items };
+        } else if(p.cat==="Weapons"){
+          items.push({
+            id:`it_${Math.random().toString(36).slice(2,9)}`,
+            productId: p.id,
+            name: p.name, type:"weapon",
+            quality: p.quality,
+            hitMod: p.hitMod, maxUses: p.maxUses, usesLeft: p.maxUses,
+            createdAt: new Date().toISOString()
+          });
+          d.inventory = { ...inv, items };
+        } else if(p.cat==="Shields"){
+          items.push({
+            id:`it_${Math.random().toString(36).slice(2,9)}`,
+            productId: p.id,
+            name: p.name, type:"shield",
+            quality: p.quality,
+            defMod: p.defMod, maxUses: p.maxUses, usesLeft: p.maxUses,
+            createdAt: new Date().toISOString()
+          });
+          d.inventory = { ...inv, items };
+        } else if(p.cat==="Services"){
+          const days = p.insuranceDays || 30;
+          const base = (d.insurance?.activeUntil && new Date(d.insurance.activeUntil) > new Date())
+            ? new Date(d.insurance.activeUntil) : new Date();
+          base.setDate(base.getDate()+days);
+          d.insurance = { activeUntil: base.toISOString() };
+        }
+      }
+      function decStockMut(d, pid){
+        const stock = { ...(d.shop?.stock||{}) };
+        stock[pid] = Math.max(0, (stock[pid]||0)-1);
+        d.shop = { ...(d.shop||{}), stock };
+      }
+
+      function requestPurchase(product){
+        // Can't buy if no stock (except Services)
+        if(product.cat!=="Services" && stockOf(product.id)<=0){ push("Sold out. Try believing harder."); return; }
+        setConfirm({ product });
+      }
+      function confirmPurchase(){
+        if(!confirm) return;
+        const p = confirm.product;
+        transact(d=>{
+          const price = p.price;
+          if(p.cat!=="Services" && (d.shop?.stock?.[p.id]||0)<=0) return; // double guard
+          if((d.economy?.gold||0) < price){ return; } // guard
+
+          d.economy.gold -= price;
+          addLedger(d, "purchase", -price, `Bought ${p.name} from Hexmart`);
+          addItemMut(d, p);
+          if(p.cat!=="Services") decStockMut(d, p.id);
+        });
+        push(`Purchased ${p.name}.`);
+        setConfirm(null);
+      }
+
+      function ProductCard({ p }){
+        const stock = stockOf(p.id);
+        const price = p.price;
+        const cantAfford = gold < price;
+        const isSoldOut = (p.cat!=="Services" && stock<=0);
+        const disabled = cantAfford || isSoldOut;
+        return (
+          <div className="p-4" style={{border:"1px solid var(--border)", borderRadius:12}}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-extrabold">
+                  {p.name} <span className="badgeui text-[10px]">{p.quality}</span>
+                </div>
+                <div className="text-xs" style={{color:"var(--muted)"}}>{p.desc}</div>
+                <div className="text-xs mt-2 flex flex-wrap gap-2">
+                  <Pill>{p.cat}</Pill>
+                  {p.cat==="Potions" && <>
+                    <Pill>Heals {p.heal[0]}–{p.heal[1]}</Pill>
+                    <Pill>Success {Math.round(p.success*100)}%</Pill>
+                  </>}
+                  {p.cat==="Weapons" && <>
+                    <Pill>Hit +{p.hitMod}</Pill>
+                    <Pill>Uses {p.maxUses}</Pill>
+                  </>}
+                  {p.cat==="Shields" && <>
+                    <Pill>Defense +{p.defMod}</Pill>
+                    <Pill>Uses {p.maxUses}</Pill>
+                  </>}
+                  {p.cat==="Services" && <Pill>30 days</Pill>}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-extrabold">{price} Gold</div>
+                {p.cat!=="Services" && <div className="text-xs" style={{color:"var(--muted)"}}>{stock} in stock</div>}
+                <div className="mt-2">
+                  <Button onClick={()=>requestPurchase(p)} disabled={disabled}>
+                    {isSoldOut ? "Sold Out" : cantAfford ? "Can't Afford" : "Purchase"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if(!data.player){
+        return (
+          <div className="min-h-screen app theme-arcane" style={{fontFamily:"var(--font-body)"}}>
+            <div className="max-w-5xl mx-auto p-4 md:p-6">
+              <div className="card p-4">
+                <h1 className="pixel text-xl mb-2">Hexmart™</h1>
+                <p className="text-sm">Open <a className="underline" href="index.html">index.html</a> first to create your Adventurer.</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className={`min-h-screen app theme-${data.player.theme||'arcane'} ${data.player.highContrast?'theme-hc':''}`} style={{fontFamily:"var(--font-body)"}}>
+          <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-4">
+            {/* Header */}
+            <div className="card p-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">🧪</div>
+                  <div>
+                    <h1 className="pixel text-xl md:text-2xl">Hexmart™ — Adventurer Outlet</h1>
+                    <div className="text-xs" style={{color:"var(--muted)"}}>“Our products believe in you. They don’t work—but they’re affordable.”</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a href="index.html" className="btn btn-ghost">← Back to Dashboard</a>
+                  <Button kind="ghost" onClick={()=>setInvOpen(true)}>View Inventory</Button>
+                </div>
+              </div>
+              <div className="mt-3 text-xs" style={{color:"var(--muted)"}}>
+                Gold <b>{gold}</b> · Debt <b>{debt}</b>
+                <span className="ml-3">Daily restock in {restockCountdown()}</span>
+                <span className="ml-3">{data.insurance?.activeUntil && new Date(data.insurance.activeUntil) > new Date()
+                  ? <>Soulspire Insurance: <b>Active</b> (until {new Date(data.insurance.activeUntil).toISOString().slice(0,10)})</>
+                  : <>Soulspire Insurance: <b>Inactive</b></>}</span>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="card p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {CATS.map(c=>(
+                  <button key={c} onClick={()=>setTab(c)} className={`btn ${tab===c?'btn-primary':'btn-ghost'}`}>{CATS_EMOJI[c]} {c}</button>
+                ))}
+                <div className="ml-auto text-xs" style={{color:"var(--muted)"}}>
+                  Warranty: “Working as intended” includes the possibility of not working.
+                </div>
+              </div>
+            </div>
+
+            {/* Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filtered.map(p=> <ProductCard key={p.id} p={p}/>)}
+            </div>
+
+            {/* Footer */}
+            <footer className="text-center text-xs" style={{color:"var(--muted)"}}>
+              Equip weapons/shields from your inventory. Potions are usable in the dungeon.
+            </footer>
+          </div>
+
+          {/* Modals */}
+          {invOpen && <InventoryModal data={data} setData={setData} onClose={()=>setInvOpen(false)}/>}
+          {confirm && <ConfirmModal
+            product={confirm.product}
+            price={confirm.product.price}
+            gold={gold}
+            onConfirm={confirmPurchase}
+            onCancel={()=>setConfirm(null)}
+          />}
+
+          {/* Toasts */}
+          <div className="fixed bottom-3 right-3 z-50 space-y-2 max-w-sm">
+            {toasts.map(x=> <div key={x.id} className="card p-3 text-sm">{x.t}</div>)}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
