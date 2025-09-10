@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Minerals Data Pack + DC System</title>
+  <!--
+    Minerals (HTML data pack)
+    -------------------------------------------------------
+    How to load from another app:
+      const html = await (await fetch('minerals.html')).text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const data = JSON.parse(doc.querySelector('#minerals-data').textContent);
+      // data.items has full expanded objects
+
+    Compact schema used in #minerals-data:
+      u = uid          n = name          r = rarity
+      y = type         d = description   l = lore
+      s = locations[]  o = origin/plane  k = tags[]
+      note: duplicates in your source (e.g., Spiritglass, Orichalcum) were unified
+            into single entries at the higher rarity, with notes retained.
+
+    DC System:
+      - Base DC determined by rarity (editable in Settings).
+      - Optional situational modifiers (Depth, Tools, Vein, Hazard, Planar).
+      - Final DC = clamp(5 .. 40) of (Base + mods). You can change clamp in code.
+
+    Exposed API:
+      window.MineralsPack = {
+        version, items, rarityDC, getAll(), find(), byRarity(), byType(), rollCheck(opts)
+      }
+  -->
+  <style>
+    :root{
+      --paper-0:#fbf6e9; --paper-1:#f3ead4; --paper-2:#e6d7bb;
+      --ink:#111; --ink-soft:rgba(0,0,0,.68); --ink-red:#7a1f1f;
+      --ring:#d9c9a7; --ring-2:#d7c6a1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(rgba(0,0,0,.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1200px;margin:0 auto;padding:40px 16px 96px}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));
+      border:1px solid var(--ring); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.10)}
+
+    header.card{position:relative;overflow:hidden}
+    header.card:before, header.card:after{
+      content:"";position:absolute;border-radius:999px;filter:blur(28px);opacity:.12;mix-blend-mode:multiply;pointer-events:none
+    }
+    header.card:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+    h1{margin:0;font-family:ui-serif,Georgia,Cambria,"Times New Roman",Times,serif;font-weight:700;color:var(--ink-red)}
+    .sub{color:var(--ink-soft)}
+
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .controls{margin-top:14px}
+    .input,.select,.num{padding:10px 12px;border:1px solid var(--ring-2);border-radius:12px;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);outline:0}
+    .num{width:84px}
+    .btn{border:1px solid var(--ring-2);background:linear-gradient(180deg, var(--paper-0), var(--paper-1));padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.02)}
+    .muted{color:var(--ink-soft);font-size:14px}
+    .count{font-size:12px;color:var(--ink-soft);margin-left:auto}
+
+    details.settings{margin-top:14px}
+    summary{cursor:pointer;color:var(--ink-red);font-weight:700}
+    .grid{display:grid;gap:8px}
+    .grid.dc{grid-template-columns:repeat(5,minmax(100px,1fr))}
+    .grid.mods{grid-template-columns:repeat(5,minmax(140px,1fr))}
+
+    .table-wrap{margin-top:16px;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:linear-gradient(180deg, var(--paper-0), var(--paper-1));border:1px solid var(--ring);border-radius:16px;overflow:hidden}
+    thead th{position:sticky;top:0;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);text-align:left;padding:10px 12px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--ring)}
+    tbody td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.05);vertical-align:top}
+    tbody tr:hover{background:rgba(0,0,0,.035)}
+    th.sortable{cursor:pointer}
+    th.sortable::after{content:" ↕";opacity:.5}
+    th.sortable[data-dir="asc"]::after{content:" ↑"}
+    th.sortable[data-dir="desc"]::after{content:" ↓"}
+
+    .badge{display:inline-block;border:1px solid var(--ring-2);border-radius:999px;padding:4px 8px;font:700 10px/1 system-ui;text-transform:uppercase;letter-spacing:.04em;background:#f3ead4;color:color-mix(in oklab, var(--ink-red) 90%, black 10%);margin:0 6px 4px 0}
+    .tag{display:inline-block;border:1px dashed var(--ring-2);border-radius:999px;padding:3px 8px;font:700 10px/1 system-ui;margin:0 6px 4px 0}
+    .small{font-size:12px;color:var(--ink-soft)}
+    .hidden{display:none!important}
+
+    .calc{margin-top:16px;padding:12px}
+    .calc .row{gap:10px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card" style="padding:24px">
+      <h1 style="font-size:clamp(28px,3vw,38px)">Minerals Data Pack</h1>
+      <p class="sub" style="margin:.25rem 0 0">
+        Metals, glasses, stones, alloys & more. Includes a configurable DC system for mining/gathering by rarity.
+      </p>
+
+      <div class="controls row">
+        <input id="q" class="input" type="search" placeholder="Search name, tag, plane, location…" aria-label="Search"/>
+        <select id="rar" class="select" aria-label="Filter by rarity"><option value="">All rarity</option></select>
+        <select id="typ" class="select" aria-label="Filter by type"><option value="">All types</option></select>
+        <select id="org" class="select" aria-label="Filter by origin"><option value="">All origins</option></select>
+        <button id="reset" class="btn" type="button">Reset</button>
+        <button id="export" class="btn" type="button" title="Download minerals.json">Export JSON</button>
+        <span id="count" class="count" aria-live="polite"></span>
+      </div>
+
+      <details class="settings card" style="padding:14px;margin-top:10px">
+        <summary>⚙️ DC Settings & Modifiers</summary>
+        <div class="grid dc" style="margin-top:8px">
+          <!-- Base DC by rarity (editable) -->
+          <label>Very Common <input class="num dc" data-r="Very Common" type="number" min="5" max="40" value="10"></label>
+          <label>Common <input class="num dc" data-r="Common" type="number" min="5" max="40" value="12"></label>
+          <label>Uncommon <input class="num dc" data-r="Uncommon" type="number" min="5" max="40" value="14"></label>
+          <label>Rare <input class="num dc" data-r="Rare" type="number" min="5" max="40" value="16"></label>
+          <label>Very Rare <input class="num dc" data-r="Very Rare" type="number" min="5" max="40" value="18"></label>
+
+          <label>Super Rare <input class="num dc" data-r="Super Rare" type="number" min="5" max="40" value="20"></label>
+          <label>Legendary <input class="num dc" data-r="Legendary" type="number" min="5" max="40" value="22"></label>
+          <label>Epically Legendary <input class="num dc" data-r="Epically Legendary" type="number" min="5" max="40" value="24"></label>
+          <label>Mythical <input class="num dc" data-r="Mythical" type="number" min="5" max="40" value="26"></label>
+          <label>Cosmic Mythical <input class="num dc" data-r="Cosmic Mythical" type="number" min="5" max="40" value="28"></label>
+        </div>
+
+        <div class="grid mods" style="margin-top:12px">
+          <label>Depth
+            <select class="select mod" data-mod="depth">
+              <option value="0">Surface/Exposed (0)</option>
+              <option value="2">Shallow Vein (+2)</option>
+              <option value="4">Deep Seam (+4)</option>
+            </select>
+          </label>
+          <label>Tool Quality
+            <select class="select mod" data-mod="tools">
+              <option value="0">Standard (0)</option>
+              <option value="-2">Improvised (-2)</option>
+              <option value="2">Masterwork (+2)</option>
+              <option value="4">Magical (+4)</option>
+            </select>
+          </label>
+          <label>Vein Richness
+            <select class="select mod" data-mod="vein">
+              <option value="0">Average (0)</option>
+              <option value="-2">Rich/Plentiful (-2)</option>
+              <option value="-4">Legendary Cache (-4)</option>
+              <option value="2">Sparse (+2)</option>
+              <option value="4">Trace (+4)</option>
+            </select>
+          </label>
+          <label>Hazard
+            <select class="select mod" data-mod="hazard">
+              <option value="0">None (0)</option>
+              <option value="2">Hazardous Terrain (+2)</option>
+              <option value="4">Extreme (+4)</option>
+            </select>
+          </label>
+          <label>Planar Attunement
+            <select class="select mod" data-mod="planar">
+              <option value="0">Native/Attuned (0)</option>
+              <option value="2">Planar Rifts/Unstable (+2)</option>
+              <option value="4">Foreign Plane (+4)</option>
+            </select>
+          </label>
+        </div>
+        <p class="muted" style="margin-top:8px">Tip: These modifiers are optional. If you want strictly rarity-based DCs, leave all at 0.</p>
+      </details>
+
+      <section class="calc card" style="background:linear-gradient(180deg,var(--paper-0),var(--paper-1));">
+        <div class="row">
+          <select id="pick" class="select" style="min-width:260px"></select>
+          <span class="muted">Base DC: <b class="mono" id="baseDC">—</b> · Mods: <b class="mono" id="modsDC">0</b> · Final DC: <b class="mono" id="finalDC">—</b></span>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label>Modifier/Skill <input id="skill" class="num" type="number" value="0"></label>
+          <label>Roll
+            <select id="rollmode" class="select">
+              <option value="normal">Normal d20</option>
+              <option value="adv">Advantage</option>
+              <option value="dis">Disadvantage</option>
+            </select>
+          </label>
+          <button id="roll" class="btn" type="button">Roll Check</button>
+          <span id="rollout" class="muted mono"></span>
+        </div>
+      </section>
+    </header>
+
+    <main class="table-wrap" style="margin-top:16px">
+      <table aria-describedby="count">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="name">Name</th>
+            <th class="sortable" data-key="rarity" style="width:150px">Rarity</th>
+            <th class="sortable" data-key="type" style="width:120px">Type</th>
+            <th class="sortable" data-key="dc" style="width:90px">Base DC</th>
+            <th>Locations / Origin</th>
+            <th>Notes & Lore</th>
+            <th>Tags</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" class="muted hidden" style="padding:14px">No results match that filter.</p>
+
+      <div class="row" style="margin-top:12px">
+        <span class="small">Pack: <code>minerals</code> · Version: <code>1.0.0</code></span>
+        <span class="small">Source: user-provided list</span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Compact canonical dataset -->
+  <script type="application/json" id="minerals-data">{
+    "p":"minerals","v":"1.0.0","i":[
+      /* Very Common */
+      {"u":"sand","n":"Sand","r":"Very Common","y":"Glass Base","d":"Traditional silica used for mundane glass.","l":null,"s":["Desert","Coastal","Riverbeds"],"o":"Material Plane","k":["silica","glass"]},
+      {"u":"quartz","n":"Quartz","r":"Very Common","y":"Glass Base","d":"Clear silica used for higher-quality glass and vessels.","l":null,"s":["Mountains","Caves"],"o":"Material Plane","k":["silica","crystal"]},
+
+      /* Common */
+      {"u":"elemental-glass","n":"Elemental Glass","r":"Common","y":"Glass","d":"Glass infused with elemental energy during making.","l":"Properties vary by element (fire, water, air, earth).","s":["Kilns near elemental fonts"],"o":"Elemental Planes","k":["glass","elemental"]},
+      {"u":"spiritglass-lesser","n":"Spiritglass (Lesser)","r":"Common","y":"Crystal Metal","d":"Crystalline metal seeded with faint spiritual resonance.","l":"Often harvested as low-grade nodules around spirit sites.","s":["Haunted ruins","spirit wells"],"o":"Ethereal Touched","k":["spirit","focus","variant"]},
+      {"u":"dragon-glass","n":"Dragon Glass","r":"Common","y":"Glass","d":"Sand vitrified by a dragon’s breath.","l":"Inherits traits from the dragon’s element.","s":["Dragon nesting grounds"],"o":"Material + Draconic","k":["glass","dragon"]},
+      {"u":"alchemical-silver","n":"Alchemical Silver","r":"Common","y":"Metal","d":"Worked silver alloyed/alchemically treated to harm monsters.","l":null,"s":["Civilized markets","temple forges"],"o":"Material Plane","k":["silver","anti-monster"]},
+      {"u":"cold-iron","n":"Cold Iron","r":"Common","y":"Metal","d":"Iron specially smelted to vex the fey.","l":null,"s":["Ancient bog iron","deep seams"],"o":"Material Plane","k":["iron","anti-fey"]},
+      {"u":"elemental-clay","n":"Elemental Clay","r":"Common","y":"Clay","d":"Clay infused with elemental energy, tough as iron when set.","l":null,"s":["Elemental springs","hot vents"],"o":"Elemental Planes","k":["clay","crafting"]},
+
+      /* Uncommon */
+      {"u":"stardust-glass","n":"Stardust Glass","r":"Uncommon","y":"Glass","d":"Glass worked with extraplanar stardust to channel cosmic energy.","l":null,"s":["Fallen star sites"],"o":"Astral","k":["glass","cosmic"]},
+      {"u":"feywild-glass","n":"Feywild Glass","r":"Uncommon","y":"Glass","d":"Enchanted glasswork from the Feywild.","l":"Responsive to glamours.","s":["Fey forges","enchanted groves"],"o":"Feywild","k":["glass","fey"]},
+      {"u":"nith","n":"Nith","r":"Uncommon","y":"Metal","d":"Refractory metal with an extremely high melting point.","l":null,"s":["Volcanic deeps"],"o":"Material Plane","k":["metal","refractory"]},
+      {"u":"shroud","n":"Shroud","r":"Uncommon","y":"Metal","d":"Ethereal-touched metal for phasing gear.","l":null,"s":["Ethereal overlaps"],"o":"Ethereal","k":["ethereal","phase"]},
+      {"u":"sanctus-silver","n":"Sanctus Silver","r":"Uncommon","y":"Metal","d":"Silver refined with celestial rites for angelic arms.","l":null,"s":["Holy forges"],"o":"Celestial","k":["celestial","silver"]},
+      {"u":"aetherium","n":"Aetherium","r":"Uncommon","y":"Metal","d":"Lightweight metal charged with arcane potential.","l":"Attuned to the Weave.","s":["Leyline nodes"],"o":"Arcane","k":["weave","arcane","metal"]},
+
+      /* Rare */
+      {"u":"abyssal-glass","n":"Abyssal Glass","r":"Rare","y":"Glass","d":"Twisted, dark glass from abyssal materials.","l":"Demonic undertones.","s":["Abyssal vents"],"o":"Abyss","k":["glass","infernal"]},
+      {"u":"mithral","n":"Mithral","r":"Rare","y":"Metal","d":"Silvery, light, remarkably strong.","l":"Dwarven masterwork legacy; essence of air.","s":["Ancient dwarven mines"],"o":"Material Plane","k":["armor","light","metal"]},
+      {"u":"adamantine","n":"Adamantine","r":"Rare","y":"Metal","d":"Incredibly hard, dense, holds a perfect edge.","l":"Said to be forged by gods; essence of earth.","s":["Underdark","volcanic hearts"],"o":"Material Plane","k":["metal","indestructible"]},
+      {"u":"astral-silver","n":"Astral Silver","r":"Rare","y":"Metal","d":"Luminous silver interacting with extraplanar spaces.","l":"Bridges material and astral.","s":["Thin planar veils","astral lairs"],"o":"Astral","k":["metal","astral"]},
+      {"u":"elysian-bronze","n":"Elysian Bronze","r":"Rare","y":"Alloy","d":"Green-gold alloy potent against fiends.","l":"First wrought by celestials; radiates positive energy.","s":["Celestial sites","holy armories"],"o":"Celestial","k":["alloy","anti-fiend"]},
+      {"u":"dragonsteel","n":"Dragonsteel","r":"Rare","y":"Alloy","d":"Forged from draconic scales/essence.","l":"Takes on lineage aspects.","s":["Ancient dragon hoards"],"o":"Draconic","k":["alloy","dragon"]},
+      {"u":"wyrmweave","n":"Wyrmweave","r":"Rare","y":"Metal","d":"Nearly indestructible “woven” metallic strand from wyrm breath.","l":null,"s":["Wyrm graves"],"o":"Draconic","k":["metal","artifact"]},
+      {"u":"dream-gold","n":"Dream Gold","r":"Rare","y":"Metal","d":"Holds dreams and memories.","l":null,"s":["Oneiric realms","sites of slumber magic"],"o":"Dream","k":["memory","psionic"]},
+      {"u":"infernal-brimstone","n":"Infernal Brimstone","r":"Rare","y":"Stone","d":"Fiery stone metal from Hell’s depths.","l":null,"s":["Hellforges"],"o":"Nine Hells","k":["fire","infernal"]},
+      {"u":"thunder-iron","n":"Thunder Iron","r":"Rare","y":"Metal","d":"Iron charged with immense lightning.","l":null,"s":["Storm peaks"],"o":"Elemental Air","k":["lightning","metal"]},
+
+      /* Very Rare */
+      {"u":"whispering-iron","n":"Whispering Iron","r":"Very Rare","y":"Metal","d":"Devilish otherworld iron that murmurs to bearers.","l":null,"s":["Outer dark seams"],"o":"Infernal","k":["cursed","devil"]},
+      {"u":"orichalcum","n":"Orichalcum","r":"Very Rare","y":"Metal","d":"Reddish-gold/blue hued, superb magical conductor.","l":"Lost-empire relic; essence of fire; amplifies magic.","s":["Ancient ruins","magma vaults"],"o":"Material/Primordial","k":["conductor","artifact"]},
+      {"u":"bloodiron","n":"Bloodiron","r":"Very Rare","y":"Metal","d":"Alloy infused with powerful blood; drains vitality.","l":null,"s":["War shrines","battlefields (buried)"],"o":"Necromantic","k":["vampiric","alloy"]},
+      {"u":"vortex-stone","n":"Vortex Stone","r":"Very Rare","y":"Stone","d":"Swirling, multi-colored stone that channels raw elements.","l":null,"s":["Elemental confluences"],"o":"Elemental","k":["stone","elemental"]},
+
+      /* Super Rare */
+      {"u":"voidstone","n":"Voidstone","r":"Super Rare","y":"Stone","d":"Weightless black stone that absorbs magic.","l":null,"s":["Null zones"],"o":"Vacuum/Void","k":["antimagic","stone"]},
+      {"u":"primordial-crystal","n":"Primordial Crystal","r":"Super Rare","y":"Crystal","d":"Ancient crystalline metal with creation potential.","l":null,"s":["World-bones"],"o":"Primordial","k":["creation","crystal"]},
+      {"u":"seraphinite","n":"Seraphinite","r":"Super Rare","y":"Metal","d":"Luminous green metal enhancing healing/divine energy.","l":null,"s":["Sacred groves","sky-temples"],"o":"Celestial","k":["healing","divine"]},
+      {"u":"soulsteel","n":"Soulsteel","r":"Super Rare","y":"Metal","d":"Metal bound with souls; necromantically attuned.","l":null,"s":["Soul forges","necropolis"],"o":"Shadowfell/Necro","k":["necromancy","metal"]},
+      {"u":"honey-gold","n":"Honey Gold","r":"Super Rare","y":"Alloy","d":"Celestial-essence alloy for exalted arms.","l":null,"s":["Empyrean vaults"],"o":"Celestial","k":["alloy","celestial"]},
+
+      /* Legendary */
+      {"u":"spiritglass-prime","n":"Spiritglass (Prime)","r":"Legendary","y":"Crystal Metal","d":"High-grade crystalline metal suffused with spirits.","l":"Prime quality; used in relics that bridge the Ethereal.","s":["Major spirit fonts"],"o":"Ethereal","k":["legendary","spirit","variant"]},
+      {"u":"phoenix-feathersteel","n":"Phoenix Feathersteel","r":"Legendary","y":"Alloy","d":"Alloy imbued with phoenix power; fire-warded, regenerative.","l":null,"s":["Ash altars"],"o":"Celestial/Fire","k":["phoenix","alloy"]},
+      {"u":"feywild-steelwood","n":"Feywild Steelwood","r":"Legendary","y":"Hybrid (Wood-Metal)","d":"Magical wood as strong as steel.","l":null,"s":["Enchanted forests"],"o":"Feywild","k":["wood","metal","hybrid"]},
+      {"u":"truesteel","n":"Truesteel","r":"Legendary","y":"Alloy","d":"Magic-resistant, incredibly durable alloy.","l":null,"s":["Ancient keeps"],"o":"Material Plane","k":["anti-magic","alloy"]},
+      {"u":"abyssal-obsidian","n":"Abyssal Obsidian","r":"Legendary","y":"Glass/Stone","d":"Dark glass-stone from abyssal fires.","l":"Carries demonic power.","s":["Abyssal furnaces"],"o":"Abyss","k":["obsidian","infernal"]},
+
+      /* Epically Legendary */
+      {"u":"starforged-iron","n":"Starforged Iron","r":"Epically Legendary","y":"Metal","d":"Wrought from a dying star’s heart; incredibly dense.","l":null,"s":["Fallen star cores"],"o":"Cosmic","k":["star","artifact"]},
+      {"u":"gods-blood","n":"Godsblood","r":"Epically Legendary","y":"Liquid Metal","d":"Rare liquid metal with divine essence.","l":null,"s":["Godfall sites"],"o":"Divine","k":["divine","liquid"]},
+      {"u":"luminous-ethersteel","n":"Luminous Ethersteel","r":"Epically Legendary","y":"Metal","d":"Infused with cosmic ether; channels celestial power.","l":null,"s":["Aether streams"],"o":"Cosmic","k":["celestial","ether"]},
+      {"u":"titanshard","n":"Titanshard","r":"Epically Legendary","y":"Metal Fragment","d":"Fragments from ancient titans’ remains.","l":null,"s":["Titan graveyards"],"o":"Primordial","k":["titan","artifact"]},
+
+      /* Mythical */
+      {"u":"aeonstone","n":"Aeonstone","r":"Mythical","y":"Crystal/Metal","d":"Holds the power of time itself.","l":null,"s":["Temporal rifts"],"o":"Chronal","k":["time","artifact"]},
+      {"u":"twilight-alloy","n":"Twilight Alloy","r":"Mythical","y":"Alloy","d":"Alloy of the space between realms.","l":null,"s":["Hedge realms"],"o":"Transdimensional","k":["alloy","liminal"]},
+      {"u":"stormheart","n":"Stormheart","r":"Mythical","y":"Metal","d":"Embodies raw elemental storms.","l":null,"s":["Tempest nodes"],"o":"Elemental Storm","k":["storm","lightning"]},
+      {"u":"worldforge","n":"Worldforge","r":"Mythical","y":"Metal","d":"A metal that can shape and reshape reality.","l":null,"s":["World-anvils"],"o":"Cosmic","k":["reality","artifact"]},
+
+      /* Cosmic Mythical */
+      {"u":"celestial-alloy","n":"Celestial Alloy","r":"Cosmic Mythical","y":"Alloy","d":"Mythic alloy infused with creation itself.","l":null,"s":["Creation fonts"],"o":"Cosmic","k":["creation","ascension"]},
+      {"u":"black-voidstone","n":"Black Voidstone","r":"Cosmic Mythical","y":"Stone","d":"Essence of the void; nullifies energy and magic.","l":null,"s":["Darkest voids"],"o":"Void","k":["null","antimagic"]},
+      {"u":"nexusium","n":"Nexusium","r":"Cosmic Mythical","y":"Metal","d":"Incomprehensible metal of the multiversal center.","l":null,"s":["Multiversal nexus"],"o":"Cosmic","k":["dominion","reality"]},
+      {"u":"singularity-shard","n":"Singularity Shard","r":"Cosmic Mythical","y":"Stone/Metal","d":"Condensed spacetime fragment of immense gravity.","l":null,"s":["Gravitic wells"],"o":"Cosmic","k":["gravity","spacetime"]}
+    ]
+  }</script>
+
+  <script>
+    (function(){
+      // Read compact data and expand
+      const raw = document.getElementById('minerals-data').textContent;
+      const pack = JSON.parse(raw);
+      const items = pack.i.map(x => ({
+        uid:x.u, name:x.n, rarity:x.r, type:x.y,
+        description:x.d||null, lore:x.l||null,
+        locations:x.s||[], origin:x.o||"Unknown",
+        tags:x.k||[]
+      }));
+
+      // Default DC map (editable in UI)
+      const rarityOrder = [
+        "Very Common","Common","Uncommon","Rare","Very Rare",
+        "Super Rare","Legendary","Epically Legendary","Mythical","Cosmic Mythical"
+      ];
+      const rarityDC = {
+        "Very Common":10,"Common":12,"Uncommon":14,"Rare":16,"Very Rare":18,
+        "Super Rare":20,"Legendary":22,"Epically Legendary":24,"Mythical":26,"Cosmic Mythical":28
+      };
+
+      // Utility: clamp and sorting helpers
+      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+      const rarityRank = r => rarityOrder.indexOf(r) === -1 ? 99 : rarityOrder.indexOf(r);
+
+      // Compute base DC for each item (dynamic—reflects settings)
+      function computeBaseDC(it){ return Number(rarityDC[it.rarity] ?? 15); }
+
+      // Build filters
+      const rarSel = document.getElementById('rar');
+      const typSel = document.getElementById('typ');
+      const orgSel = document.getElementById('org');
+      const qEl = document.getElementById('q');
+      const rows = document.getElementById('rows');
+      const empty = document.getElementById('empty');
+      const count = document.getElementById('count');
+      const resetBtn = document.getElementById('reset');
+      const exportBtn = document.getElementById('export');
+      const ths = Array.from(document.querySelectorAll('th.sortable'));
+
+      // Settings elements
+      const dcInputs = Array.from(document.querySelectorAll('input.dc'));
+      const modEls = Array.from(document.querySelectorAll('.mod'));
+      const pickSel = document.getElementById('pick');
+      const baseDCEl = document.getElementById('baseDC');
+      const modsDCEl = document.getElementById('modsDC');
+      const finalDCEl = document.getElementById('finalDC');
+      const skillEl = document.getElementById('skill');
+      const rollmodeEl = document.getElementById('rollmode');
+      const rollBtn = document.getElementById('roll');
+      const rollout = document.getElementById('rollout');
+
+      // Populate dropdowns
+      const rarities = [...new Set(items.map(i=>i.rarity))].sort((a,b)=>rarityRank(a)-rarityRank(b));
+      rarities.forEach(r => { const op=document.createElement('option'); op.textContent=r; rarSel.appendChild(op); });
+      const types = [...new Set(items.map(i=>i.type))].sort((a,b)=>a.localeCompare(b));
+      types.forEach(t => { const op=document.createElement('option'); op.textContent=t; typSel.appendChild(op); });
+      const origins = [...new Set(items.map(i=>i.origin))].sort((a,b)=>a.localeCompare(b));
+      origins.forEach(o => { const op=document.createElement('option'); op.textContent=o; orgSel.appendChild(op); });
+      items.forEach(i => { const op=document.createElement('option'); op.value=i.uid; op.textContent=`${i.name} — ${i.rarity}`; pickSel.appendChild(op); });
+
+      // Sorting
+      let view = items.slice();
+      let sortKey = 'name', sortDir = 'asc';
+      function applySort(){
+        const dir = sortDir==='asc'?1:-1;
+        view.sort((a,b)=>{
+          if (sortKey==='rarity') return (rarityRank(a.rarity)-rarityRank(b.rarity))*dir;
+          if (sortKey==='dc') return (computeBaseDC(a)-computeBaseDC(b))*dir;
+          if (typeof a[sortKey]==='number' && typeof b[sortKey]==='number') return (a[sortKey]-b[sortKey])*dir;
+          return String(a[sortKey]??'').localeCompare(String(b[sortKey]??''))*dir;
+        });
+      }
+
+      // Filtering + render
+      function applyFilters(){
+        const q = (qEl.value||'').trim().toLowerCase();
+        const rar = rarSel.value; const typ = typSel.value; const org = orgSel.value;
+        view = items.filter(it=>{
+          if (rar && it.rarity!==rar) return false;
+          if (typ && it.type!==typ) return false;
+          if (org && it.origin!==org) return false;
+          if (q){
+            const hay = [
+              it.name,it.rarity,it.type,it.origin,(it.description||''),(it.lore||''),
+              ...(it.tags||[]),...(it.locations||[])
+            ].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+        applySort(); render();
+      }
+
+      function render(){
+        rows.innerHTML='';
+        view.forEach(it=>{
+          const dc = computeBaseDC(it);
+          const locBadges = (it.locations||[]).map(L=>`<span class="badge">${L}</span>`).join(' ');
+          const tags = (it.tags||[]).map(t=>`<span class="tag">${t}</span>`).join(' ');
+          const notes = [it.description, it.lore].filter(Boolean).join(' <br> ');
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><b>${it.name}</b></td>
+            <td><span class="badge">${it.rarity}</span></td>
+            <td>${it.type}</td>
+            <td class="mono">${dc}</td>
+            <td>${locBadges} ${it.origin ? `<div class="small">Origin: <b>${it.origin}</b></div>`:''}</td>
+            <td>${notes||''}</td>
+            <td>${tags}</td>
+          `;
+          rows.appendChild(tr);
+        });
+        empty.classList.toggle('hidden', view.length!==0);
+        count.textContent = `${view.length}/${items.length}`;
+        // refresh selection base DC if selected
+        updateCalc();
+      }
+
+      // Settings syncing
+      dcInputs.forEach(inp=>{
+        inp.addEventListener('change', ()=>{
+          const r = inp.dataset.r;
+          rarityDC[r] = clamp(Number(inp.value||0), 5, 40);
+          render();
+        });
+      });
+      function sumMods(){
+        return modEls.map(m=>Number(m.value||0)).reduce((a,b)=>a+b,0);
+      }
+
+      function updateCalc(){
+        const uid = pickSel.value;
+        const it = items.find(x=>x.uid===uid) || items[0];
+        const base = computeBaseDC(it);
+        const mods = sumMods();
+        const final = clamp(base + mods, 5, 40);
+        baseDCEl.textContent = base;
+        modsDCEl.textContent = (mods>=0?'+':'') + mods;
+        finalDCEl.textContent = final;
+      }
+
+      pickSel.addEventListener('change', updateCalc);
+      modEls.forEach(m => m.addEventListener('change', updateCalc));
+
+      // Dice roller
+      function d20(){ return 1 + Math.floor(Math.random()*20); }
+      function rollD20Mode(mode){
+        const a=d20(), b=d20();
+        if (mode==='adv') return Math.max(a,b);
+        if (mode==='dis') return Math.min(a,b);
+        return a;
+      }
+      rollBtn.addEventListener('click', ()=>{
+        const uid = pickSel.value;
+        const it = items.find(x=>x.uid===uid) || items[0];
+        const base = computeBaseDC(it);
+        const final = clamp(base + sumMods(), 5, 40);
+        const mod = Number(skillEl.value||0);
+        const mode = rollmodeEl.value;
+        const roll = rollD20Mode(mode);
+        const total = roll + mod;
+        const pass = total >= final;
+        rollout.textContent = `d20${mode==='adv'?' (adv)':''}${mode==='dis'?' (dis)':''}: ${roll} + ${mod} = ${total} vs DC ${final} → ${pass ? 'SUCCESS' : 'FAIL'}`;
+        rollout.style.color = pass ? 'green' : 'var(--ink-red)';
+      });
+
+      // Table sort handlers
+      ths.forEach(th=>{
+        th.addEventListener('click', ()=>{
+          const key = th.dataset.key;
+          if (sortKey===key) sortDir = (sortDir==='asc') ? 'desc' : 'asc';
+          else { sortKey=key; sortDir='asc'; }
+          ths.forEach(t=>t.removeAttribute('data-dir'));
+          th.setAttribute('data-dir', sortDir);
+          applySort(); render();
+        });
+      });
+
+      // Export JSON
+      exportBtn.addEventListener('click', ()=>{
+        const payload = {
+          pack: 'minerals',
+          version: pack.v,
+          rarityDC: rarityDC,
+          items: items.map(it=>({
+            uid:it.uid,name:it.name,rarity:it.rarity,type:it.type,
+            description:it.description,lore:it.lore,locations:it.locations,
+            origin:it.origin,tags:it.tags
+          }))
+        };
+        const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'minerals.json';
+        document.body.appendChild(a); a.click();
+        URL.revokeObjectURL(url); a.remove();
+      });
+
+      // Reset
+      resetBtn.addEventListener('click', ()=>{
+        qEl.value=''; rarSel.value=''; typSel.value=''; orgSel.value='';
+        document.querySelectorAll('details.settings').forEach(d => d.open=false);
+        // Reset mods
+        modEls.forEach(m => m.value='0');
+        // Reset DCs to defaults
+        dcInputs.forEach(inp=>{
+          const r=inp.dataset.r; inp.value=rarityDC[r];
+        });
+        applyFilters();
+      });
+
+      // Public API
+      window.MineralsPack = {
+        version: pack.v,
+        items: items.slice(),
+        rarityDC: {...rarityDC},
+        getAll(){ return items.slice(); },
+        byRarity(r){ return items.filter(i=>i.rarity===r); },
+        byType(t){ return items.filter(i=>i.type===t); },
+        find(q){
+          const needle = (q||'').toLowerCase();
+          return items.filter(i =>
+            i.name.toLowerCase().includes(needle) ||
+            i.rarity.toLowerCase().includes(needle) ||
+            i.type.toLowerCase().includes(needle) ||
+            i.origin.toLowerCase().includes(needle) ||
+            (i.tags||[]).some(t=>t.toLowerCase().includes(needle)) ||
+            (i.locations||[]).some(L=>L.toLowerCase().includes(needle))
+          );
+        },
+        rollCheck({uid, mods=0, skill=0, mode='normal'}){
+          const it = items.find(x=>x.uid===uid) || items[0];
+          const base = computeBaseDC(it);
+          const dc = clamp(base + Number(mods||0), 5, 40);
+          const a = 1 + Math.floor(Math.random()*20);
+          const b = 1 + Math.floor(Math.random()*20);
+          const r = mode==='adv'? Math.max(a,b) : mode==='dis'? Math.min(a,b) : a;
+          return { item: it, dc, roll:r, total:r+Number(skill||0), pass:(r+Number(skill||0))>=dc, detail:{a,b,mode} };
+        }
+      };
+
+      // Initial render
+      applyFilters();
+      // Seed picker + DC display
+      if (items[0]) pickSel.value = items[0].uid;
+      updateCalc();
+    })();
+  </script>
+</body>
+</html>

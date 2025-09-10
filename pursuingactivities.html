@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pursuing Activities</title>
+  <style>
+    :root{
+      --paper-0:#fbf6e9;/* light */
+      --paper-1:#f3ead4;/* mid */
+      --paper-2:#e6d7bb;/* deep */
+      --ink:#111111;
+      --ink-soft:rgba(0,0,0,.60);
+      --ink-red:#7a1f1f; /* header ink */
+      --ring:#d9c9a7;
+      --ring-2:#d7c6a1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--ink);
+      font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      background: radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      /* subtle grain */
+      background-image:
+        radial-gradient(rgba(0,0,0,0.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; 
+      -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1040px;margin:0 auto;padding:40px 16px 72px}
+
+    .paper{background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));backdrop-filter:blur(.3px)}
+    .round{border-radius:16px}
+    .shadow{box-shadow:0 10px 30px rgba(0,0,0,.10)}
+    .ring{border:1px solid var(--ring)}
+
+    header.card{position:relative;overflow:hidden}
+    header.card .burn:before, header.card .burn:after{
+      content:"";position:absolute;border-radius:999px;filter:blur(28px);opacity:.12;mix-blend-mode:multiply;pointer-events:none
+    }
+    header.card .burn:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card .burn:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+
+    h1{margin:0;font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;font-weight:700;color:var(--ink-red)}
+    .sub{color:var(--ink-soft)}
+
+    .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+    .input{width:100%;max-width:480px;padding:10px 12px;border-radius:12px;border:1px solid var(--ring-2);background:color-mix(in oklab, var(--paper-0) 70%, white 30%);outline:0}
+    .btn-clear{border:0;background:transparent;padding:6px 8px;border-radius:8px;color:var(--ink-soft);cursor:pointer}
+    .btn-clear:hover{background:rgba(0,0,0,.05)}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(min-width:1024px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+    .tile{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:16px;border-radius:16px;border:1px solid var(--ring);background:linear-gradient(180deg, var(--paper-0), var(--paper-1));box-shadow:0 6px 18px rgba(0,0,0,.08);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+    .tile:focus-visible{outline:2px solid color-mix(in oklab, var(--ink-red) 55%, white 45%)}
+    .tile:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.10)}
+    .tile:active{transform:none}
+
+    .mark{display:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--ring-2);background:#f6eedb;font:700 12px ui-serif, Georgia, serif}
+    @media(min-width:640px){.mark{display:flex}}
+
+    .title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .caption{margin-top:2px;font-size:12px;color:var(--ink-soft)}
+
+    .badge{margin-left:8px;flex-shrink:0;border-radius:999px;border:1px solid var(--ring-2);background:#f3ead4;padding:4px 8px;font:700 10px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;letter-spacing:.04em;text-transform:uppercase;color:color-mix(in oklab, var(--ink-red) 90%, black 10%)}
+
+    .count{color:var(--ink-soft);font-size:12px}
+
+    .muted{text-align:center;color:var(--ink-soft);margin-top:24px}
+
+    /* Toast */
+    .toast-wrap{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:50;transition:opacity .15s ease, transform .15s ease}
+    .toast{padding:8px 12px;border-radius:12px;border:1px solid var(--ring);background:linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.62));box-shadow:0 10px 20px rgba(0,0,0,.15);font-weight:600}
+    .toast-wrap.hidden{opacity:0;transform:translate(-50%,-6px);pointer-events:none}
+
+    /* Utility */
+    .mt-6{margin-top:24px}
+    .p-6{padding:24px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card paper round shadow ring">
+      <div class="burn" aria-hidden="true"></div>
+      <div class="p-6">
+        <h1 class="h1" style="font-size:clamp(28px, 3vw, 38px)">Choose Activity</h1>
+        <p class="sub" style="margin:.25rem 0 0">Choose the activity you want to perform.</p>
+        <div class="row" style="margin-top:16px">
+          <div class="row" style="position:relative;max-width:520px;width:100%">
+            <input id="search" class="input" type="search" placeholder="Search activities…" aria-label="Search activities" />
+            <button id="clearBtn" class="btn-clear" aria-label="Clear search" title="Clear" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none">Clear</button>
+          </div>
+          <span id="count" class="count" aria-hidden="true"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="mt-6">
+      <div id="grid" class="grid" role="list"></div>
+      <p id="emptyMsg" class="muted" hidden>No activities match that search.</p>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastWrap" class="toast-wrap hidden" role="status" aria-live="polite">
+    <div class="toast paper round ring" id="toastText"></div>
+  </div>
+
+  <script>
+    // --- Activities data ---
+    const ACTIVITIES = [
+      "Appraisal","Attuning","Bonding","Boosting Camp","Brewing","Building","Cooking","Crafting","Crafting Magical Item","Designing Blueprint","Disguising","Extracting","Felling","Finding Camp","Fishing","Foraging","Healing","Hunting","Identifying","Identifying Magical Item","Imbuing","Keeping Watch","Learning","Map Making","Navigating","Mining","Planning Ritual","Performing Ritual","Reading","Recuperate","Repair","Researching Formula","Scouting","Scribing","Setting Up Traps","Tend to Companions (Animals)","Tend to Wounds","Tracking","Trailblazing","Training"
+    ];
+    
+    const IMPLEMENTED = {
+  "Foraging": "./foraging.html" // add more as you build them
+};
+
+    const grid = document.getElementById('grid');
+    const searchEl = document.getElementById('search');
+    const clearBtn = document.getElementById('clearBtn');
+    const countEl = document.getElementById('count');
+    const emptyMsg = document.getElementById('emptyMsg');
+    const toastWrap = document.getElementById('toastWrap');
+    const toastText = document.getElementById('toastText');
+
+    let toastTimer = null;
+
+    function abbr(name){
+      const letters = name.split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join('');
+      return letters || '·';
+    }
+
+    function makeTile(name){
+  const isLive = !!IMPLEMENTED[name];
+  const el = document.createElement(isLive ? 'a' : 'button');
+  el.className = 'tile';
+  el.setAttribute('aria-label', (isLive ? 'Open' : 'Select') + ` activity: ${name}`);
+  if (isLive) el.href = IMPLEMENTED[name];
+
+  const left = document.createElement('div');
+  left.style.display='flex';
+  left.style.alignItems='center';
+  left.style.gap='12px';
+  left.style.minWidth='0';
+
+  const mark = document.createElement('div');
+  mark.className = 'mark';
+  mark.textContent = abbr(name);
+  left.appendChild(mark);
+
+  const textWrap = document.createElement('div');
+  textWrap.style.minWidth='0';
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = name;
+  const cap = document.createElement('div');
+  cap.className = 'caption';
+  cap.textContent = isLive ? 'Open Activity' : 'Coming Soon';
+  textWrap.appendChild(title);
+  textWrap.appendChild(cap);
+  left.appendChild(textWrap);
+
+  const badge = document.createElement('span');
+  badge.className = 'badge';
+  badge.textContent = isLive ? 'Available' : 'Coming Soon';
+
+  el.appendChild(left);
+  el.appendChild(badge);
+
+  if (!isLive){
+    el.addEventListener('click', ()=>{
+      showToast(name + ' — Coming Soon');
+    });
+  }
+
+  return el;
+}
+
+
+    function render(list){
+      grid.innerHTML = '';
+      list.forEach(name=> grid.appendChild(makeTile(name)));
+      emptyMsg.hidden = list.length !== 0;
+      countEl.textContent = `${list.length}/${ACTIVITIES.length}`;
+    }
+
+    function showToast(msg){
+      toastText.textContent = msg;
+      toastWrap.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>{
+        toastWrap.classList.add('hidden');
+      }, 1800);
+    }
+
+    function filterList(q){
+      const needle = q.trim().toLowerCase();
+      if(!needle) return ACTIVITIES;
+      return ACTIVITIES.filter(a=> a.toLowerCase().includes(needle));
+    }
+
+    // Wire search
+    searchEl.addEventListener('input', ()=>{
+      const val = searchEl.value;
+      clearBtn.style.display = val ? 'inline-block' : 'none';
+      render(filterList(val));
+    });
+    clearBtn.addEventListener('click', ()=>{
+      searchEl.value = '';
+      clearBtn.style.display = 'none';
+      searchEl.focus();
+      render(ACTIVITIES);
+    });
+
+    // Initial render
+    render(ACTIVITIES);
+  </script>
+</body>
+</html>

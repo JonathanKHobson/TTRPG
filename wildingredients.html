@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wild Ingredients Data Pack</title>
+  <!--
+    Wild Ingredients (HTML data pack)
+    ---------------------------------------------
+    Load from another page:
+      fetch('wildingredients.html').then(r => r.text()).then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const compact = JSON.parse(doc.querySelector('#wild-data').textContent);
+        // Expand compact format into full records using the schema below
+      });
+
+    Compact item schema (to keep this file size lean):
+      For each item (object keys):
+        u = uid              c = category ("Plants" | "Bugs" | "Minerals")
+        l = list (number)    g = range (e.g., "1-2", "68")
+        a = rollMin          b = rollMax
+        r = rarity           n = name
+        o = location (raw string)
+        s = locations (array of strings)
+        m = units_note (e.g., "Units" for Bugs)
+        t = note             k = tags (array)
+
+    The viewer expands this compact form to verbose keys at runtime and exposes:
+      window.WildIngredientsPack = { version, items, getAll(), byCategory(), byList(), find(), random() }
+  -->
+  <style>
+    :root{
+      --paper-0:#fbf6e9; --paper-1:#f3ead4; --paper-2:#e6d7bb;
+      --ink:#111; --ink-soft:rgba(0,0,0,.65); --ink-red:#7a1f1f;
+      --ring:#d9c9a7; --ring-2:#d7c6a1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(rgba(0,0,0,.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1200px;margin:0 auto;padding:40px 16px 84px}
+    .paper{background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));backdrop-filter:blur(.3px)}
+    .round{border-radius:16px}
+    .shadow{box-shadow:0 10px 30px rgba(0,0,0,.10)}
+    .ring{border:1px solid var(--ring)}
+
+    header.card{position:relative;overflow:hidden}
+    header.card .burn:before, header.card .burn:after{
+      content:"";position:absolute;border-radius:999px;filter:blur(28px);opacity:.12;mix-blend-mode:multiply;pointer-events:none
+    }
+    header.card .burn:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card .burn:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+    h1{margin:0;font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;font-weight:700;color:var(--ink-red)}
+    .sub{color:var(--ink-soft)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+    .input,.select{padding:10px 12px;border:1px solid var(--ring-2);border-radius:12px;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);outline:0}
+    .btn{border:1px solid var(--ring-2);background:linear-gradient(180deg, var(--paper-0), var(--paper-1));padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.02)}
+    .count{font-size:12px;color:var(--ink-soft);margin-left:auto}
+    .check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+    .muted{color:var(--ink-soft);font-size:14px}
+
+    .table-wrap{margin-top:16px;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:linear-gradient(180deg, var(--paper-0), var(--paper-1));border:1px solid var(--ring);border-radius:16px;overflow:hidden}
+    thead th{position:sticky;top:0;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);text-align:left;padding:10px 12px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--ring)}
+    tbody td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.05)}
+    tbody tr:hover{background:rgba(0,0,0,.035)}
+    th.sortable{cursor:pointer}
+    th.sortable::after{content:" ↕";opacity:.5}
+    th.sortable[data-dir="asc"]::after{content:" ↑"}
+    th.sortable[data-dir="desc"]::after{content:" ↓"}
+
+    .badge{display:inline-block;border:1px solid var(--ring-2);border-radius:999px;padding:4px 8px;font:700 10px/1 system-ui;text-transform:uppercase;letter-spacing:.04em;background:#f3ead4;color:color-mix(in oklab, var(--ink-red) 90%, black 10%);margin:0 6px 4px 0}
+    .tag{display:inline-block;border:1px dashed var(--ring-2);border-radius:999px;padding:3px 8px;font:700 10px/1 system-ui;margin:0 6px 4px 0}
+    .env{font-weight:600}
+    .foot{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .small{font-size:12px;color:var(--ink-soft)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card paper round shadow ring">
+      <div class="burn" aria-hidden="true"></div>
+      <div style="padding:24px">
+        <h1 style="font-size:clamp(28px,3vw,38px)">Wild Ingredients Data Pack</h1>
+        <p class="sub" style="margin:.25rem 0 0">
+          Plants, Bugs (units), and Minerals from your roll lists, with locations and rarities (Common → Legendary).
+        </p>
+
+        <div class="controls">
+          <input id="q" class="input" type="search" placeholder="Search name or tag…" aria-label="Search" />
+          <select id="cat" class="select" aria-label="Filter by category">
+            <option value="">All categories</option>
+            <option>Plants</option><option>Bugs</option><option>Minerals</option>
+          </select>
+          <select id="list" class="select" aria-label="Filter by list #">
+            <option value="">All lists</option>
+          </select>
+          <select id="rarity" class="select" aria-label="Filter by rarity">
+            <option value="">All rarity</option>
+          </select>
+          <select id="loc" class="select" aria-label="Filter by location">
+            <option value="">All locations</option>
+          </select>
+          <label class="check"><input id="unitsOnly" type="checkbox" /> Bugs (units) only</label>
+          <button id="reset" class="btn" type="button">Reset</button>
+          <button id="export" class="btn" type="button" title="Download wild-ingredients.json">Export JSON</button>
+          <span id="count" class="count" aria-live="polite"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="table-wrap">
+      <table aria-describedby="count">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="category" style="width:110px">Category</th>
+            <th class="sortable" data-key="list" style="width:70px">List</th>
+            <th class="sortable" data-key="range" style="width:90px">Roll</th>
+            <th class="sortable" data-key="name">Name</th>
+            <th class="sortable" data-key="rarity" style="width:130px">Rarity</th>
+            <th>Locations</th>
+            <th>Tags</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <p id="empty" class="muted hidden" style="padding:14px">No results match that filter.</p>
+
+      <div class="foot">
+        <span class="small">Source: Heron’s Manual — Volume 1: Pursuing Activities (user-provided).</span>
+        <span class="small">Pack: <code>wild-ingredients</code>, Version: <code>1.0.0</code></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Compact canonical dataset -->
+  <script type="application/json" id="wild-data">{"p":"wild-ingredients","v":"1.0.0","i":[{"u":"plants-list1-1-2-arrow-root","c":"Plants","l":1,"g":"1-2","a":1,"b":2,"r":"Uncommon","n":"Arrow Root","o":"Desert; Forest; Grassland","s":["Desert","Forest","Grassland"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list1-3-black-sap","c":"Plants","l":1,"g":"3","a":3,"b":3,"r":"Very Rare","n":"Black Sap","o":"Forest; Swamp","s":["Forest","Swamp"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list1-4-blight-ichor","c":"Plants","l":1,"g":"4","a":4,"b":4,"r":"Rare","n":"Blight Ichor","o":"Forest; Swamp; Coastal","s":["Forest","Swamp","Coastal"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list1-5-blue-toadshade","c":"Plants","l":1,"g":"5","a":5,"b":5,"r":"Rare","n":"Blue Toadshade","o":"Coastal; Forest; Swamp","s":["Coastal","Forest","Swamp"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list1-6-chromus-slime","c":"Plants","l":1,"g":"6","a":6,"b":6,"r":"Rare","n":"Chromus Slime","o":"Coastal; Underdark; Underwater; Ocean","s":["Coastal","Underdark","Underwater","Ocean"],"m":null,"t":null,"k":["plant","extract"]},{"u":"plants-list1-7-cosmos-glond","c":"Plants","l":1,"g":"7","a":7,"b":7,"r":"Rare","n":"Cosmos Glond","o":"Coastal; Desert; Underwater; Ocean","s":["Coastal","Desert","Underwater","Ocean"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list1-8-devil-s-bloodleaf","c":"Plants","l":1,"g":"8","a":8,"b":8,"r":"Very Rare","n":"Devil's Bloodleaf","o":"Hill; Swamp; Underdark; Underwater; Ocean","s":["Hill","Swamp","Underdark","Underwater","Ocean"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list1-9-elemental-water","c":"Plants","l":1,"g":"9","a":9,"b":9,"r":"Rare","n":"Elemental Water","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list1-10-fiend-s-ivy","c":"Plants","l":1,"g":"10","a":10,"b":10,"r":"Rare","n":"Fiend's Ivy","o":"Arctic; Underdark","s":["Arctic","Underdark"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list1-11-12-hydrathistle","c":"Plants","l":1,"g":"11-12","a":11,"b":12,"r":"Uncommon","n":"Hydrathistle","o":"Coastal; Swamp; Underwater; Ocean","s":["Coastal","Swamp","Underwater","Ocean"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list1-13-14-ironwood-heart","c":"Plants","l":1,"g":"13-14","a":13,"b":14,"r":"Uncommon","n":"Ironwood Heart","o":"Arctic; Forest; Hill","s":["Arctic","Forest","Hill"],"m":null,"t":null,"k":["plant","wood"]},{"u":"plants-list1-15-luminous-cap-dust","c":"Plants","l":1,"g":"15","a":15,"b":15,"r":"Rare","n":"Luminous Cap Dust","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":null,"t":null,"k":["fungus","plant"]},{"u":"plants-list1-16-mortflesh-powder","c":"Plants","l":1,"g":"16","a":16,"b":16,"r":"Very Rare","n":"Mortflesh Powder","o":"Arctic; Underdark","s":["Arctic","Underdark"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list1-17-18-muroosa-balm","c":"Plants","l":1,"g":"17-18","a":17,"b":18,"r":"Uncommon","n":"Muroosa Balm","o":"Forest; Grassland","s":["Forest","Grassland"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list1-19-20-nightshade-berries","c":"Plants","l":1,"g":"19-20","a":19,"b":20,"r":"Uncommon","n":"NightShade Berries","o":"Forest; Hill","s":["Forest","Hill"],"m":null,"t":null,"k":["berry","plant"]},{"u":"plants-list2-21-22-olisuba-leaf","c":"Plants","l":2,"g":"21-22","a":21,"b":22,"r":"Uncommon","n":"Olisuba Leaf","o":"Forest; Grassland; Swamp","s":["Forest","Grassland","Swamp"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list2-23-primordial-balm","c":"Plants","l":2,"g":"23","a":23,"b":23,"r":"Rare","n":"Primordial Balm","o":"Mountain; Swamp; Underdark","s":["Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list2-24-rock-vine","c":"Plants","l":2,"g":"24","a":24,"b":24,"r":"Rare","n":"Rock Vine","o":"Hill; Mountain","s":["Hill","Mountain"],"m":null,"t":null,"k":["vine","plant"]},{"u":"plants-list2-25-28-scillia-beans","c":"Plants","l":2,"g":"25-28","a":25,"b":28,"r":"Common","n":"Scillia Beans","o":"Desert; Grassland","s":["Desert","Grassland"],"m":null,"t":null,"k":["seed","plant"]},{"u":"plants-list2-29-sliver-hibiscus","c":"Plants","l":2,"g":"29","a":29,"b":29,"r":"Rare","n":"Sliver Hibiscus","o":"Arctic; Underdark","s":["Arctic","Underdark"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list2-30-soothsalts","c":"Plants","l":2,"g":"30","a":30,"b":30,"r":"Rare","n":"Soothsalts","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list2-31-34-sprig-of-mistletoe","c":"Plants","l":2,"g":"31-34","a":31,"b":34,"r":"Common","n":"Sprig of Mistletoe","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list2-35-tail-leaf","c":"Plants","l":2,"g":"35","a":35,"b":35,"r":"Very Rare","n":"Tail Leaf","o":"Grassland; Hill","s":["Grassland","Hill"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list2-36-39-theki-root","c":"Plants","l":2,"g":"36-39","a":36,"b":39,"r":"Common","n":"Theki Root","o":"Swamp","s":["Swamp"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list2-40-41-verdant-nettle","c":"Plants","l":2,"g":"40-41","a":40,"b":41,"r":"Uncommon","n":"Verdant Nettle","o":"Forest","s":["Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list3-42-voidroot","c":"Plants","l":3,"g":"42","a":42,"b":42,"r":"Very Rare","n":"Voidroot","o":"Arctic; Desert","s":["Arctic","Desert"],"m":null,"t":null,"k":["root","plant"]},{"u":"plants-list3-43-44-willowshade-oil","c":"Plants","l":3,"g":"43-44","a":43,"b":44,"r":"Uncommon","n":"Willowshade Oil","o":"Forest; Swamp; Coastal","s":["Forest","Swamp","Coastal"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list3-45-wisp-stalks","c":"Plants","l":3,"g":"45","a":45,"b":45,"r":"Very Rare","n":"Wisp Stalks","o":"Forest; Underdark","s":["Forest","Underdark"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list3-46-wrackwort-bulbs","c":"Plants","l":3,"g":"46","a":46,"b":46,"r":"Rare","n":"Wrackwort Bulbs","o":"Coastal; Swamp; Underwater; Ocean","s":["Coastal","Swamp","Underwater","Ocean"],"m":null,"t":null,"k":["plant"]},{"u":"bugs-list4-47-50-ants","c":"Bugs","l":4,"g":"47-50","a":47,"b":50,"r":"Common","n":"Ants","o":"Desert; Forest; Grassland; Mountain; Hill; Underdark","s":["Desert","Forest","Grassland","Mountain","Hill","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-51-54-bumblebees","c":"Bugs","l":4,"g":"51-54","a":51,"b":54,"r":"Common","n":"Bumblebees","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-55-56-butterflies","c":"Bugs","l":4,"g":"55-56","a":55,"b":56,"r":"Uncommon","n":"Butterflies","o":"Arctic; Forest; Grassland; Mountain; Hill; Coastal","s":["Arctic","Forest","Grassland","Mountain","Hill","Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-57-60-caterpillars","c":"Bugs","l":4,"g":"57-60","a":57,"b":60,"r":"Common","n":"Caterpillars","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-61-cicadas","c":"Bugs","l":4,"g":"61","a":61,"b":61,"r":"Rare","n":"Cicadas","o":"Desert; Forest; Grassland","s":["Desert","Forest","Grassland"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-62-65-crickets","c":"Bugs","l":4,"g":"62-65","a":62,"b":65,"r":"Common","n":"Crickets","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-66-67-dragonflies","c":"Bugs","l":4,"g":"66-67","a":66,"b":67,"r":"Uncommon","n":"Dragonflies","o":"Desert; Forest; Grassland; Hill","s":["Desert","Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-68-dung-beetles","c":"Bugs","l":4,"g":"68","a":68,"b":68,"r":"Rare","n":"Dung Beetles","o":"Desert; Grassland","s":["Desert","Grassland"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-69-72-fireflies","c":"Bugs","l":4,"g":"69-72","a":69,"b":72,"r":"Common","n":"Fireflies","o":"Forest; Grassland; Mountain; Hill; Coastal","s":["Forest","Grassland","Mountain","Hill","Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-73-glowworms","c":"Bugs","l":4,"g":"73","a":73,"b":73,"r":"Rare","n":"Glowworms","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-74-75-grasshoppers","c":"Bugs","l":4,"g":"74-75","a":74,"b":75,"r":"Uncommon","n":"Grasshoppers","o":"Grassland; Hill","s":["Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-76-hornets","c":"Bugs","l":4,"g":"76","a":76,"b":76,"r":"Very Rare","n":"Hornets","o":"Forest; Mountain","s":["Forest","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list4-77-80-ladybugs","c":"Bugs","l":4,"g":"77-80","a":77,"b":80,"r":"Common","n":"Ladybugs","o":"Desert; Forest; Grassland; Hill","s":["Desert","Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list5-81-praying-mantis","c":"Bugs","l":5,"g":"81","a":81,"b":81,"r":"Rare","n":"Praying Mantis","o":"Forest; Grassland; Hill; Mountain","s":["Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list5-82-rhino-beetles","c":"Bugs","l":5,"g":"82","a":82,"b":82,"r":"Very Rare","n":"Rhino Beetles","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list5-83-scarab-beetles","c":"Bugs","l":5,"g":"83","a":83,"b":83,"r":"Rare","n":"Scarab Beetles","o":"Desert","s":["Desert"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list5-84-85-slugs","c":"Bugs","l":5,"g":"84-85","a":84,"b":85,"r":"Uncommon","n":"Slugs","o":"Forest; Grassland; Mountain; Hill; Coastal","s":["Forest","Grassland","Mountain","Hill","Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list5-86-stag-beetles","c":"Bugs","l":5,"g":"86","a":86,"b":86,"r":"Very Rare","n":"Stag Beetles","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"plants-list6-87-90-arctic-creeper","c":"Plants","l":6,"g":"87-90","a":87,"b":90,"r":"Common","n":"Arctic Creeper","o":"Arctic; Mountain","s":["Arctic","Mountain"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list6-91-94-drakus-flower","c":"Plants","l":6,"g":"91-94","a":91,"b":94,"r":"Common","n":"Drakus Flower","o":"Desert; Grassland; Mountain","s":["Desert","Grassland","Mountain"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list6-95-98-emetic-wax","c":"Plants","l":6,"g":"95-98","a":95,"b":98,"r":"Common","n":"Emetic Wax","o":"Forest; Swamp","s":["Forest","Swamp"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list6-99-102-lavender-sprig","c":"Plants","l":6,"g":"99-102","a":99,"b":102,"r":"Common","n":"Lavender Sprig","o":"Coastal; Grassland; Hill","s":["Coastal","Grassland","Hill"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list6-103-radiant-synthseed","c":"Plants","l":6,"g":"103","a":103,"b":103,"r":"Rare","n":"Radiant Synthseed","o":"Underdark","s":["Underdark"],"m":null,"t":null,"k":["seed","plant"]},{"u":"plants-list6-104-108-bloodgrass","c":"Plants","l":6,"g":"104-108","a":104,"b":108,"r":"Very Common","n":"Bloodgrass","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list6-109-110-dried-ephedra","c":"Plants","l":6,"g":"109-110","a":109,"b":110,"r":"Uncommon","n":"Dried Ephedra","o":"Desert; Mountain","s":["Desert","Mountain"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list6-111-114-fennel-silk","c":"Plants","l":6,"g":"111-114","a":111,"b":114,"r":"Common","n":"Fennel Silk","o":"Arctic; Underdark","s":["Arctic","Underdark"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list6-115-116-ginkgo-brush","c":"Plants","l":6,"g":"115-116","a":115,"b":116,"r":"Uncommon","n":"Ginkgo Brush","o":"Hill; Underdark","s":["Hill","Underdark"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list6-117-120-hyacinth-nectar","c":"Plants","l":6,"g":"117-120","a":117,"b":120,"r":"Common","n":"Hyacinth Nectar","o":"Coastal; Grassland; Underwater; Ocean","s":["Coastal","Grassland","Underwater","Ocean"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list8-121-125-mandrake-root","c":"Plants","l":8,"g":"121-125","a":121,"b":125,"r":"Very Common","n":"Mandrake Root","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list8-126-130-milkweed-seeds","c":"Plants","l":8,"g":"126-130","a":126,"b":130,"r":"Very Common","n":"Milkweed Seeds","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["seed","plant"]},{"u":"plants-list8-131-135-wild-sageroot","c":"Plants","l":8,"g":"131-135","a":131,"b":135,"r":"Very Common","n":"Wild Sageroot","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list8-136-139-amanita-cap","c":"Plants","l":8,"g":"136-139","a":136,"b":139,"r":"Common","n":"Amanita Cap","o":"Coastal; Swamp","s":["Coastal","Swamp"],"m":null,"t":null,"k":["fungus","mushroom","plant"]},{"u":"plants-list8-140-basilisk-breath","c":"Plants","l":8,"g":"140","a":140,"b":140,"r":"Very Rare","n":"Basilisk Breath","o":"Mountain; Coastal","s":["Mountain","Coastal"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list9-141-144-cactus-juice","c":"Plants","l":9,"g":"141-144","a":141,"b":144,"r":"Common","n":"Cactus Juice","o":"Desert; Grassland","s":["Desert","Grassland"],"m":null,"t":null,"k":["extract","plant"]},{"u":"plants-list9-145-frozen-seedlings","c":"Plants","l":9,"g":"145","a":145,"b":145,"r":"Common","n":"Frozen Seedlings","o":"Arctic; Mountain","s":["Arctic","Mountain"],"m":null,"t":null,"k":["seed","plant"]},{"u":"plants-list9-146-149-harrada-leaf","c":"Plants","l":9,"g":"146-149","a":146,"b":149,"r":"Common","n":"Harrada Leaf","o":"Forest","s":["Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list9-150-154-howeling-love-orchid","c":"Plants","l":9,"g":"150-154","a":150,"b":154,"r":"Very Common","n":"Howeling Love Orchid","o":"Forest; Grassland","s":["Forest","Grassland"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list9-155-159-quicksilver-lichen","c":"Plants","l":9,"g":"155-159","a":155,"b":159,"r":"Very Common","n":"Quicksilver Lichen","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["fungus","plant"]},{"u":"plants-list9-160-161-spineflower-berries","c":"Plants","l":9,"g":"160-161","a":160,"b":161,"r":"Uncommon","n":"Spineflower Berries","o":"Desert; Swamp","s":["Desert","Swamp"],"m":null,"t":null,"k":["berry","flower","plant"]},{"u":"plants-list10-162-166-wyrmtongue-petals","c":"Plants","l":10,"g":"162-166","a":162,"b":166,"r":"Very Common","n":"Wyrmtongue Petals","o":"Arctic; Desert; Coastal; Underwater; Ocean; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Arctic","Desert","Coastal","Underwater","Ocean","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":null,"t":null,"k":["flower","petal","plant"]},{"u":"bugs-list10-167-auriellin-s-imp-weevil","c":"Bugs","l":10,"g":"167","a":167,"b":167,"r":"Rare","n":"Auriellin's Imp Weevil","o":"Desert; Forest; Grassland; Mountain; Hill; Underdark","s":["Desert","Forest","Grassland","Mountain","Hill","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list10-168-bastard-finding-mosquito","c":"Bugs","l":10,"g":"168","a":168,"b":168,"r":"Very Rare","n":"Bastard Finding Mosquito","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list10-169-bonsai-wasp","c":"Bugs","l":10,"g":"169","a":169,"b":169,"r":"Very Rare","n":"Bonsai Wasp","o":"Forest; Grassland; Mountain; Hill; Coastal","s":["Forest","Grassland","Mountain","Hill","Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list10-170-bookwyrm","c":"Bugs","l":10,"g":"170","a":170,"b":170,"r":"Very Rare","n":"Bookwyrm","o":"Libraries (places with lots of books)","s":["Libraries (places with lots of books)"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list10-171-boreal-ice-beetle","c":"Bugs","l":10,"g":"171","a":171,"b":171,"r":"Rare","n":"Boreal Ice Beetle","o":"Arctic","s":["Arctic"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list10-172-chaos-mosquito","c":"Bugs","l":10,"g":"172","a":172,"b":172,"r":"Rare","n":"Chaos mosquito","o":"Desert; Coastal; Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Desert","Coastal","Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-173-corpse-hunter","c":"Bugs","l":11,"g":"173","a":173,"b":173,"r":"Legendary","n":"Corpse Hunter","o":"Forest; Grassland; Hill; Mountain; Swamp; Underdark","s":["Forest","Grassland","Hill","Mountain","Swamp","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-68-death-s-head-scorpion","c":"Bugs","l":11,"g":"68","a":68,"b":68,"r":"Rare","n":"Death's Head Scorpion","o":"Desert; Grassland","s":["Desert","Grassland"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-171-deathfate-moth","c":"Bugs","l":11,"g":"171","a":171,"b":171,"r":"Rare","n":"Deathfate Moth","o":"Forest; Grassland; Mountain; Hill; Coastal","s":["Forest","Grassland","Mountain","Hill","Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-171-dino-roller","c":"Bugs","l":11,"g":"171","a":171,"b":171,"r":"Rare","n":"Dino Roller","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-174-175-dino-mite","c":"Bugs","l":11,"g":"174-175","a":174,"b":175,"r":"Uncommon","n":"Dino-mite","o":"Grassland; Hill","s":["Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-176-drailian-elephant-fly","c":"Bugs","l":11,"g":"176","a":176,"b":176,"r":"Very Rare","n":"Drailian Elephant Fly","o":"Forest; Mountain","s":["Forest","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-177-ethereal-flat-worms","c":"Bugs","l":11,"g":"177","a":177,"b":177,"r":"Very Rare","n":"Ethereal Flat Worms","o":"Ethereal Limbo","s":["Ethereal Limbo"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-178-feywild-boneflys","c":"Bugs","l":11,"g":"178","a":178,"b":178,"r":"Very Rare","n":"Feywild Boneflys","o":"Feywild","s":["Feywild"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-179-fire-beetle","c":"Bugs","l":11,"g":"179","a":179,"b":179,"r":"Very Rare","n":"Fire Beetle","o":"Desert; Mountain","s":["Desert","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-180-fly-dragon","c":"Bugs","l":11,"g":"180","a":180,"b":180,"r":"Very Rare","n":"Fly Dragon","o":"Desert; Coastal; Forest; Grassland; Hill; Mountain","s":["Desert","Coastal","Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-181-ghost-rock","c":"Bugs","l":11,"g":"181","a":181,"b":181,"r":"Very Rare","n":"Ghost rock","o":"Ethereal Limbo","s":["Ethereal Limbo"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-182-giant-ant-lion","c":"Bugs","l":11,"g":"182","a":182,"b":182,"r":"Very Rare","n":"Giant Ant Lion","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-183-giant-phasmid","c":"Bugs","l":11,"g":"183","a":183,"b":183,"r":"Rare","n":"Giant Phasmid","o":"Forest","s":["Forest"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-183-giant-sea-lice","c":"Bugs","l":11,"g":"183","a":183,"b":183,"r":"Rare","n":"Giant Sea Lice","o":"Coastal","s":["Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-184-giant-tarantula-hawk","c":"Bugs","l":11,"g":"184","a":184,"b":184,"r":"Rare","n":"Giant Tarantula Hawk","o":"Desert; Forest; Hill","s":["Desert","Forest","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-185-186-giraffe-beetle","c":"Bugs","l":11,"g":"185-186","a":185,"b":186,"r":"Uncommon","n":"Giraffe Beetle","o":"Forest; Grassland; Hill; Jungle","s":["Forest","Grassland","Hill","Jungle"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-187-188-glass-hornet","c":"Bugs","l":11,"g":"187-188","a":187,"b":188,"r":"Uncommon","n":"Glass Hornet","o":"Forest; Jungle; Swamp","s":["Forest","Jungle","Swamp"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-189-190-glitterbugs","c":"Bugs","l":11,"g":"189-190","a":189,"b":190,"r":"Uncommon","n":"Glitterbugs","o":"Forest; Grassland; Hill; Mountain","s":["Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-191-gnomish-butterflies","c":"Bugs","l":11,"g":"191","a":191,"b":191,"r":"Rare","n":"Gnomish Butterflies","o":"Desert; Forest; Grassland; Hill","s":["Desert","Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-192-193-gnomish-gnats","c":"Bugs","l":11,"g":"192-193","a":192,"b":193,"r":"Uncommon","n":"Gnomish Gnats","o":"Coastal; Desert; Forest; Grassland; Hill; Mountain","s":["Coastal","Desert","Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-194-195-greater-darkling-beetle","c":"Bugs","l":11,"g":"194-195","a":194,"b":195,"r":"Uncommon","n":"Greater Darkling Beetle","o":"Desert; Grassland; Hill;","s":["Desert","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-196-hairy-backed-skillet-pan-darkling-beetle","c":"Bugs","l":11,"g":"196","a":196,"b":196,"r":"Very Rare","n":"Hairy Backed Skillet Pan Darkling Beetle","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-197-198-honey-locust","c":"Bugs","l":11,"g":"197-198","a":197,"b":198,"r":"Uncommon","n":"Honey Locust","o":"Grassland","s":["Grassland"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list11-199-200-hopping-crab","c":"Bugs","l":11,"g":"199-200","a":199,"b":200,"r":"Uncommon","n":"Hopping Crab","o":"Forest; Lake; Coastal","s":["Forest","Lake","Coastal"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-201-ice-ants","c":"Bugs","l":12,"g":"201","a":201,"b":201,"r":"Rare","n":"Ice ants","o":"Arctic","s":["Arctic"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-202-indigo-bloat-worm","c":"Bugs","l":12,"g":"202","a":202,"b":202,"r":"Rare","n":"Indigo Bloat Worm","o":"Lakes; Ocean; Underwater","s":["Lakes","Ocean","Underwater"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-203-204-kung-fu-mantis","c":"Bugs","l":12,"g":"203-204","a":203,"b":204,"r":"Uncommon","n":"Kung-fu Mantis","o":"Forest; Grassland","s":["Forest","Grassland"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-205-lava-centipede","c":"Bugs","l":12,"g":"205","a":205,"b":205,"r":"Very Rare","n":"Lava Centipede","o":"Mountain; Volcano","s":["Mountain","Volcano"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-206-megamoth","c":"Bugs","l":12,"g":"206","a":206,"b":206,"r":"Legendary","n":"Megamoth","o":"Jungle","s":["Jungle"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-207-210-monkey-spider","c":"Bugs","l":12,"g":"207-210","a":207,"b":210,"r":"Common","n":"Monkey Spider","o":"Jungle","s":["Jungle"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-211-214-necro-wasp-larvae","c":"Bugs","l":12,"g":"211-214","a":211,"b":214,"r":"Common","n":"Necro-wasp Larvae","o":"Desert; Forest; Grassland; Hill; Mountain; Jungle","s":["Desert","Forest","Grassland","Hill","Mountain","Jungle"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-215-218-orc-moth","c":"Bugs","l":12,"g":"215-218","a":215,"b":218,"r":"Common","n":"Orc Moth","o":"Forest; Grassland; Hill;","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-219-phoenix-butterfly","c":"Bugs","l":12,"g":"219","a":219,"b":219,"r":"Legendary","n":"Phoenix Butterfly","o":"Desert; Forest; Grassland; Hill; Mountain;","s":["Desert","Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list12-220-phoenix-roach","c":"Bugs","l":12,"g":"220","a":220,"b":220,"r":"Very Rare","n":"Phoenix Roach","o":"Desert; Forest; Grassland; Hill; Mountain;","s":["Desert","Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list13-221-225-prismic-caterpillar","c":"Bugs","l":13,"g":"221-225","a":221,"b":225,"r":"Common","n":"Prismic Caterpillar","o":"Forest; Grassland; Hill; Mountain;","s":["Forest","Grassland","Hill","Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list13-226-229-puffer-fly","c":"Bugs","l":13,"g":"226-229","a":226,"b":229,"r":"Uncommon","n":"Puffer Fly","o":"Jungle; Mountain; Swamp; Underdark","s":["Jungle","Mountain","Swamp","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list13-230-235-reverse-bee","c":"Bugs","l":13,"g":"230-235","a":230,"b":235,"r":"Very Common","n":"Reverse Bee","o":"Forest; Grassland; Hill;","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list13-236-240-sea-spider","c":"Bugs","l":13,"g":"236-240","a":236,"b":240,"r":"Common","n":"Sea Spider","o":"Lake; Ocean; Underwater","s":["Lake","Ocean","Underwater"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-241-244-skitter-dancers","c":"Bugs","l":14,"g":"241-244","a":241,"b":244,"r":"Uncommon","n":"Skitter Dancers","o":"Coastal; Lake; Ocean","s":["Coastal","Lake","Ocean"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-245-steel-termite","c":"Bugs","l":14,"g":"245","a":245,"b":245,"r":"Rare","n":"Steel Termite","o":"Mountain","s":["Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-245-249-storm-flies","c":"Bugs","l":14,"g":"245-249","a":245,"b":249,"r":"Common","n":"Storm Flies","o":"Mountain","s":["Mountain"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-250-strum-spiders","c":"Bugs","l":14,"g":"250","a":250,"b":250,"r":"Rare","n":"Strum Spiders","o":"Desert","s":["Desert"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-251-255-super-mealworm-darkling-beetle","c":"Bugs","l":14,"g":"251-255","a":251,"b":255,"r":"Common","n":"Super Mealworm Darkling Beetle","o":"Grassland","s":["Grassland"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-256-259-tetracurn-beetle","c":"Bugs","l":14,"g":"256-259","a":256,"b":259,"r":"Uncommon","n":"Tetracurn Beetle","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list14-260-263-tetracurn-grub","c":"Bugs","l":14,"g":"260-263","a":260,"b":263,"r":"Uncommon","n":"Tetracurn Grub","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list15-264-267-tetracurn-pod","c":"Bugs","l":15,"g":"264-267","a":264,"b":267,"r":"Uncommon","n":"Tetracurn Pod","o":"Mountain; Underdark","s":["Mountain","Underdark"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list15-268-272-the-luminous-mammalian-mantis","c":"Bugs","l":15,"g":"268-272","a":268,"b":272,"r":"Common","n":"The Luminous Mammalian Mantis","o":"Forest; Grassland; Hill;","s":["Forest","Grassland","Hill"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list15-273-276-versin-s-butterfly","c":"Bugs","l":15,"g":"273-276","a":273,"b":276,"r":"Uncommon","n":"Versin's Butterfly","o":"Forest","s":["Forest"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list15-277-vornath-tree-worm","c":"Bugs","l":15,"g":"277","a":277,"b":277,"r":"Rare","n":"Vornath Tree Worm","o":"Forest","s":["Forest"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list15-278-281-thaorian-spiker-pod","c":"Bugs","l":15,"g":"278-281","a":278,"b":281,"r":"Uncommon","n":"Thaorian Spiker Pod","o":"Jungle; Swamp","s":["Jungle","Swamp"],"m":"Units","t":null,"k":["bug"]},{"u":"bugs-list16-282-285-darken-widow-spider","c":"Bugs","l":16,"g":"282-285","a":282,"b":285,"r":"Uncommon","n":"Darken Widow Spider","o":"Underdark; Cave; Mountain","s":["Underdark","Cave","Mountain"],"m":"Units","t":"had HTML comment","k":["bug","spider"]},{"u":"bugs-list16-286-290-red-wolf-spider","c":"Bugs","l":16,"g":"286-290","a":286,"b":290,"r":"Common","n":"Red Wolf Spider","o":"Underdark; Cave; Mountain; Grasslands; Forest;","s":["Underdark","Cave","Mountain","Grasslands","Forest"],"m":"Units","t":"had HTML comment","k":["bug","spider"]},{"u":"bugs-list16-291-296-black-widow-spider","c":"Bugs","l":16,"g":"291-296","a":291,"b":296,"r":"Very Common","n":"Black Widow Spider","o":"Forest; Deserts; Grasslands","s":["Forest","Deserts","Grasslands"],"m":"Units","t":null,"k":["bug","spider"]},{"u":"bugs-list16-297-301-elven-wandering-spider","c":"Bugs","l":16,"g":"297-301","a":297,"b":301,"r":"Very Common","n":"Elven Wandering Spider","o":"Jungle; Forest; Swamp","s":["Jungle","Forest","Swamp"],"m":"Units","t":null,"k":["bug","spider"]},{"u":"plants-list17-302-306-dwarven-recluse-spider","c":"Plants","l":17,"g":"302-306","a":302,"b":306,"r":"Very Common","n":"Dwarven Recluse Spider","o":"Mountain;","s":["Mountain"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list17-307-311-orc-spider","c":"Plants","l":17,"g":"307-311","a":307,"b":311,"r":"Very Common","n":"Orc Spider","o":"Forest; Hill; Grassland","s":["Forest","Hill","Grassland"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list17-312-darkwood","c":"Plants","l":17,"g":"312","a":312,"b":312,"r":"Rare","n":"Darkwood","o":"Forest","s":["Forest"],"m":null,"t":null,"k":["plant","wood"]},{"u":"plants-list17-313-318-gum-arabic","c":"Plants","l":17,"g":"313-318","a":313,"b":318,"r":"Very Common","n":"Gum Arabic","o":"Forest","s":["Forest"],"m":null,"t":null,"k":["plant","extract"]},{"u":"plants-list17-319-323-cloves","c":"Plants","l":17,"g":"319-323","a":319,"b":323,"r":"Common","n":"Cloves","o":"Forest","s":["Forest"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list18-324-328-opium-poppy","c":"Plants","l":18,"g":"324-328","a":324,"b":328,"r":"Uncommon","n":"Opium Poppy","o":"Grassland; Hill; Forest","s":["Grassland","Hill","Forest"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list18-329-333-peyote","c":"Plants","l":18,"g":"329-333","a":329,"b":333,"r":"Uncommon","n":"Peyote","o":"Desert;","s":["Desert"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list18-334-338-salvia","c":"Plants","l":18,"g":"334-338","a":334,"b":338,"r":"Uncommon","n":"Salvia","o":"Jungle; Forest;","s":["Jungle","Forest"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list18-339-343-cannabis","c":"Plants","l":18,"g":"339-343","a":339,"b":343,"r":"Uncommon","n":"Cannabis","o":"Forest; Jungle; Grasslands","s":["Forest","Jungle","Grasslands"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list19-344-348-ayahuasca","c":"Plants","l":19,"g":"344-348","a":344,"b":348,"r":"Uncommon","n":"Ayahuasca","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list19-349-353-betel-nut","c":"Plants","l":19,"g":"349-353","a":349,"b":353,"r":"Uncommon","n":"Betel Nut","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["seed","plant"]},{"u":"plants-list19-354-358-tobacco","c":"Plants","l":19,"g":"354-358","a":354,"b":358,"r":"Uncommon","n":"Tobacco","o":"Grassland; Hill; Forest","s":["Grassland","Hill","Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list19-359-363-jimsonweed","c":"Plants","l":19,"g":"359-363","a":359,"b":363,"r":"Uncommon","n":"Jimsonweed","o":"Grassland; Hill; Forest","s":["Grassland","Hill","Forest"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list20-364-368-coca","c":"Plants","l":20,"g":"364-368","a":364,"b":368,"r":"Uncommon","n":"Coca","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list20-369-373-silenean-baby-woodrose","c":"Plants","l":20,"g":"369-373","a":369,"b":373,"r":"Uncommon","n":"Silenean Baby Woodrose","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list20-374-378-dream-herb","c":"Plants","l":20,"g":"374-378","a":374,"b":378,"r":"Uncommon","n":"Dream Herb","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list20-379-383-heavenly-blue-morning-glory","c":"Plants","l":20,"g":"379-383","a":379,"b":383,"r":"Uncommon","n":"Heavenly Blue’ Morning Glory","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list21-384-388-kava","c":"Plants","l":21,"g":"384-388","a":384,"b":388,"r":"Uncommon","n":"Kava","o":"Forest; Grassland","s":["Forest","Grassland"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list21-389-393-perin-torch-cactus","c":"Plants","l":21,"g":"389-393","a":389,"b":393,"r":"Uncommon","n":"Perin Torch Cactus","o":"Desert;","s":["Desert"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list21-394-401-fly-agaric-mushroom","c":"Plants","l":21,"g":"394-401","a":394,"b":401,"r":"Super Common","n":"Fly Agaric Mushroom","o":"Forest; Grassland","s":["Forest","Grassland"],"m":null,"t":null,"k":["fungus","mushroom","plant"]},{"u":"plants-list22-402-405-ashwagandha","c":"Plants","l":22,"g":"402-405","a":402,"b":405,"r":"Uncommon","n":"Ashwagandha","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list22-406-410-maca","c":"Plants","l":22,"g":"406-410","a":406,"b":410,"r":"Uncommon","n":"Maca","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list22-411-415-ginseng","c":"Plants","l":22,"g":"411-415","a":411,"b":415,"r":"Uncommon","n":"Ginseng","o":"Grassland; Hill; Forest","s":["Grassland","Hill","Forest"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list22-416-420-eleuthero","c":"Plants","l":22,"g":"416-420","a":416,"b":420,"r":"Uncommon","n":"Eleuthero","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list23-421-427-basil","c":"Plants","l":23,"g":"421-427","a":421,"b":427,"r":"Super Common","n":"Basil","o":"Grassland; Hill; Forest","s":["Grassland","Hill","Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list23-428-holy-basil","c":"Plants","l":23,"g":"428","a":428,"b":428,"r":"Rare","n":"Holy Basil","o":"Grassland; Hill; Forest","s":["Grassland","Hill","Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list23-429-432-rhodiola","c":"Plants","l":23,"g":"429-432","a":429,"b":432,"r":"Uncommon","n":"Rhodiola","o":"Tundra, Artic, Forest","s":["Tundra","Artic","Forest"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list23-433-436-reishi-mushroom","c":"Plants","l":23,"g":"433-436","a":433,"b":436,"r":"Uncommon","n":"Reishi Mushroom","o":"Forest; Grassland; Hill","s":["Forest","Grassland","Hill"],"m":null,"t":null,"k":["fungus","mushroom","plant"]},{"u":"plants-list23-437-440-schizandra","c":"Plants","l":23,"g":"437-440","a":437,"b":440,"r":"Uncommon","n":"Schizandra","o":"Jungle; Mountain;","s":["Jungle","Mountain"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list24-441-444-cordyceps-fungus","c":"Plants","l":24,"g":"441-444","a":441,"b":444,"r":"Uncommon","n":"Cordyceps Fungus","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["fungus","plant"]},{"u":"plants-list24-445-448-ginger","c":"Plants","l":24,"g":"445-448","a":445,"b":448,"r":"Common","n":"Ginger","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list24-449-453-turmeric","c":"Plants","l":24,"g":"449-453","a":449,"b":453,"r":"Common","n":"Turmeric","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["plant","root"]},{"u":"plants-list24-454-458-boswellia","c":"Plants","l":24,"g":"454-458","a":454,"b":458,"r":"Uncommon","n":"Boswellia","o":"Forest; Desert","s":["Forest","Desert"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list24-459-463-devil-s-claw","c":"Plants","l":24,"g":"459-463","a":459,"b":463,"r":"Uncommon","n":"Devil’s claw","o":"Desert;","s":["Desert"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list25-464-468-cat-s-claws","c":"Plants","l":25,"g":"464-468","a":464,"b":468,"r":"Uncommon","n":"Cat's Claws","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list25-469-473-cacao","c":"Plants","l":25,"g":"469-473","a":469,"b":473,"r":"Uncommon","n":"Cacao","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["seed","plant"]},{"u":"plants-list25-474-478-matcha","c":"Plants","l":25,"g":"474-478","a":474,"b":478,"r":"Uncommon","n":"Matcha","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list25-479-483-cinnamon","c":"Plants","l":25,"g":"479-483","a":479,"b":483,"r":"Uncommon","n":"Cinnamon","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["plant"]},{"u":"plants-list26-484-488-blue-butterfly-pea","c":"Plants","l":26,"g":"484-488","a":484,"b":488,"r":"Uncommon","n":"Blue Butterfly Pea","o":"Swamp; Jungle; Forest","s":["Swamp","Jungle","Forest"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list26-489-493-passionflower","c":"Plants","l":26,"g":"489-493","a":489,"b":493,"r":"Common","n":"Passionflower","o":"Forest; Desert","s":["Forest","Desert"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list26-494-498-vanilla","c":"Plants","l":26,"g":"494-498","a":494,"b":498,"r":"Common","n":"Vanilla","o":"Jungle;","s":["Jungle"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list26-499-503-catnip","c":"Plants","l":26,"g":"499-503","a":499,"b":503,"r":"Common","n":"Catnip","o":"Grassland; Hill","s":["Grassland","Hill"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list27-504-508-chamomile","c":"Plants","l":27,"g":"504-508","a":504,"b":508,"r":"Common","n":"Chamomile","o":"Grassland; Hill","s":["Grassland","Hill"],"m":null,"t":null,"k":["flower","plant"]},{"u":"plants-list27-509-514-lemon-balm","c":"Plants","l":27,"g":"509-514","a":509,"b":514,"r":"Very Common","n":"Lemon Balm","o":"Jungle; Forest","s":["Jungle","Forest"],"m":null,"t":null,"k":["leaf","plant"]},{"u":"plants-list27-515-519-milk-thistle","c":"Plants","l":27,"g":"515-519","a":515,"b":519,"r":"Very Common","n":"Milk Thistle","o":"Grassland; Hill","s":["Grassland","Hill"],"m":null,"t":null,"k":["plant"]},{"u":"minerals-list27-520-523-drolect-mud","c":"Minerals","l":27,"g":"520-523","a":520,"b":523,"r":"Common","n":"Drolect Mud","o":"Underdark","s":["Underdark"],"m":null,"t":null,"k":["extract","mineral"]}]}</script>
+
+  <script>
+    (function init() {
+      // Read compact data
+      const raw = document.getElementById('wild-data').textContent;
+      const compact = JSON.parse(raw);
+
+      // Expand to verbose keys for easier use
+      const items = compact.i.map(it => ({
+        uid: it.u, category: it.c, list: it.l, range: it.g,
+        rollMin: it.a, rollMax: it.b, rarity: it.r, name: it.n,
+        location: it.o, locations: it.s || [], units_note: it.m || null,
+        note: it.t || null, tags: it.k || []
+      }));
+
+      // Helpers exposed globally
+      window.WildIngredientsPack = {
+        version: compact.v,
+        items: items.slice(),
+        getAll(){ return items.slice(); },
+        byCategory(c){ return items.filter(x => x.category === c); },
+        byList(l){ return items.filter(x => x.list === +l); },
+        find(q){
+          const needle = (q||'').trim().toLowerCase();
+          return items.filter(x =>
+            x.name.toLowerCase().includes(needle) ||
+            x.rarity.toLowerCase().includes(needle) ||
+            (x.tags||[]).some(t => t.includes(needle)) ||
+            (x.locations||[]).some(loc => loc.toLowerCase().includes(needle))
+          );
+        },
+        random(filters={}){
+          let pool = items.slice();
+          if (filters.category) pool = pool.filter(x => x.category === filters.category);
+          if (filters.list) pool = pool.filter(x => x.list === +filters.list);
+          if (filters.rarity) pool = pool.filter(x => x.rarity === filters.rarity);
+          if (filters.location) pool = pool.filter(x => (x.locations||[]).includes(filters.location));
+          if (filters.unitsOnly) pool = pool.filter(x => x.category === 'Bugs' && x.units_note);
+          if (!pool.length) return null;
+          return pool[Math.floor(Math.random()*pool.length)];
+        }
+      };
+
+      // ===== Viewer wiring =====
+      const rows = document.getElementById('rows');
+      const qEl = document.getElementById('q');
+      const catEl = document.getElementById('cat');
+      const listEl = document.getElementById('list');
+      const rarityEl = document.getElementById('rarity');
+      const locEl = document.getElementById('loc');
+      const unitsOnlyEl = document.getElementById('unitsOnly');
+      const count = document.getElementById('count');
+      const empty = document.getElementById('empty');
+      const reset = document.getElementById('reset');
+      const exportBtn = document.getElementById('export');
+      const ths = Array.from(document.querySelectorAll('th.sortable'));
+
+      // Build dynamic options
+      const allLists = [...new Set(items.map(x => x.list))].sort((a,b)=>a-b);
+      allLists.forEach(n => {
+        const op = document.createElement('option'); op.value = String(n); op.textContent = `List ${n}`;
+        listEl.appendChild(op);
+      });
+      const allRarities = [...new Set(items.map(x => x.rarity))].sort((a,b)=>a.localeCompare(b));
+      allRarities.forEach(r => {
+        const op = document.createElement('option'); op.textContent = r; rarityEl.appendChild(op);
+      });
+      const allLocs = [...new Set(items.flatMap(x => x.locations || []))].sort((a,b)=>a.localeCompare(b));
+      allLocs.forEach(L => {
+        const op = document.createElement('option'); op.textContent = L; locEl.appendChild(op);
+      });
+
+      let view = items.slice();
+      let sortKey = 'category', sortDir = 'asc';
+
+      function applyFilters(){
+        const q = (qEl.value||'').trim().toLowerCase();
+        const cat = catEl.value;
+        const list = listEl.value;
+        const rar = rarityEl.value;
+        const loc = locEl.value;
+        const unitsOnly = unitsOnlyEl.checked;
+
+        view = items.filter(it => {
+          if (cat && it.category !== cat) return false;
+          if (list && it.list !== +list) return false;
+          if (rar && it.rarity !== rar) return false;
+          if (loc && !(it.locations||[]).includes(loc)) return false;
+          if (unitsOnly && !(it.category === 'Bugs' && it.units_note)) return false;
+          if (q){
+            const hay = [
+              it.name, it.rarity, it.category, it.location,
+              ...(it.tags||[]), ...(it.locations||[])
+            ].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+        applySort(); render();
+      }
+
+      function applySort(){
+        const dir = sortDir === 'asc' ? 1 : -1;
+        view.sort((a,b) => {
+          let av = a[sortKey], bv = b[sortKey];
+          // custom rarity order (adds extended rarities)
+          const ro = {
+            'Super Common':1, 'Very Common':2, 'Common':3,
+            'Uncommon':4, 'Rare':5, 'Very Rare':6, 'Legendary':7
+          };
+          if (sortKey === 'rarity'){ av = ro[av] ?? 99; bv = ro[bv] ?? 99; return (av - bv) * dir; }
+          if (sortKey === 'range'){ return (a.rollMin - b.rollMin) * dir; }
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+          return String(av).localeCompare(String(bv)) * dir;
+        });
+      }
+
+      function render(){
+        rows.innerHTML = '';
+        view.forEach(it => {
+          const tr = document.createElement('tr');
+          const locBadges = (it.locations||[]).map(L => `<span class="badge">${L}</span>`).join(' ');
+          const tagBadges = (it.tags||[]).map(t => `<span class="tag">${t}</span>`).join(' ');
+          tr.innerHTML = `
+            <td>${it.category}${it.units_note ? ' <span class="badge">Units</span>' : ''}</td>
+            <td>${it.list}</td>
+            <td>${it.range}</td>
+            <td>${it.name}</td>
+            <td><span class="badge">${it.rarity}</span></td>
+            <td>${locBadges}</td>
+            <td>${tagBadges}</td>
+          `;
+          rows.appendChild(tr);
+        });
+        empty.classList.toggle('hidden', view.length !== 0);
+        count.textContent = `${view.length}/${items.length}`;
+      }
+
+      function setSort(key){
+        if (sortKey === key){ sortDir = (sortDir === 'asc') ? 'desc' : 'asc'; }
+        else { sortKey = key; sortDir = 'asc'; }
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        const active = ths.find(th => th.dataset.key === sortKey);
+        if (active) active.dataset.dir = sortDir;
+        applySort(); render();
+      }
+
+      // Events
+      qEl.addEventListener('input', applyFilters);
+      catEl.addEventListener('change', applyFilters);
+      listEl.addEventListener('change', applyFilters);
+      rarityEl.addEventListener('change', applyFilters);
+      locEl.addEventListener('change', applyFilters);
+      unitsOnlyEl.addEventListener('change', applyFilters);
+      reset.addEventListener('click', () => {
+        qEl.value = ''; catEl.value = ''; listEl.value = ''; rarityEl.value = ''; locEl.value = ''; unitsOnlyEl.checked = false;
+        sortKey = 'category'; sortDir = 'asc'; ths.forEach(th => th.removeAttribute('data-dir'));
+        applyFilters();
+      });
+      ths.forEach(th => th.addEventListener('click', () => setSort(th.dataset.key)));
+
+      exportBtn.addEventListener('click', () => {
+        const payload = {
+          pack: 'wild-ingredients',
+          version: compact.v,
+          items: items
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'wild-ingredients.json';
+        document.body.appendChild(a); a.click();
+        URL.revokeObjectURL(url); a.remove();
+      });
+
+      // Init
+      applySort(); render();
+    })();
+  </script>
+</body>
+</html>

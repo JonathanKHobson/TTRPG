@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Foods Data Pack</title>
+  <!--
+    Foods Data Pack (HTML)
+    ---------------------------------------------
+    Use this as a standalone viewer, or load its JSON from another page:
+      fetch('food.html').then(r => r.text()).then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const json = JSON.parse(doc.querySelector('#foods-data').textContent);
+        console.log(json.items);
+      });
+
+    Global helpers (same-origin access):
+      window.FoodsDataPack = {
+        version: '1.0.0',
+        items: [...],
+        getAll(), byEnv(env), bySeason(season), findByName(q),
+        random({ env, season, tag, daggerOnly })
+      }
+
+    Seasons used:
+      'Spring' | 'Summer' | 'Fall' | 'Winter' | 'Any' (for Tropical/Jungle & Random Finds)
+  -->
+  <style>
+    :root{
+      --paper-0:#fbf6e9; --paper-1:#f3ead4; --paper-2:#e6d7bb;
+      --ink:#111; --ink-soft:rgba(0,0,0,.65); --ink-red:#7a1f1f;
+      --ring:#d9c9a7; --ring-2:#d7c6a1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(rgba(0,0,0,.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1100px;margin:0 auto;padding:40px 16px 72px}
+    .paper{background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));backdrop-filter:blur(.3px)}
+    .round{border-radius:16px}
+    .shadow{box-shadow:0 10px 30px rgba(0,0,0,.10)}
+    .ring{border:1px solid var(--ring)}
+
+    header.card{position:relative;overflow:hidden}
+    header.card .burn:before, header.card .burn:after{
+      content:"";position:absolute;border-radius:999px;filter:blur(28px);opacity:.12;mix-blend-mode:multiply;pointer-events:none
+    }
+    header.card .burn:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card .burn:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+
+    h1{margin:0;font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;font-weight:700;color:var(--ink-red)}
+    .sub{color:var(--ink-soft)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+    .input,.select{padding:10px 12px;border:1px solid var(--ring-2);border-radius:12px;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);outline:0}
+    .btn{border:1px solid var(--ring-2);background:linear-gradient(180deg, var(--paper-0), var(--paper-1));padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.02)}
+    .count{font-size:12px;color:var(--ink-soft);margin-left:auto}
+    .check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+
+    .table-wrap{margin-top:16px;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:linear-gradient(180deg, var(--paper-0), var(--paper-1));border:1px solid var(--ring);border-radius:16px;overflow:hidden}
+    thead th{position:sticky;top:0;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);text-align:left;padding:10px 12px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--ring)}
+    tbody td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.05)}
+    tbody tr:hover{background:rgba(0,0,0,.035)}
+    th.sortable{cursor:pointer}
+    th.sortable::after{content:" ↕";opacity:.5}
+    th.sortable[data-dir="asc"]::after{content:" ↑"}
+    th.sortable[data-dir="desc"]::after{content:" ↓"}
+
+    .badge{display:inline-block;border:1px solid var(--ring-2);border-radius:999px;padding:4px 8px;font:700 10px/1 system-ui;text-transform:uppercase;letter-spacing:.04em;background:#f3ead4;color:color-mix(in oklab, var(--ink-red) 90%, black 10%)}
+    .env{font-weight:600}
+    .muted{color:var(--ink-soft);font-size:14px}
+
+    .foot{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .small{font-size:12px;color:var(--ink-soft)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card paper round shadow ring">
+      <div class="burn" aria-hidden="true"></div>
+      <div style="padding:24px">
+        <h1 style="font-size:clamp(28px,3vw,38px)">Foods Data Pack</h1>
+        <p class="sub" style="margin:.25rem 0 0">
+          Seasonal forageables by environment. Some items can appear in multiple environments/seasons; this list reflects where they’re most likely.
+        </p>
+
+        <div class="controls">
+          <input id="q" class="input" type="search" placeholder="Search name or tag…" aria-label="Search" />
+          <select id="env" class="select" aria-label="Filter by environment">
+            <option value="">All environments</option>
+            <option>Forest/Woodlands</option>
+            <option>Mountains/Steppes</option>
+            <option>Water/Coastal</option>
+            <option>Plains/Meadow</option>
+            <option>Arid/Desert</option>
+            <option>Tropical/Jungle (Exotic)</option>
+            <option>Random Finds</option>
+          </select>
+          <select id="season" class="select" aria-label="Filter by season">
+            <option value="">All seasons</option>
+            <option>Spring</option>
+            <option>Summer</option>
+            <option>Fall</option>
+            <option>Winter</option>
+            <option>Any</option>
+          </select>
+          <label class="check"><input id="daggerOnly" type="checkbox" /> Show † only</label>
+          <button id="reset" class="btn" type="button">Reset</button>
+          <button id="export" class="btn" type="button" title="Download foods.json">Export JSON</button>
+          <span id="count" class="count" aria-live="polite"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="table-wrap">
+      <table aria-describedby="count">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="environment">Environment</th>
+            <th class="sortable" data-key="season" style="width:120px">Season</th>
+            <th class="sortable" data-key="index" style="width:84px">Index</th>
+            <th class="sortable" data-key="name">Name</th>
+            <th class="sortable" data-key="descriptor" style="width:200px">Descriptor</th>
+            <th>Tags</th>
+            <th class="sortable" data-key="dagger" style="width:70px">†</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <p id="empty" class="muted hidden" style="padding:14px">No results match that filter.</p>
+
+      <div class="foot">
+        <span class="small">Source: Heron’s Manual – Volume 1: Pursuing Activities (user-provided).</span>
+        <span class="small">Version: <code>1.0.0</code></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Canonical dataset (faithful to your list; preserves numbering & daggers) -->
+  <script type="application/json" id="foods-data">
+  {
+    "pack": "foods",
+    "version": "1.0.0",
+    "schema": "foods.schema.v1 (informal)",
+    "fields": ["uid","environment","season","index","name","descriptor","dagger","tags"],
+    "items": [
+      /* Forest/Woodlands */
+      { "uid":"forest-spring-1-ramps-wild-leeks","environment":"Forest/Woodlands","season":"Spring","index":1,"name":"Ramps (Wild Leeks)","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"forest-spring-2-river-cane-shoots","environment":"Forest/Woodlands","season":"Spring","index":2,"name":"River Cane Shoots","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"forest-spring-3-fiddleheads","environment":"Forest/Woodlands","season":"Spring","index":3,"name":"Fiddleheads","descriptor":"Young Ferns","dagger":true,"tags":[] },
+      { "uid":"forest-spring-4-oyster-mushroom","environment":"Forest/Woodlands","season":"Spring","index":4,"name":"Oyster Mushroom","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"forest-spring-5-quail-eggs","environment":"Forest/Woodlands","season":"Spring","index":5,"name":"Quail Eggs","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"forest-summer-6-catfish","environment":"Forest/Woodlands","season":"Summer","index":6,"name":"Catfish","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"forest-summer-7-queen-annes-lace","environment":"Forest/Woodlands","season":"Summer","index":7,"name":"Queen Anne’s Lace","descriptor":"Wild Carrots","dagger":false,"tags":[] },
+      { "uid":"forest-summer-8-chicken-of-the-woods-mushroom","environment":"Forest/Woodlands","season":"Summer","index":8,"name":"Chicken of the Woods Mushroom","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"forest-summer-9-cattails","environment":"Forest/Woodlands","season":"Summer","index":9,"name":"Cattails","descriptor":"near water","dagger":false,"tags":[] },
+      { "uid":"forest-summer-10-blackberries","environment":"Forest/Woodlands","season":"Summer","index":10,"name":"BlackBerries","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"forest-fall-11-chicory","environment":"Forest/Woodlands","season":"Fall","index":11,"name":"Chicory","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+      { "uid":"forest-fall-12-paw-paw","environment":"Forest/Woodlands","season":"Fall","index":12,"name":"Paw Paw","descriptor":"Tree Fruit","dagger":false,"tags":[] },
+      { "uid":"forest-fall-13-bolete-mushrooms","environment":"Forest/Woodlands","season":"Fall","index":13,"name":"Bolete Mushrooms","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"forest-fall-14-acorns","environment":"Forest/Woodlands","season":"Fall","index":14,"name":"Acorns","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"forest-fall-15-black-walnuts","environment":"Forest/Woodlands","season":"Fall","index":15,"name":"Black Walnuts","descriptor":null,"dagger":true,"tags":[] },
+
+      { "uid":"forest-winter-16-rose-hips","environment":"Forest/Woodlands","season":"Winter","index":16,"name":"Rose Hips","descriptor":"Rose Bush Berries","dagger":true,"tags":[] },
+      { "uid":"forest-winter-17-crabapple","environment":"Forest/Woodlands","season":"Winter","index":17,"name":"Crabapple","descriptor":"Tree Fruit","dagger":false,"tags":[] },
+      { "uid":"forest-winter-18-persimmons","environment":"Forest/Woodlands","season":"Winter","index":18,"name":"Persimmons","descriptor":"Tree Fruit","dagger":false,"tags":[] },
+      { "uid":"forest-winter-19-gingko-nuts","environment":"Forest/Woodlands","season":"Winter","index":19,"name":"Gingko Nuts","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"forest-winter-20-chestnuts","environment":"Forest/Woodlands","season":"Winter","index":20,"name":"Chestnuts","descriptor":null,"dagger":false,"tags":[] },
+
+      /* Mountains/Steppes */
+      { "uid":"mountains-spring-1-shaggy-mane-mushrooms","environment":"Mountains/Steppes","season":"Spring","index":1,"name":"Shaggy Mane Mushrooms","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-spring-2-horseradish","environment":"Mountains/Steppes","season":"Spring","index":2,"name":"Horseradish","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-spring-3-rhubarb","environment":"Mountains/Steppes","season":"Spring","index":3,"name":"Rhubarb","descriptor":"Young Ferns","dagger":true,"tags":[] },
+      { "uid":"mountains-spring-4-morel-mushrooms","environment":"Mountains/Steppes","season":"Spring","index":4,"name":"Morel Mushrooms","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-spring-5-green-fir-pine-cones","environment":"Mountains/Steppes","season":"Spring","index":5,"name":"Green Fir Pine Cones","descriptor":null,"dagger":true,"tags":[] },
+
+      { "uid":"mountains-summer-6-cherries","environment":"Mountains/Steppes","season":"Summer","index":6,"name":"Cherries","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-summer-7-gooseberry","environment":"Mountains/Steppes","season":"Summer","index":7,"name":"Gooseberry","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"mountains-summer-8-blueberry","environment":"Mountains/Steppes","season":"Summer","index":8,"name":"Blueberry","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-summer-9-elderberries","environment":"Mountains/Steppes","season":"Summer","index":9,"name":"Elderberries","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-summer-10-raspberries","environment":"Mountains/Steppes","season":"Summer","index":10,"name":"Raspberries","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"mountains-fall-11-porcini-mushroom","environment":"Mountains/Steppes","season":"Fall","index":11,"name":"Porcini Mushroom","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-fall-12-chanterelle","environment":"Mountains/Steppes","season":"Fall","index":12,"name":"Chanterelle","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-fall-13-salmon","environment":"Mountains/Steppes","season":"Fall","index":13,"name":"Salmon","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-fall-14-sheep-sorrel","environment":"Mountains/Steppes","season":"Fall","index":14,"name":"Sheep Sorrel","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+      { "uid":"mountains-fall-15-evergreen-needles","environment":"Mountains/Steppes","season":"Fall","index":15,"name":"Evergreen Needles","descriptor":null,"dagger":true,"tags":[] },
+
+      { "uid":"mountains-winter-16-camas-root","environment":"Mountains/Steppes","season":"Winter","index":16,"name":"Camas Root","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-winter-17-actinidia","environment":"Mountains/Steppes","season":"Winter","index":17,"name":"Actinidia","descriptor":"Bush Fruit","dagger":false,"tags":[] },
+      { "uid":"mountains-winter-18-juniper-berries","environment":"Mountains/Steppes","season":"Winter","index":18,"name":"Juniper Berries","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"mountains-winter-19-usnea-old-mans-beard","environment":"Mountains/Steppes","season":"Winter","index":19,"name":"Usnea – Old Man’s Beard","descriptor":"Moss","dagger":true,"tags":[] },
+      { "uid":"mountains-winter-20-sea-buckthorn","environment":"Mountains/Steppes","season":"Winter","index":20,"name":"Sea buckthorn","descriptor":"Bush Berry","dagger":false,"tags":[] },
+
+      /* Water/Coastal */
+      { "uid":"coastal-spring-1-pepper-dulse","environment":"Water/Coastal","season":"Spring","index":1,"name":"Pepper Dulse","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"coastal-spring-2-gutweed","environment":"Water/Coastal","season":"Spring","index":2,"name":"Gutweed","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"coastal-spring-3-brown-crabs","environment":"Water/Coastal","season":"Spring","index":3,"name":"Brown Crabs","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-spring-4-duck-eggs","environment":"Water/Coastal","season":"Spring","index":4,"name":"Duck Eggs","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-spring-5-sandpiper-eggs","environment":"Water/Coastal","season":"Spring","index":5,"name":"Sandpiper Eggs","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"coastal-summer-6-brown-shrimp","environment":"Water/Coastal","season":"Summer","index":6,"name":"Brown shrimp","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-summer-7-snails","environment":"Water/Coastal","season":"Summer","index":7,"name":"Snails","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-summer-8-sugar-kelp","environment":"Water/Coastal","season":"Summer","index":8,"name":"Sugar Kelp","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"coastal-summer-9-sea-lettuce","environment":"Water/Coastal","season":"Summer","index":9,"name":"Sea Lettuce","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"coastal-summer-10-beach-peas","environment":"Water/Coastal","season":"Summer","index":10,"name":"Beach Peas","descriptor":null,"dagger":true,"tags":[] },
+
+      { "uid":"coastal-fall-11-beach-mustard","environment":"Water/Coastal","season":"Fall","index":11,"name":"Beach Mustard","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+      { "uid":"coastal-fall-12-oarweed","environment":"Water/Coastal","season":"Fall","index":12,"name":"Oarweed","descriptor":"Seaweed","dagger":true,"tags":[] },
+      { "uid":"coastal-fall-13-serrated-wrack","environment":"Water/Coastal","season":"Fall","index":13,"name":"Serrated Wrack","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"coastal-fall-14-sand-crab","environment":"Water/Coastal","season":"Fall","index":14,"name":"Sand Crab","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-fall-15-watercress","environment":"Water/Coastal","season":"Fall","index":15,"name":"Watercress","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+
+      { "uid":"coastal-winter-16-mussels","environment":"Water/Coastal","season":"Winter","index":16,"name":"Mussels","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-winter-17-laver","environment":"Water/Coastal","season":"Winter","index":17,"name":"Laver","descriptor":"Seaweed","dagger":true,"tags":[] },
+      { "uid":"coastal-winter-18-dumonts-weed","environment":"Water/Coastal","season":"Winter","index":18,"name":"Dumont’s Weed","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"coastal-winter-19-clams","environment":"Water/Coastal","season":"Winter","index":19,"name":"Clams","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"coastal-winter-20-oysters","environment":"Water/Coastal","season":"Winter","index":20,"name":"Oysters","descriptor":null,"dagger":false,"tags":[] },
+
+      /* Plains/Meadow */
+      { "uid":"plains-spring-1-wild-violets","environment":"Plains/Meadow","season":"Spring","index":1,"name":"Wild Violets","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-spring-2-dandelions","environment":"Plains/Meadow","season":"Spring","index":2,"name":"Dandelions","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-spring-3-burdock","environment":"Plains/Meadow","season":"Spring","index":3,"name":"Burdock","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+      { "uid":"plains-spring-4-daylilies","environment":"Plains/Meadow","season":"Spring","index":4,"name":"Daylilies","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-spring-5-kudzu","environment":"Plains/Meadow","season":"Spring","index":5,"name":"Kudzu","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+
+      { "uid":"plains-summer-6-lambsquarter","environment":"Plains/Meadow","season":"Summer","index":6,"name":"Lambsquarter","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+      { "uid":"plains-summer-7-purslane","environment":"Plains/Meadow","season":"Summer","index":7,"name":"Purslane","descriptor":"Succulent","dagger":false,"tags":[] },
+      { "uid":"plains-summer-8-miners-lettuce","environment":"Plains/Meadow","season":"Summer","index":8,"name":"Miner’s Lettuce","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-summer-9-hedgehog-mushrooms","environment":"Plains/Meadow","season":"Summer","index":9,"name":"Hedgehog Mushrooms","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-summer-10-wild-onions","environment":"Plains/Meadow","season":"Summer","index":10,"name":"Wild Onions","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"plains-fall-11-strawberries","environment":"Plains/Meadow","season":"Fall","index":11,"name":"Strawberries","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-fall-12-wild-grapes","environment":"Plains/Meadow","season":"Fall","index":12,"name":"Wild Grapes","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-fall-13-wild-apples","environment":"Plains/Meadow","season":"Fall","index":13,"name":"Wild Apples","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-fall-14-squash","environment":"Plains/Meadow","season":"Fall","index":14,"name":"Squash","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-fall-15-pecans","environment":"Plains/Meadow","season":"Fall","index":15,"name":"Pecans","descriptor":null,"dagger":true,"tags":[] },
+
+      { "uid":"plains-winter-16-kinnikinnick","environment":"Plains/Meadow","season":"Winter","index":16,"name":"Kinnikinnick","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+      { "uid":"plains-winter-17-greenbriar-root","environment":"Plains/Meadow","season":"Winter","index":17,"name":"Greenbriar Root","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-winter-18-cattail-root","environment":"Plains/Meadow","season":"Winter","index":18,"name":"Cattail Root","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-winter-19-chickweed","environment":"Plains/Meadow","season":"Winter","index":19,"name":"Chickweed","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"plains-winter-20-teaberry","environment":"Plains/Meadow","season":"Winter","index":20,"name":"Teaberry","descriptor":null,"dagger":false,"tags":[] },
+
+      /* Arid/Desert */
+      { "uid":"desert-spring-1-nettles","environment":"Arid/Desert","season":"Spring","index":1,"name":"Nettles","descriptor":"Leafy Vegetable","dagger":true,"tags":[] },
+      { "uid":"desert-spring-2-agarita-berries","environment":"Arid/Desert","season":"Spring","index":2,"name":"Agarita Berries","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-spring-3-yucca-flower","environment":"Arid/Desert","season":"Spring","index":3,"name":"Yucca Flower","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"desert-spring-4-milk-thistle","environment":"Arid/Desert","season":"Spring","index":4,"name":"Milk Thistle","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-spring-5-chiavul-buds","environment":"Arid/Desert","season":"Spring","index":5,"name":"Chiávul Buds","descriptor":"Cactus","dagger":false,"tags":[] },
+
+      { "uid":"desert-summer-6-saguaro-fruit","environment":"Arid/Desert","season":"Summer","index":6,"name":"Saguaro Fruit","descriptor":"Cactus","dagger":true,"tags":[] },
+      { "uid":"desert-summer-7-mulberries","environment":"Arid/Desert","season":"Summer","index":7,"name":"Mulberries","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-summer-8-wild-poppies","environment":"Arid/Desert","season":"Summer","index":8,"name":"Wild Poppies","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-summer-9-hackberry","environment":"Arid/Desert","season":"Summer","index":9,"name":"Hackberry","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-summer-10-amaranth","environment":"Arid/Desert","season":"Summer","index":10,"name":"Amaranth","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"desert-fall-11-honey-mesquite","environment":"Arid/Desert","season":"Fall","index":11,"name":"Honey Mesquite","descriptor":"Bush and Seeds","dagger":false,"tags":[] },
+      { "uid":"desert-fall-12-prickly-pear","environment":"Arid/Desert","season":"Fall","index":12,"name":"Prickly Pear","descriptor":"Cactus","dagger":true,"tags":[] },
+      { "uid":"desert-fall-13-peppergrass","environment":"Arid/Desert","season":"Fall","index":13,"name":"Peppergrass","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-fall-14-sweetgum-pods","environment":"Arid/Desert","season":"Fall","index":14,"name":"Sweetgum Pods","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-fall-15-henbit","environment":"Arid/Desert","season":"Fall","index":15,"name":"Henbit","descriptor":"Leafy Vegetable","dagger":false,"tags":[] },
+
+      { "uid":"desert-winter-16-buffalo-gourd","environment":"Arid/Desert","season":"Winter","index":16,"name":"Buffalo Gourd","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-winter-17-carolina-bristle-mallow","environment":"Arid/Desert","season":"Winter","index":17,"name":"Carolina Bristle Mallow","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"desert-winter-18-barrel-cactus","environment":"Arid/Desert","season":"Winter","index":18,"name":"Barrel Cactus","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"desert-winter-19-agave","environment":"Arid/Desert","season":"Winter","index":19,"name":"Agave","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"desert-winter-20-arrowhead-root","environment":"Arid/Desert","season":"Winter","index":20,"name":"Arrowhead Root","descriptor":null,"dagger":true,"tags":[] },
+
+      /* Tropical/Jungle (Exotic) — note: no #15 in source list */
+      { "uid":"tropical-any-1-mountain-apples","environment":"Tropical/Jungle (Exotic)","season":"Any","index":1,"name":"Mountain Apples","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-2-guava","environment":"Tropical/Jungle (Exotic)","season":"Any","index":2,"name":"Guava","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-3-lilikoi","environment":"Tropical/Jungle (Exotic)","season":"Any","index":3,"name":"Lilikoi","descriptor":"Passion Fruit","dagger":false,"tags":[] },
+      { "uid":"tropical-any-4-opal-crab","environment":"Tropical/Jungle (Exotic)","season":"Any","index":4,"name":"Opal Crab","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-5-breadfruit","environment":"Tropical/Jungle (Exotic)","season":"Any","index":5,"name":"Breadfruit","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-6-mangoes","environment":"Tropical/Jungle (Exotic)","season":"Any","index":6,"name":"Mangoes","descriptor":null,"dagger":false,"tags":[] },
+
+      { "uid":"tropical-any-7-tangerines","environment":"Tropical/Jungle (Exotic)","season":"Any","index":7,"name":"Tangerines","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-8-kukui-nut","environment":"Tropical/Jungle (Exotic)","season":"Any","index":8,"name":"Kukui Nut","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"tropical-any-9-coconuts","environment":"Tropical/Jungle (Exotic)","season":"Any","index":9,"name":"Coconuts","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-10-papayas","environment":"Tropical/Jungle (Exotic)","season":"Any","index":10,"name":"Papayas","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-11-pumelos","environment":"Tropical/Jungle (Exotic)","season":"Any","index":11,"name":"Pumelos","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-12-pomegranates","environment":"Tropical/Jungle (Exotic)","season":"Any","index":12,"name":"Pomegranates","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-13-limo","environment":"Tropical/Jungle (Exotic)","season":"Any","index":13,"name":"Limo","descriptor":"Seaweed","dagger":false,"tags":[] },
+      { "uid":"tropical-any-14-ogo","environment":"Tropical/Jungle (Exotic)","season":"Any","index":14,"name":"Ogo","descriptor":"Seaweed","dagger":false,"tags":[] },
+
+      { "uid":"tropical-any-16-clown-fruit","environment":"Tropical/Jungle (Exotic)","season":"Any","index":16,"name":"Clown Fruit","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-17-jinn-mushroom","environment":"Tropical/Jungle (Exotic)","season":"Any","index":17,"name":"Jinn Mushroom","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"tropical-any-18-dizzy-daze-twist","environment":"Tropical/Jungle (Exotic)","season":"Any","index":18,"name":"Dizzy Daze Twist","descriptor":"Leafy Vegetable","dagger":true,"tags":[] },
+      { "uid":"tropical-any-19-wily-fur-nut","environment":"Tropical/Jungle (Exotic)","season":"Any","index":19,"name":"Wily Fur Nut","descriptor":null,"dagger":true,"tags":[] },
+      { "uid":"tropical-any-20-grizzle-timber-root","environment":"Tropical/Jungle (Exotic)","season":"Any","index":20,"name":"Grizzle Timber Root","descriptor":null,"dagger":false,"tags":[] },
+
+      /* Random Finds */
+      { "uid":"random-any-1-honeycomb","environment":"Random Finds","season":"Any","index":1,"name":"Honeycomb","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"random-any-2-abandoned-cart-cheeses","environment":"Random Finds","season":"Any","index":2,"name":"Abandoned Cart with Cheeses","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"random-any-3-buried-cask-of-ale","environment":"Random Finds","season":"Any","index":3,"name":"A Buried, Sealed, Cask of Ale","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"random-any-4-cottage-ruins-preserves","environment":"Random Finds","season":"Any","index":4,"name":"Cottage ruins with jarred preserves","descriptor":null,"dagger":false,"tags":[] },
+      { "uid":"random-any-5-local-grubs","environment":"Random Finds","season":"Any","index":5,"name":"Several Fat, Nutritious Local Grubs","descriptor":null,"dagger":false,"tags":[] }
+    ]
+  }
+  </script>
+
+  <script>
+    (function initPack(){
+      const raw = document.getElementById('foods-data').textContent.trim();
+      /** @type {{items:any[]}} */
+      const data = JSON.parse(raw);
+
+      // Derive tags from descriptor/name (non-destructive)
+      data.items.forEach(it => {
+        const tags = new Set(Array.isArray(it.tags) ? it.tags : []);
+        const d = (it.descriptor || '').toLowerCase();
+
+        function add(s){ if(s) tags.add(s); }
+
+        // From descriptors
+        if (d.includes('seaweed')) add('seaweed');
+        if (d.includes('leafy')) add('leafy-vegetable');
+        if (d.includes('tree fruit')) add('tree-fruit');
+        if (d.includes('bush fruit')) add('bush-fruit');
+        if (d.includes('bush berries') || d.includes('bush berry')) add('bush-fruit');
+        if (d.includes('cactus')) add('cactus');
+        if (d.includes('moss')) add('moss');
+        if (d.includes('succulent')) add('succulent');
+        if (d.includes('young ferns')) add('young-ferns');
+        if (d.includes('near water')) add('wetland');
+
+        // From names
+        const n = it.name.toLowerCase();
+        if (/\bmushroom(s)?\b/.test(n)) add('mushroom');
+        if (/\begg(s)?\b/.test(n)) add('egg');
+        if (/\bcrab(s)?\b/.test(n)) add('crustacean');
+        if (/\bshrimp\b/.test(n)) add('crustacean');
+        if (/\bsnail(s)?\b/.test(n)) add('snail');
+        if (/\bclam(s)?\b/.test(n) || /\boyster(s)?\b/.test(n) || /\bmussel(s)?\b/.test(n)) add('shellfish');
+        if (/\bcatfish\b|\bsalmon\b|\bfish\b/.test(n)) add('fish');
+        if (/\bberry\b|\bberries\b/.test(n)) add('berry');
+        if (/\bnut(s)?\b/.test(n)) add('nut');
+        if (/\broot\b/.test(n)) add('root');
+        if (/\bwalnut(s)?\b|\bpecan(s)?\b|\bchestnut(s)?\b|\bgingko\b/.test(n)) add('nut');
+
+        it.tags = Array.from(tags);
+      });
+
+      // Expose helpers
+      window.FoodsDataPack = {
+        version: data.version || '1.0.0',
+        items: data.items.slice(),
+        getAll(){ return data.items.slice(); },
+        byEnv(env){ return data.items.filter(x => x.environment === env); },
+        bySeason(season){ return data.items.filter(x => x.season === season); },
+        findByName(q){
+          const needle = (q||'').trim().toLowerCase();
+          return data.items.filter(x =>
+            x.name.toLowerCase().includes(needle) ||
+            (x.descriptor||'').toLowerCase().includes(needle) ||
+            (x.tags||[]).some(t => t.includes(needle))
+          );
+        },
+        random(filter={}){
+          let pool = data.items;
+          if (filter.env) pool = pool.filter(x => x.environment === filter.env);
+          if (filter.season) pool = pool.filter(x => x.season === filter.season);
+          if (filter.tag) pool = pool.filter(x => (x.tags||[]).includes(filter.tag));
+          if (filter.daggerOnly) pool = pool.filter(x => !!x.dagger);
+          if (!pool.length) return null;
+          return pool[Math.floor(Math.random() * pool.length)];
+        }
+      };
+
+      // Viewer wiring
+      const rows = document.getElementById('rows');
+      const qEl   = document.getElementById('q');
+      const envEl = document.getElementById('env');
+      const seasonEl = document.getElementById('season');
+      const daggerOnlyEl = document.getElementById('daggerOnly');
+      const count = document.getElementById('count');
+      const empty = document.getElementById('empty');
+      const reset = document.getElementById('reset');
+      const exportBtn = document.getElementById('export');
+      const ths = Array.from(document.querySelectorAll('th.sortable'));
+
+      let view = data.items.slice();
+      let sortKey = 'environment';
+      let sortDir = 'asc';
+
+      function applyFilters(){
+        const q = (qEl.value||'').trim().toLowerCase();
+        const env = envEl.value;
+        const season = seasonEl.value;
+        const daggerOnly = daggerOnlyEl.checked;
+
+        view = data.items.filter(it => {
+          if (env && it.environment !== env) return false;
+          if (season && it.season !== season) return false;
+          if (daggerOnly && !it.dagger) return false;
+          if (q){
+            const hay = [
+              it.name,
+              it.descriptor || '',
+              ...(it.tags||[])
+            ].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+        applySort(); render();
+      }
+
+      function applySort(){
+        const dir = sortDir === 'asc' ? 1 : -1;
+        view.sort((a,b) => {
+          let av = a[sortKey], bv = b[sortKey];
+          // custom season ordering
+          const order = { 'Spring':1,'Summer':2,'Fall':3,'Winter':4,'Any':5 };
+          if (sortKey === 'season'){ av = order[av] || 99; bv = order[bv] || 99; }
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+          return String(av).localeCompare(String(bv)) * dir;
+        });
+      }
+
+      function render(){
+        rows.innerHTML = '';
+        view.forEach(it => {
+          const tr = document.createElement('tr');
+          const tags = (it.tags||[]).map(t => `<span class="badge" style="margin-right:6px">${t}</span>`).join(' ');
+          tr.innerHTML = `
+            <td><span class="env">${it.environment}</span></td>
+            <td>${it.season}</td>
+            <td>${it.index ?? ''}</td>
+            <td>${it.name}</td>
+            <td>${it.descriptor || ''}</td>
+            <td>${tags}</td>
+            <td>${it.dagger ? '†' : ''}</td>
+          `;
+          rows.appendChild(tr);
+        });
+        empty.classList.toggle('hidden', view.length !== 0);
+        count.textContent = `${view.length}/${data.items.length}`;
+      }
+
+      function setSort(key){
+        if (sortKey === key){
+          sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
+        } else {
+          sortKey = key; sortDir = 'asc';
+        }
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        const active = ths.find(th => th.dataset.key === sortKey);
+        if (active) active.dataset.dir = sortDir;
+        applySort(); render();
+      }
+
+      // Events
+      qEl.addEventListener('input', applyFilters);
+      envEl.addEventListener('change', applyFilters);
+      seasonEl.addEventListener('change', applyFilters);
+      daggerOnlyEl.addEventListener('change', applyFilters);
+      reset.addEventListener('click', () => {
+        qEl.value = ''; envEl.value = ''; seasonEl.value = ''; daggerOnlyEl.checked = false;
+        sortKey = 'environment'; sortDir = 'asc';
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        applyFilters();
+      });
+      ths.forEach(th => th.addEventListener('click', () => setSort(th.dataset.key)));
+
+      exportBtn.addEventListener('click', () => {
+        const payload = { pack: 'foods', version: data.version || '1.0.0', items: data.items };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'foods.json';
+        document.body.appendChild(a); a.click();
+        URL.revokeObjectURL(url); a.remove();
+      });
+
+      // Init
+      setSort('environment');
+      applyFilters();
+    })();
+  </script>
+</body>
+</html>

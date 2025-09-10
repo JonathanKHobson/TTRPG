@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Herbs Data Pack</title>
+  <!--
+    Herbs Data Pack (HTML)
+    ---------------------------------------------
+    Load elsewhere (same-origin):
+      fetch('herbs.html').then(r => r.text()).then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const json = JSON.parse(doc.querySelector('#herbs-data').textContent);
+        console.log(json.items);
+      });
+
+    Global helpers available in-page:
+      window.HerbsDataPack = {
+        version, items,
+        getAll(), byEnv(env), byRarity(rarity), find(q),
+        random({ env, d20 }?)  // if d20 omitted, one is rolled
+      }
+
+    Rarity mapping (derived from roll range):
+      1–5: Common   | 6–10: Uncommon | 11–15: Rare | 16–20: Very Rare
+  -->
+  <style>
+    :root{
+      --paper-0:#fbf6e9; --paper-1:#f3ead4; --paper-2:#e6d7bb;
+      --ink:#111; --ink-soft:rgba(0,0,0,.65); --ink-red:#7a1f1f;
+      --ring:#d9c9a7; --ring-2:#d7c6a1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(rgba(0,0,0,.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1100px;margin:0 auto;padding:40px 16px 84px}
+    .paper{background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));backdrop-filter:blur(.3px)}
+    .round{border-radius:16px}
+    .shadow{box-shadow:0 10px 30px rgba(0,0,0,.10)}
+    .ring{border:1px solid var(--ring)}
+
+    header.card{position:relative;overflow:hidden}
+    header.card .burn:before, header.card .burn:after{
+      content:"";position:absolute;border-radius:999px;filter:blur(28px);opacity:.12;mix-blend-mode:multiply;pointer-events:none
+    }
+    header.card .burn:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card .burn:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+
+    h1{margin:0;font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;font-weight:700;color:var(--ink-red)}
+    .sub{color:var(--ink-soft)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+    .input,.select{padding:10px 12px;border:1px solid var(--ring-2);border-radius:12px;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);outline:0}
+    .btn{border:1px solid var(--ring-2);background:linear-gradient(180deg, var(--paper-0), var(--paper-1));padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.02)}
+    .count{font-size:12px;color:var(--ink-soft);margin-left:auto}
+    .check{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+
+    .table-wrap{margin-top:16px;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:linear-gradient(180deg, var(--paper-0), var(--paper-1));border:1px solid var(--ring);border-radius:16px;overflow:hidden}
+    thead th{position:sticky;top:0;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);text-align:left;padding:10px 12px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--ring)}
+    tbody td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.05)}
+    tbody tr:hover{background:rgba(0,0,0,.035)}
+    th.sortable{cursor:pointer}
+    th.sortable::after{content:" ↕";opacity:.5}
+    th.sortable[data-dir="asc"]::after{content:" ↑"}
+    th.sortable[data-dir="desc"]::after{content:" ↓"}
+
+    .badge{display:inline-block;border:1px solid var(--ring-2);border-radius:999px;padding:4px 8px;font:700 10px/1 system-ui;text-transform:uppercase;letter-spacing:.04em;background:#f3ead4;color:color-mix(in oklab, var(--ink-red) 90%, black 10%)}
+    .env{font-weight:600}
+    .muted{color:var(--ink-soft);font-size:14px}
+
+    .foot{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .small{font-size:12px;color:var(--ink-soft)}
+    .hidden{display:none!important}
+
+    .roll-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    .roll-out{font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card paper round shadow ring">
+      <div class="burn" aria-hidden="true"></div>
+      <div style="padding:24px">
+        <h1 style="font-size:clamp(28px,3vw,38px)">Herbs Data Pack</h1>
+        <p class="sub" style="margin:.25rem 0 0">
+          Roll-table entries by environment. Lists go from <em>Common</em> to <em>Very Rare</em> (based on roll ranges).
+        </p>
+
+        <div class="controls">
+          <input id="q" class="input" type="search" placeholder="Search name or tag…" aria-label="Search" />
+          <select id="env" class="select" aria-label="Filter by environment">
+            <option value="">All environments</option>
+            <option>Forest/Woodlands</option>
+            <option>Tropical/Jungle</option>
+            <option>Mountains/Steppes</option>
+            <option>Cave/Subterranean</option>
+            <option>Water/Coastal</option>
+            <option>Swamps/Wetlands</option>
+            <option>Plains/Hills</option>
+            <option>Arid/Deserts</option>
+            <option>Tundra/Arctic</option>
+            <option>Wasteland/Corruptland</option>
+            <option>Ethereal Limbo</option>
+            <option>Astral Window</option>
+            <option>Fey Plane</option>
+            <option>UnderDark</option>
+          </select>
+          <select id="rarity" class="select" aria-label="Filter by rarity">
+            <option value="">All rarity</option>
+            <option>Common</option>
+            <option>Uncommon</option>
+            <option>Rare</option>
+            <option>Very Rare</option>
+          </select>
+          <label class="check"><input id="daggerOnly" type="checkbox" /> Show † only</label>
+          <button id="reset" class="btn" type="button">Reset</button>
+          <button id="export" class="btn" type="button" title="Download herbs.json">Export JSON</button>
+          <span id="count" class="count" aria-live="polite"></span>
+        </div>
+
+        <div class="roll-bar">
+          <select id="rollEnv" class="select" aria-label="Roll environment">
+            <option value="">Choose environment for 1d20 roll…</option>
+            <option>Forest/Woodlands</option>
+            <option>Tropical/Jungle</option>
+            <option>Mountains/Steppes</option>
+            <option>Cave/Subterranean</option>
+            <option>Water/Coastal</option>
+            <option>Swamps/Wetlands</option>
+            <option>Plains/Hills</option>
+            <option>Arid/Deserts</option>
+            <option>Tundra/Arctic</option>
+            <option>Wasteland/Corruptland</option>
+            <option>Ethereal Limbo</option>
+            <option>Astral Window</option>
+            <option>Fey Plane</option>
+            <option>UnderDark</option>
+          </select>
+          <button id="rollBtn" class="btn" type="button">Roll 1d20</button>
+          <span id="rollOut" class="roll-out"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="table-wrap">
+      <table aria-describedby="count">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="environment">Environment</th>
+            <th class="sortable" data-key="range" style="width:110px">Roll</th>
+            <th class="sortable" data-key="name">Name</th>
+            <th class="sortable" data-key="rarity" style="width:120px">Rarity</th>
+            <th>Tags</th>
+            <th class="sortable" data-key="dagger" style="width:70px">†</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <p id="empty" class="muted hidden" style="padding:14px">No results match that filter.</p>
+
+      <div class="foot">
+        <span class="small">Source: Heron’s Manual – Volume 1: Pursuing Activities (user-provided).</span>
+        <span class="small">Version: <code>1.0.0</code></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Canonical dataset -->
+  <script type="application/json" id="herbs-data">
+  {
+    "pack": "herbs",
+    "version": "1.0.0",
+    "schema": "herbs.schema.v1 (informal)",
+    "fields": ["uid","environment","rollMin","rollMax","range","name","dagger","rarity","tags","note"],
+    "annams_finger_roll": [
+      { "roll": "1-2", "color": "Brown Berries", "giant": "hill giant" },
+      { "roll": "3",   "color": "Grey Berries",  "giant": "frost/stone giant" },
+      { "roll": "4",   "color": "Red Berries",   "giant": "fire giant" },
+      { "roll": "5",   "color": "White Berries", "giant": "cloud giant" },
+      { "roll": "6",   "color": "Violet Berries","giant": "storm giant" }
+    ],
+    "items": [
+      /* Forest/Woodlands */
+      { "uid":"forest-1-5-yarrow-flowers","environment":"Forest/Woodlands","rollMin":1,"rollMax":5,"range":"1-5","name":"Yarrow Flowers","dagger":false },
+      { "uid":"forest-6-10-twilight-wormwood","environment":"Forest/Woodlands","rollMin":6,"rollMax":10,"range":"6-10","name":"Twilight Wormwood","dagger":false },
+      { "uid":"forest-11-15-drojos-ivy","environment":"Forest/Woodlands","rollMin":11,"rollMax":15,"range":"11-15","name":"Drojos Ivy","dagger":false },
+      { "uid":"forest-16-ellond-scrub","environment":"Forest/Woodlands","rollMin":16,"rollMax":16,"range":"16","name":"Ellond Scrub","dagger":false },
+      { "uid":"forest-17-blood-herb","environment":"Forest/Woodlands","rollMin":17,"rollMax":17,"range":"17","name":"Blood Herb","dagger":false },
+      { "uid":"forest-18-black-ivy","environment":"Forest/Woodlands","rollMin":18,"rollMax":18,"range":"18","name":"Black Ivy","dagger":false },
+      { "uid":"forest-19-thunderleaf","environment":"Forest/Woodlands","rollMin":19,"rollMax":19,"range":"19","name":"Thunderleaf","dagger":false },
+      { "uid":"forest-20-wisp-stems","environment":"Forest/Woodlands","rollMin":20,"rollMax":20,"range":"20","name":"Wisp Stems","dagger":false },
+
+      /* Tropical/Jungle */
+      { "uid":"tropical-1-5-deadly-nightshade","environment":"Tropical/Jungle","rollMin":1,"rollMax":5,"range":"1-5","name":"Deadly Nightshade","dagger":false },
+      { "uid":"tropical-6-10-sandbox-tree","environment":"Tropical/Jungle","rollMin":6,"rollMax":10,"range":"6-10","name":"Sandbox Tree","dagger":false },
+      { "uid":"tropical-11-15-tropical-pitcher","environment":"Tropical/Jungle","rollMin":11,"rollMax":15,"range":"11-15","name":"Tropical Pitcher","dagger":false },
+      { "uid":"tropical-16-sensitive-plant","environment":"Tropical/Jungle","rollMin":16,"rollMax":16,"range":"16","name":"Sensitive Plant","dagger":false },
+      { "uid":"tropical-17-whistling-thorn","environment":"Tropical/Jungle","rollMin":17,"rollMax":17,"range":"17","name":"Whistling Thorn","dagger":false },
+      { "uid":"tropical-18-queen-nius-water-lily","environment":"Tropical/Jungle","rollMin":18,"rollMax":18,"range":"18","name":"Queen Niu's Water Lily","dagger":false },
+      { "uid":"tropical-19-corpse-lily","environment":"Tropical/Jungle","rollMin":19,"rollMax":19,"range":"19","name":"Corpse Lily","dagger":false },
+      { "uid":"tropical-20-corpse-flower","environment":"Tropical/Jungle","rollMin":20,"rollMax":20,"range":"20","name":"Corpse Flower","dagger":false },
+
+      /* Mountains/Steppes */
+      { "uid":"mountains-1-5-drojos-ivy","environment":"Mountains/Steppes","rollMin":1,"rollMax":5,"range":"1-5","name":"Drojos ivy","dagger":false },
+      { "uid":"mountains-6-10-ellond-scrub","environment":"Mountains/Steppes","rollMin":6,"rollMax":10,"range":"6-10","name":"Ellond scrub","dagger":false },
+      { "uid":"mountains-11-15-mandrake-root","environment":"Mountains/Steppes","rollMin":11,"rollMax":15,"range":"11-15","name":"Mandrake root","dagger":false },
+      { "uid":"mountains-16-ash-chives","environment":"Mountains/Steppes","rollMin":16,"rollMax":16,"range":"16","name":"Ash chives","dagger":false },
+      { "uid":"mountains-17-vein-lily","environment":"Mountains/Steppes","rollMin":17,"rollMax":17,"range":"17","name":"Vein Lily","dagger":false },
+      { "uid":"mountains-18-kasuni-juice","environment":"Mountains/Steppes","rollMin":18,"rollMax":18,"range":"18","name":"Kasuni juice","dagger":false },
+      { "uid":"mountains-19-solar-wormwood","environment":"Mountains/Steppes","rollMin":19,"rollMax":19,"range":"19","name":"Solar Wormwood","dagger":false },
+      { "uid":"mountains-20-dragontongue-petals","environment":"Mountains/Steppes","rollMin":20,"rollMax":20,"range":"20","name":"Dragontongue petals","dagger":false },
+
+      /* Cave/Subterranean */
+      { "uid":"cave-1-5-midnight-wormwood","environment":"Cave/Subterranean","rollMin":1,"rollMax":5,"range":"1-5","name":"Midnight Wormwood","dagger":false },
+      { "uid":"cave-6-10-night-herb","environment":"Cave/Subterranean","rollMin":6,"rollMax":10,"range":"6-10","name":"Night Herb","dagger":false },
+      { "uid":"cave-11-15-mandrake-root","environment":"Cave/Subterranean","rollMin":11,"rollMax":15,"range":"11-15","name":"Mandrake Root","dagger":false },
+      { "uid":"cave-16-abyss-flower","environment":"Cave/Subterranean","rollMin":16,"rollMax":16,"range":"16","name":"Abyss Flower","dagger":false },
+      { "uid":"cave-17-night-maize","environment":"Cave/Subterranean","rollMin":17,"rollMax":17,"range":"17","name":"Night Maize","dagger":false },
+      { "uid":"cave-18-kasuni-juice","environment":"Cave/Subterranean","rollMin":18,"rollMax":18,"range":"18","name":"Kasuni Juice","dagger":false },
+      { "uid":"cave-19-lunar-flowers","environment":"Cave/Subterranean","rollMin":19,"rollMax":19,"range":"19","name":"Lunar Flowers","dagger":false },
+      { "uid":"cave-20-blackleaf-rose","environment":"Cave/Subterranean","rollMin":20,"rollMax":20,"range":"20","name":"Blackleaf Rose","dagger":false },
+
+      /* Water/Coastal */
+      { "uid":"coastal-1-5-pun-seaweed","environment":"Water/Coastal","rollMin":1,"rollMax":5,"range":"1-5","name":"Pun Seaweed","dagger":false },
+      { "uid":"coastal-6-10-twilight-wormwood","environment":"Water/Coastal","rollMin":6,"rollMax":10,"range":"6-10","name":"Twilight Wormwood","dagger":false },
+      { "uid":"coastal-11-15-blue-herb","environment":"Water/Coastal","rollMin":11,"rollMax":15,"range":"11-15","name":"Blue Herb","dagger":false },
+      { "uid":"coastal-16-mandrake-root","environment":"Water/Coastal","rollMin":16,"rollMax":16,"range":"16","name":"Mandrake Root","dagger":false },
+      { "uid":"coastal-17-aniseed","environment":"Water/Coastal","rollMin":17,"rollMax":17,"range":"17","name":"Aniseed","dagger":false },
+      { "uid":"coastal-18-wuggy-moss","environment":"Water/Coastal","rollMin":18,"rollMax":18,"range":"18","name":"Wuggy Moss","dagger":false },
+      { "uid":"coastal-19-kreet-paste","environment":"Water/Coastal","rollMin":19,"rollMax":19,"range":"19","name":"Kreet Paste","dagger":false },
+      { "uid":"coastal-20-chromatic-mud","environment":"Water/Coastal","rollMin":20,"rollMax":20,"range":"20","name":"Chromatic Mud","dagger":false },
+
+      /* Swamps/Wetlands */
+      { "uid":"swamps-1-5-twilight-wormwood","environment":"Swamps/Wetlands","rollMin":1,"rollMax":5,"range":"1-5","name":"Twilight Wormwood","dagger":false },
+      { "uid":"swamps-6-10-blue-herb","environment":"Swamps/Wetlands","rollMin":6,"rollMax":10,"range":"6-10","name":"Blue Herb","dagger":false },
+      { "uid":"swamps-11-15-ucre-bramble","environment":"Swamps/Wetlands","rollMin":11,"rollMax":15,"range":"11-15","name":"Ucre Bramble","dagger":false },
+      { "uid":"swamps-16-frenn-moss","environment":"Swamps/Wetlands","rollMin":16,"rollMax":16,"range":"16","name":"Frenn Moss","dagger":false },
+      { "uid":"swamps-17-gnolls-weed","environment":"Swamps/Wetlands","rollMin":17,"rollMax":17,"range":"17","name":"Gnoll's Weed","dagger":false },
+      { "uid":"swamps-18-ecire-laurel","environment":"Swamps/Wetlands","rollMin":18,"rollMax":18,"range":"18","name":"Ecire Laurel","dagger":false },
+      { "uid":"swamps-19-spineflower-berry","environment":"Swamps/Wetlands","rollMin":19,"rollMax":19,"range":"19","name":"Spineflower Berry","dagger":false },
+      { "uid":"swamps-20-death-root","environment":"Swamps/Wetlands","rollMin":20,"rollMax":20,"range":"20","name":"Death Root","dagger":false },
+
+      /* Plains/Hills */
+      { "uid":"plains-1-5-yarrow-flowers","environment":"Plains/Hills","rollMin":1,"rollMax":5,"range":"1-5","name":"Yarrow Flowers","dagger":false },
+      { "uid":"plains-6-10-ellond-scrub","environment":"Plains/Hills","rollMin":6,"rollMax":10,"range":"6-10","name":"Ellond Scrub","dagger":false },
+      { "uid":"plains-11-15-ucre-bramble","environment":"Plains/Hills","rollMin":11,"rollMax":15,"range":"11-15","name":"Ucre Bramble","dagger":false },
+      { "uid":"plains-16-mandrake-root","environment":"Plains/Hills","rollMin":16,"rollMax":16,"range":"16","name":"Mandrake Root","dagger":false },
+      { "uid":"plains-17-aniseed-sap","environment":"Plains/Hills","rollMin":17,"rollMax":17,"range":"17","name":"Aniseed Sap","dagger":false },
+      { "uid":"plains-18-blood-tree-sap","environment":"Plains/Hills","rollMin":18,"rollMax":18,"range":"18","name":"Blood Tree Sap","dagger":false },
+      { "uid":"plains-19-lunar-flower","environment":"Plains/Hills","rollMin":19,"rollMax":19,"range":"19","name":"Lunar Flower","dagger":false },
+      { "uid":"plains-20-dragontongue-petal-flower","environment":"Plains/Hills","rollMin":20,"rollMax":20,"range":"20","name":"Dragontongue Petal (Flower)","dagger":false },
+
+      /* Arid/Deserts */
+      { "uid":"desert-1-5-drojos-cacti","environment":"Arid/Deserts","rollMin":1,"rollMax":5,"range":"1-5","name":"Drojos Cacti","dagger":false },
+      { "uid":"desert-6-10-blood-thistle","environment":"Arid/Deserts","rollMin":6,"rollMax":10,"range":"6-10","name":"Blood Thistle","dagger":false },
+      { "uid":"desert-11-15-eucalyptus","environment":"Arid/Deserts","rollMin":11,"rollMax":15,"range":"11-15","name":"Eucalyptus","dagger":false },
+      { "uid":"desert-16-needle-flower","environment":"Arid/Deserts","rollMin":16,"rollMax":16,"range":"16","name":"Needle Flower","dagger":false },
+      { "uid":"desert-17-dried-ephedra","environment":"Arid/Deserts","rollMin":17,"rollMax":17,"range":"17","name":"Dried Ephedra","dagger":false },
+      { "uid":"desert-18-nug-fungus","environment":"Arid/Deserts","rollMin":18,"rollMax":18,"range":"18","name":"Nug Fungus","dagger":false },
+      { "uid":"desert-19-olina-petals","environment":"Arid/Deserts","rollMin":19,"rollMax":19,"range":"19","name":"Olina Petals","dagger":false },
+      { "uid":"desert-20-ebrium-fungus","environment":"Arid/Deserts","rollMin":20,"rollMax":20,"range":"20","name":"Ebrium Fungus","dagger":false },
+
+      /* Tundra/Arctic */
+      { "uid":"tundra-1-5-ice-herb","environment":"Tundra/Arctic","rollMin":1,"rollMax":5,"range":"1-5","name":"Ice Herb","dagger":false },
+      { "uid":"tundra-6-10-drojos-ivy","environment":"Tundra/Arctic","rollMin":6,"rollMax":10,"range":"6-10","name":"Drojos Ivy","dagger":false },
+      { "uid":"tundra-11-15-water-scrub","environment":"Tundra/Arctic","rollMin":11,"rollMax":15,"range":"11-15","name":"Water Scrub","dagger":false },
+      { "uid":"tundra-16-white-poppy","environment":"Tundra/Arctic","rollMin":16,"rollMax":16,"range":"16","name":"White Poppy","dagger":false },
+      { "uid":"tundra-17-taggit-bloom","environment":"Tundra/Arctic","rollMin":17,"rollMax":17,"range":"17","name":"Taggit Bloom","dagger":false },
+      { "uid":"tundra-18-kreet-paste","environment":"Tundra/Arctic","rollMin":18,"rollMax":18,"range":"18","name":"Kreet Paste","dagger":false },
+      { "uid":"tundra-19-angel-bloom","environment":"Tundra/Arctic","rollMin":19,"rollMax":19,"range":"19","name":"Angel Bloom","dagger":false },
+      { "uid":"tundra-20-lee-paste","environment":"Tundra/Arctic","rollMin":20,"rollMax":20,"range":"20","name":"Lee Paste","dagger":false },
+
+      /* Wasteland/Corruptland */
+      { "uid":"wasteland-1-5-deadly-nightshade","environment":"Wasteland/Corruptland","rollMin":1,"rollMax":5,"range":"1-5","name":"Deadly Nightshade","dagger":false },
+      { "uid":"wasteland-6-10-abyss-flower","environment":"Wasteland/Corruptland","rollMin":6,"rollMax":10,"range":"6-10","name":"Abyss Flower","dagger":false },
+      { "uid":"wasteland-11-15-night-maize","environment":"Wasteland/Corruptland","rollMin":11,"rollMax":15,"range":"11-15","name":"Night Maize","dagger":false },
+      { "uid":"wasteland-16-blackleaf-rose","environment":"Wasteland/Corruptland","rollMin":16,"rollMax":16,"range":"16","name":"Blackleaf Rose","dagger":false },
+      { "uid":"wasteland-17-death-root","environment":"Wasteland/Corruptland","rollMin":17,"rollMax":17,"range":"17","name":"Death Root","dagger":false },
+      { "uid":"wasteland-18-corpse-flower","environment":"Wasteland/Corruptland","rollMin":18,"rollMax":18,"range":"18","name":"Corpse Flower","dagger":false },
+      { "uid":"wasteland-19-hell-bloom","environment":"Wasteland/Corruptland","rollMin":19,"rollMax":19,"range":"19","name":"Hell Bloom","dagger":false },
+      { "uid":"wasteland-20-frighting-woodrose","environment":"Wasteland/Corruptland","rollMin":20,"rollMax":20,"range":"20","name":"Frighting Woodrose","dagger":false },
+
+      /* Ethereal Limbo († special roll on Annam's Finger) */
+      { "uid":"ethereal-1-2-viping-vitalis","environment":"Ethereal Limbo","rollMin":1,"rollMax":2,"range":"1-2","name":"Viping Vitalis","dagger":false },
+      { "uid":"ethereal-3-4-kirins-fang","environment":"Ethereal Limbo","rollMin":3,"rollMax":4,"range":"3-4","name":"Kirin's Fang","dagger":false },
+      { "uid":"ethereal-5-6-nightcall-bloom","environment":"Ethereal Limbo","rollMin":5,"rollMax":6,"range":"5-6","name":"Nightcall Bloom","dagger":false },
+      { "uid":"ethereal-7-8-xeni-leaves","environment":"Ethereal Limbo","rollMin":7,"rollMax":8,"range":"7-8","name":"Xeni Leaves","dagger":false },
+      { "uid":"ethereal-9-olus-veritis","environment":"Ethereal Limbo","rollMin":9,"rollMax":9,"range":"9","name":"Olus Veritis","dagger":false },
+      { "uid":"ethereal-10-ghost-blossom","environment":"Ethereal Limbo","rollMin":10,"rollMax":10,"range":"10","name":"Ghost Blossom","dagger":false },
+      { "uid":"ethereal-11-spriteball-petals","environment":"Ethereal Limbo","rollMin":11,"rollMax":11,"range":"11","name":"Spriteball Petals","dagger":false },
+      { "uid":"ethereal-12-mother-tulip","environment":"Ethereal Limbo","rollMin":12,"rollMax":12,"range":"12","name":"Mother Tulip","dagger":false },
+      { "uid":"ethereal-13-lamurma-bell","environment":"Ethereal Limbo","rollMin":13,"rollMax":13,"range":"13","name":"Lamurma Bell","dagger":false },
+      { "uid":"ethereal-14-nightmare-root","environment":"Ethereal Limbo","rollMin":14,"rollMax":14,"range":"14","name":"Nightmare Root","dagger":false },
+      { "uid":"ethereal-15-ironhand","environment":"Ethereal Limbo","rollMin":15,"rollMax":15,"range":"15","name":"Ironhand","dagger":false },
+      { "uid":"ethereal-16-silverstem","environment":"Ethereal Limbo","rollMin":16,"rollMax":16,"range":"16","name":"Silverstem","dagger":false },
+      { "uid":"ethereal-17-annams-finger","environment":"Ethereal Limbo","rollMin":17,"rollMax":17,"range":"17","name":"Annam's Finger","dagger":true, "note":"See annams_finger_roll table for berry strength outcomes." },
+      { "uid":"ethereal-18-tensers-thorn","environment":"Ethereal Limbo","rollMin":18,"rollMax":18,"range":"18","name":"Tenser's Thorn","dagger":false },
+      { "uid":"ethereal-19-pargen-vine","environment":"Ethereal Limbo","rollMin":19,"rollMax":19,"range":"19","name":"Pargen Vine","dagger":false },
+      { "uid":"ethereal-20-black-lotus","environment":"Ethereal Limbo","rollMin":20,"rollMax":20,"range":"20","name":"Black Lotus","dagger":false },
+
+      /* Astral Window */
+      { "uid":"astral-1-2-sukebind","environment":"Astral Window","rollMin":1,"rollMax":2,"range":"1-2","name":"Sukebind","dagger":false },
+      { "uid":"astral-3-4-aeglos","environment":"Astral Window","rollMin":3,"rollMax":4,"range":"3-4","name":"Aeglos","dagger":false },
+      { "uid":"astral-5-6-athelas","environment":"Astral Window","rollMin":5,"rollMax":6,"range":"5-6","name":"Athelas","dagger":false },
+      { "uid":"astral-7-8-elanor","environment":"Astral Window","rollMin":7,"rollMax":8,"range":"7-8","name":"Elanor","dagger":false },
+      { "uid":"astral-9-mallorn","environment":"Astral Window","rollMin":9,"rollMax":9,"range":"9","name":"Mallorn","dagger":false },
+      { "uid":"astral-10-pipe-weed","environment":"Astral Window","rollMin":10,"rollMax":10,"range":"10","name":"Pipe-weed","dagger":false },
+      { "uid":"astral-11-ololaire","environment":"Astral Window","rollMin":11,"rollMax":11,"range":"11","name":"Ololaire","dagger":false },
+      { "uid":"astral-12-simbelmyne","environment":"Astral Window","rollMin":12,"rollMax":12,"range":"12","name":"Simbelmyne","dagger":false },
+      { "uid":"astral-13-valinor-tree","environment":"Astral Window","rollMin":13,"rollMax":13,"range":"13","name":"Valinor Tree","dagger":false },
+      { "uid":"astral-14-gillyweed","environment":"Astral Window","rollMin":14,"rollMax":14,"range":"14","name":"Gillyweed","dagger":false },
+      { "uid":"astral-15-knobweed","environment":"Astral Window","rollMin":15,"rollMax":15,"range":"15","name":"Knobweed","dagger":false },
+      { "uid":"astral-16-firemoss","environment":"Astral Window","rollMin":16,"rollMax":16,"range":"16","name":"Firemoss","dagger":false },
+      { "uid":"astral-17-tears-of-edgll","environment":"Astral Window","rollMin":17,"rollMax":17,"range":"17","name":"Tears of Edgll","dagger":false },
+      { "uid":"astral-18-dorim-vine","environment":"Astral Window","rollMin":18,"rollMax":18,"range":"18","name":"Dorim Vine","dagger":false },
+      { "uid":"astral-19-phantom-fungus","environment":"Astral Window","rollMin":19,"rollMax":19,"range":"19","name":"Phantom Fungus","dagger":false },
+      { "uid":"astral-20-angolan-sauntering-tree","environment":"Astral Window","rollMin":20,"rollMax":20,"range":"20","name":"Angolan Sauntering Tree","dagger":false },
+
+      /* Fey Plane */
+      { "uid":"fey-1-aelfengrape","environment":"Fey Plane","rollMin":1,"rollMax":1,"range":"1","name":"Aelfengrape","dagger":false },
+      { "uid":"fey-2-coldwood","environment":"Fey Plane","rollMin":2,"rollMax":2,"range":"2","name":"Coldwood","dagger":false },
+      { "uid":"fey-3-djinn-blossom","environment":"Fey Plane","rollMin":3,"rollMax":3,"range":"3","name":"Djinn Blossom","dagger":false },
+      { "uid":"fey-4-fey-cherry","environment":"Fey Plane","rollMin":4,"rollMax":4,"range":"4","name":"Fey Cherry","dagger":false },
+      { "uid":"fey-5-singing-tubes","environment":"Fey Plane","rollMin":5,"rollMax":5,"range":"5","name":"Singing Tubes","dagger":false },
+      { "uid":"fey-6-wilting-dancer","environment":"Fey Plane","rollMin":6,"rollMax":6,"range":"6","name":"Wilting Dancer","dagger":false },
+      { "uid":"fey-7-fly-fish-fruit","environment":"Fey Plane","rollMin":7,"rollMax":7,"range":"7","name":"Fly Fish Fruit","dagger":false },
+      { "uid":"fey-8-moondew","environment":"Fey Plane","rollMin":8,"rollMax":8,"range":"8","name":"Moondew","dagger":false },
+      { "uid":"fey-9-flame-clove","environment":"Fey Plane","rollMin":9,"rollMax":9,"range":"9","name":"Flame Clove","dagger":false },
+      { "uid":"fey-10-clowvine","environment":"Fey Plane","rollMin":10,"rollMax":10,"range":"10","name":"Clowvine","dagger":false },
+      { "uid":"fey-11-lakeleaf","environment":"Fey Plane","rollMin":11,"rollMax":11,"range":"11","name":"Lakeleaf","dagger":false },
+      { "uid":"fey-12-lichbriar","environment":"Fey Plane","rollMin":12,"rollMax":12,"range":"12","name":"Lichbriar","dagger":false },
+      { "uid":"fey-13-mahre","environment":"Fey Plane","rollMin":13,"rollMax":13,"range":"13","name":"Mahre","dagger":false },
+      { "uid":"fey-14-orevine","environment":"Fey Plane","rollMin":14,"rollMax":14,"range":"14","name":"Orevine","dagger":false },
+      { "uid":"fey-15-salamander-orchid","environment":"Fey Plane","rollMin":15,"rollMax":15,"range":"15","name":"Salamander Orchid","dagger":false },
+      { "uid":"fey-16-tahtoalehti","environment":"Fey Plane","rollMin":16,"rollMax":16,"range":"16","name":"Tahtoalehti","dagger":false },
+      { "uid":"fey-17-glee-fur","environment":"Fey Plane","rollMin":17,"rollMax":17,"range":"17","name":"Glee Fur","dagger":false },
+      { "uid":"fey-18-sentient-grass","environment":"Fey Plane","rollMin":18,"rollMax":18,"range":"18","name":"Sentient Grass","dagger":false },
+      { "uid":"fey-19-dragon-ice-fruit","environment":"Fey Plane","rollMin":19,"rollMax":19,"range":"19","name":"Dragon Ice Fruit","dagger":false },
+      { "uid":"fey-20-giganteus-dandelo","environment":"Fey Plane","rollMin":20,"rollMax":20,"range":"20","name":"Giganteus Dandelo","dagger":false },
+
+      /* UnderDark */
+      { "uid":"underdark-1-faerzress","environment":"UnderDark","rollMin":1,"rollMax":1,"range":"1","name":"Faerzress","dagger":false },
+      { "uid":"underdark-2-barrelstalk","environment":"UnderDark","rollMin":2,"rollMax":2,"range":"2","name":"Barrelstalk","dagger":false },
+      { "uid":"underdark-3-bulbfruit","environment":"UnderDark","rollMin":3,"rollMax":3,"range":"3","name":"Bulbfruit","dagger":false },
+      { "uid":"underdark-4-bluecap","environment":"UnderDark","rollMin":4,"rollMax":4,"range":"4","name":"Bluecap","dagger":false },
+      { "uid":"underdark-5-ripplebark","environment":"UnderDark","rollMin":5,"rollMax":5,"range":"5","name":"Ripplebark","dagger":false },
+      { "uid":"underdark-6-shrieker","environment":"UnderDark","rollMin":6,"rollMax":6,"range":"6","name":"Shrieker","dagger":false },
+      { "uid":"underdark-7-violet-mushroom","environment":"UnderDark","rollMin":7,"rollMax":7,"range":"7","name":"Violet Mushroom","dagger":false },
+      { "uid":"underdark-8-violet-fungi","environment":"UnderDark","rollMin":8,"rollMax":8,"range":"8","name":"Violet Fungi","dagger":false },
+      { "uid":"underdark-9-funguswood-or-zurkhwood","environment":"UnderDark","rollMin":9,"rollMax":9,"range":"9","name":"Funguswood or \"Zurkhwood\"","dagger":false },
+      { "uid":"underdark-10-gourdplant","environment":"UnderDark","rollMin":10,"rollMax":10,"range":"10","name":"Gourdplant","dagger":false },
+      { "uid":"underdark-11-kelpie","environment":"UnderDark","rollMin":11,"rollMax":11,"range":"11","name":"Kelpie","dagger":false },
+      { "uid":"underdark-12-lichen","environment":"UnderDark","rollMin":12,"rollMax":12,"range":"12","name":"Lichen","dagger":false },
+      { "uid":"underdark-13-fire-lichen","environment":"UnderDark","rollMin":13,"rollMax":13,"range":"13","name":"Fire Lichen","dagger":false },
+      { "uid":"underdark-14-wisp-lichen","environment":"UnderDark","rollMin":14,"rollMax":14,"range":"14","name":"Wisp Lichen","dagger":false },
+      { "uid":"underdark-15-luurden","environment":"UnderDark","rollMin":15,"rollMax":15,"range":"15","name":"Luurden","dagger":false },
+      { "uid":"underdark-16-yellow-and-brown-mold","environment":"UnderDark","rollMin":16,"rollMax":16,"range":"16","name":"Yellow and Brown Mold","dagger":false },
+      { "uid":"underdark-17-russet-mold","environment":"UnderDark","rollMin":17,"rollMax":17,"range":"17","name":"Russet Mold","dagger":false },
+      { "uid":"underdark-18-darkreeds","environment":"UnderDark","rollMin":18,"rollMax":18,"range":"18","name":"Darkreeds","dagger":false },
+      { "uid":"underdark-19-obliviax-memory-moss","environment":"UnderDark","rollMin":19,"rollMax":19,"range":"19","name":"Obliviax (memory moss)","dagger":false },
+      { "uid":"underdark-20-waterorbs","environment":"UnderDark","rollMin":20,"rollMax":20,"range":"20","name":"Waterorbs","dagger":false }
+    ]
+  }
+  </script>
+
+  <script>
+    (function initPack(){
+      const raw = document.getElementById('herbs-data').textContent.trim();
+      /** @type {{items:any[], annams_finger_roll:any[], version:string}} */
+      const data = JSON.parse(raw);
+
+      // Derive rarity & tags
+      data.items.forEach(it => {
+        // rarity
+        const min = +it.rollMin, max = +it.rollMax;
+        const bucket = (min >= 1 && max <= 5) ? 'Common'
+                    : (min >= 6 && max <= 10) ? 'Uncommon'
+                    : (min >= 11 && max <= 15) ? 'Rare'
+                    : 'Very Rare';
+        it.rarity = bucket;
+
+        // tags from name
+        const tags = new Set();
+        const n = (it.name || '').toLowerCase();
+        function add(t){ if(t) tags.add(t); }
+        if (/\bseaweed\b/.test(n)) add('seaweed');
+        if (/\bfungus\b|fungi\b|mold\b|mushroom\b/.test(n)) add('fungus');
+        if (/\blichen\b/.test(n)) add('lichen');
+        if (/\bmoss\b/.test(n)) add('moss');
+        if (/\bberry\b|berries\b/.test(n)) add('berry');
+        if (/\bbloom\b/.test(n)) add('bloom');
+        if (/\bflower\b/.test(n)) add('flower');
+        if (/\brose\b/.test(n)) add('flower');
+        if (/\bpoppy\b/.test(n)) add('flower');
+        if (/\bpetal\b|petals\b/.test(n)) add('petal');
+        if (/\bvine\b/.test(n)) add('vine');
+        if (/\broot\b/.test(n)) add('root');
+        if (/\bjuice\b|paste\b|mud\b/.test(n)) add('extract');
+        if (/\bseed\b|seeds\b/.test(n)) add('seed');
+        if (/\bwood\b|tree\b/.test(n)) add('woody');
+        if (/\bcacti\b|cactus\b|thorn\b|needle\b/.test(n)) add('spined');
+        if (/\bkelpie\b|waterorbs\b|chromatic mud\b/.test(n)) add('aquatic');
+        // environment hints
+        if (/coastal|water/.test((it.environment||'').toLowerCase())) add('aquatic');
+        it.tags = Array.from(tags);
+      });
+
+      // Expose helpers
+      window.HerbsDataPack = {
+        version: data.version || '1.0.0',
+        items: data.items.slice(),
+        annams_finger_roll: data.annams_finger_roll,
+        getAll(){ return data.items.slice(); },
+        byEnv(env){ return data.items.filter(x => x.environment === env); },
+        byRarity(r){ return data.items.filter(x => x.rarity === r); },
+        find(q){
+          const needle = (q||'').trim().toLowerCase();
+          return data.items.filter(x =>
+            x.name.toLowerCase().includes(needle) ||
+            (x.tags||[]).some(t => t.includes(needle))
+          );
+        },
+        random(opts={}){
+          const env = opts.env;
+          let d20 = opts.d20 ?? (1 + Math.floor(Math.random() * 20));
+          let pool = env ? data.items.filter(x => x.environment === env) : data.items;
+          // choose those whose range includes the roll
+          const hits = pool.filter(x => d20 >= x.rollMin && d20 <= x.rollMax);
+          if (hits.length) return { roll: d20, pick: hits[0] };
+          // fallback: nearest by distance to range
+          const scored = pool.map(x => {
+            const dist = (d20 < x.rollMin) ? (x.rollMin - d20) : (d20 > x.rollMax ? (d20 - x.rollMax) : 0);
+            return { x, dist };
+          }).sort((a,b)=>a.dist-b.dist);
+          return { roll: d20, pick: scored[0]?.x || null };
+        }
+      };
+
+      // Viewer wiring
+      const rows = document.getElementById('rows');
+      const qEl   = document.getElementById('q');
+      const envEl = document.getElementById('env');
+      const rarityEl = document.getElementById('rarity');
+      const daggerOnlyEl = document.getElementById('daggerOnly');
+      const count = document.getElementById('count');
+      const empty = document.getElementById('empty');
+      const reset = document.getElementById('reset');
+      const exportBtn = document.getElementById('export');
+      const ths = Array.from(document.querySelectorAll('th.sortable'));
+
+      const rollEnv = document.getElementById('rollEnv');
+      const rollBtn = document.getElementById('rollBtn');
+      const rollOut = document.getElementById('rollOut');
+
+      let view = data.items.slice();
+      let sortKey = 'environment';
+      let sortDir = 'asc';
+
+      function applyFilters(){
+        const q = (qEl.value||'').trim().toLowerCase();
+        const env = envEl.value;
+        const rarity = rarityEl.value;
+        const daggerOnly = daggerOnlyEl.checked;
+
+        view = data.items.filter(it => {
+          if (env && it.environment !== env) return false;
+          if (rarity && it.rarity !== rarity) return false;
+          if (daggerOnly && !it.dagger) return false;
+          if (q){
+            const hay = [it.name, ...(it.tags||[])].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+        applySort(); render();
+      }
+
+      function applySort(){
+        const dir = sortDir === 'asc' ? 1 : -1;
+        view.sort((a,b) => {
+          let av = a[sortKey], bv = b[sortKey];
+          // custom rarity order
+          const ro = { 'Common':1, 'Uncommon':2, 'Rare':3, 'Very Rare':4 };
+          if (sortKey === 'rarity'){ av = ro[av] || 99; bv = ro[bv] || 99; }
+          if (sortKey === 'range'){
+            const ap = a.rollMin, bp = b.rollMin; return (ap - bp) * dir;
+          }
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+          return String(av).localeCompare(String(bv)) * dir;
+        });
+      }
+
+      function render(){
+        rows.innerHTML = '';
+        view.forEach(it => {
+          const tr = document.createElement('tr');
+          const tags = (it.tags||[]).map(t => `<span class="badge" style="margin-right:6px">${t}</span>`).join(' ');
+          tr.innerHTML = `
+            <td><span class="env">${it.environment}</span></td>
+            <td>${it.range}</td>
+            <td>${it.name}</td>
+            <td><span class="badge">${it.rarity}</span></td>
+            <td>${tags}</td>
+            <td>${it.dagger ? '†' : ''}</td>
+          `;
+          rows.appendChild(tr);
+        });
+        empty.classList.toggle('hidden', view.length !== 0);
+        count.textContent = `${view.length}/${data.items.length}`;
+      }
+
+      function setSort(key){
+        if (sortKey === key){
+          sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
+        } else {
+          sortKey = key; sortDir = 'asc';
+        }
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        const active = ths.find(th => th.dataset.key === sortKey);
+        if (active) active.dataset.dir = sortDir;
+        applySort(); render();
+      }
+
+      // Events
+      qEl.addEventListener('input', applyFilters);
+      envEl.addEventListener('change', applyFilters);
+      rarityEl.addEventListener('change', applyFilters);
+      daggerOnlyEl.addEventListener('change', applyFilters);
+      reset.addEventListener('click', () => {
+        qEl.value = ''; envEl.value = ''; rarityEl.value = ''; daggerOnlyEl.checked = false;
+        sortKey = 'environment'; sortDir = 'asc';
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        applyFilters();
+      });
+      ths.forEach(th => th.addEventListener('click', () => setSort(th.dataset.key)));
+
+      exportBtn.addEventListener('click', () => {
+        const payload = { pack: 'herbs', version: data.version || '1.0.0', annams_finger_roll: data.annams_finger_roll, items: data.items };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'herbs.json';
+        document.body.appendChild(a); a.click();
+        URL.revokeObjectURL(url); a.remove();
+      });
+
+      // Dice roller
+      rollBtn.addEventListener('click', () => {
+        const env = rollEnv.value;
+        if (!env){ rollOut.textContent = 'Choose an environment first.'; return; }
+        const res = window.HerbsDataPack.random({ env });
+        if (!res?.pick){ rollOut.textContent = 'No result.'; return; }
+        let extra = '';
+        if (res.pick.name === "Annam's Finger"){
+          const table = window.HerbsDataPack.annams_finger_roll;
+          extra = ` | † Annam's Finger d6: ${table.map(r=>`${r.roll} ${r.color} (${r.giant})`).join(' · ')}`;
+        }
+        rollOut.textContent = `Rolled ${res.roll}: ${res.pick.name} [${res.pick.range}, ${res.pick.rarity}]${extra}`;
+      });
+
+      // Init
+      setSort('environment');
+      applyFilters();
+    })();
+  </script>
+</body>
+</html>

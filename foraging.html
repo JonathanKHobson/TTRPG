@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Foraging Activity</title>
+  <style>
+    :root{
+      --paper-0:#fbf6e9; --paper-1:#f3ead4; --paper-2:#e6d7bb;
+      --ink:#151515; --ink-soft:#444; --ink-red:#7a1f1f;
+      --ring:#d9c9a7; --ring-2:#d7c6a1; --ok:#2f7d32; --warn:#9b6b00;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(rgba(0,0,0,.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1200px;margin:0 auto;padding:32px 16px 120px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));
+      border:1px solid var(--ring); border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.10)
+    }
+    header.card{padding:18px 16px 12px; position:relative; overflow:hidden}
+    header.card:before, header.card:after{
+      content:""; position:absolute; border-radius:999px; filter:blur(28px);
+      opacity:.12; mix-blend-mode:multiply; pointer-events:none
+    }
+    header.card:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+    h1{margin:0; font-family:ui-serif,Georgia,Cambria,"Times New Roman",Times,serif; font-weight:700; color:var(--ink-red)}
+    .sub{color:var(--ink-soft); margin:.25rem 0 0}
+
+    .layout{display:grid; grid-template-columns:360px 1fr; gap:16px; margin-top:16px}
+    @media (max-width: 1000px){ .layout{grid-template-columns:1fr} }
+
+    .panel{padding:14px}
+    .section-title{font-family:ui-serif,Georgia,serif; color:var(--ink-red); margin:6px 0 10px; font-weight:700}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    label{display:flex; flex-direction:column; gap:6px; font-size:13px}
+    .input,.select,.num,.checkline{padding:10px 12px; border:1px solid var(--ring-2); border-radius:12px; background:color-mix(in oklab, var(--paper-0) 70%, white 30%); outline:0}
+    .num{width:110px}
+    .btn{border:1px solid var(--ring-2); background:linear-gradient(180deg, var(--paper-0), var(--paper-1)); padding:10px 12px; border-radius:12px; cursor:pointer}
+    .btn:hover{filter:brightness(1.02)}
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
+    .muted{color:var(--ink-soft); font-size:13px}
+    .badge{display:inline-block; border:1px solid var(--ring-2); border-radius:999px; padding:4px 8px; font:700 10px/1 system-ui; text-transform:uppercase; letter-spacing:.04em; background:#f3ead4; color:color-mix(in oklab, var(--ink-red) 90%, black 10%); margin:0 6px 4px 0}
+    .tag{display:inline-block; border:1px dashed var(--ring-2); border-radius:999px; padding:3px 8px; font:700 10px/1 system-ui; margin:0 6px 4px 0}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--ink-red)}
+    .grid{display:grid; gap:10px}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media (max-width: 900px){ .grid.cards{grid-template-columns:1fr} }
+    .item{padding:12px}
+    .title{font-weight:700}
+    .divider{height:1px; background:var(--ring); margin:8px 0}
+    details summary{cursor:pointer}
+    .right-actions{display:flex; gap:10px; justify-content:flex-end; align-items:center}
+    .link{color:var(--ink-red); text-decoration:none; font-weight:600}
+    .help{font-size:12px; color:var(--ink-soft)}
+    pre.log{white-space:pre-wrap; background:linear-gradient(180deg, var(--paper-0), var(--paper-1)); border:1px solid var(--ring); border-radius:12px; padding:12px; font-size:12px}
+    .error{background:#fff3f3; border:1px solid #e5bcbc; color:#6b1a1a; border-radius:12px; padding:10px 12px}
+    .hidden{display:none}
+
+    /* sticky action bar */
+    .sticky{position:sticky; top:8px; z-index:5; background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.55)); border:1px solid var(--ring); border-radius:12px; padding:8px 10px; backdrop-filter: blur(8px)}
+    .toolbar{display:flex; gap:8px; align-items:center; justify-content:space-between}
+    .chip{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--ring-2); background:var(--paper-1)}
+    .chip.ok{color:var(--ok); border-color:#b9d5b9}
+    .chip.bad{color:var(--ink-red); border-color:#e5bcbc; background:#fff5f5}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card">
+      <div class="row" style="justify-content:space-between; align-items:baseline">
+        <div>
+          <h1>Foraging</h1>
+          <p class="sub">2-hour activity • Always uses <b>WIS</b> • Skill: <b>Survival</b> or <b>Nature (with WIS)</b> • 30% encounter chance</p>
+        </div>
+        <a class="link" href="./pursuingactivities.html">← Back to Activities</a>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- Left: Inputs -->
+      <aside class="card panel">
+        <!-- sticky quick actions -->
+        <div class="sticky">
+          <div class="toolbar">
+            <div class="row">
+              <button id="forageBtnTop" class="btn">🌿 Forage</button>
+              <button id="clearBtnTop" class="btn">Clear</button>
+            </div>
+            <button id="quickPacks" class="btn">Load Packs…</button>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:10px">Context</div>
+        <div class="grid">
+          <label>Biome
+            <select id="biome" class="select" required>
+              <option value="">Choose biome…</option>
+              <optgroup label="Material / Surface">
+                <option>Forest / Woodlands</option>
+                <option>Mountains / Steppes</option>
+                <option>Water / Coastal</option>
+                <option>Plains / Meadow</option>
+                <option>Arid / Desert</option>
+                <option>Tropical / Jungle (Exotic)</option>
+                <option>Cave / Subterranean</option>
+                <option>Swamps / Wetlands</option>
+                <option>Tundra / Arctic</option>
+                <option>Wasteland / Corruptland</option>
+              </optgroup>
+              <optgroup label="Planar / Special">
+                <option>Ethereal Limbo</option>
+                <option>Astral Window</option>
+                <option>Fey Plane</option>
+                <option>UnderDark</option>
+              </optgroup>
+            </select>
+          </label>
+          <label>Season
+            <select id="season" class="select" required>
+              <option>Spring</option>
+              <option>Summer</option>
+              <option>Fall</option>
+              <option>Winter</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="section-title">Skill & Modifiers</div>
+        <div class="grid">
+          <div class="row">
+            <label class="checkline" style="flex:1">
+              <span><input type="radio" name="skill" value="Survival" checked> Survival</span>
+            </label>
+            <label class="checkline" style="flex:1">
+              <span><input type="radio" name="skill" value="Nature"> Nature (uses WIS)</span>
+            </label>
+          </div>
+          <label>Total Skill Bonus (includes WIS & prof)
+            <input id="skillBonus" class="num" type="number" value="0" step="1">
+          </label>
+          <label>Extra Modifiers (magic, features, situational)
+            <input id="extraMods" class="num" type="number" value="0" step="1">
+          </label>
+          <div class="row">
+            <label class="checkline">
+              <input id="hasAdv" type="checkbox"> I have Advantage
+            </label>
+            <label id="advWrap" class="hidden">How many advantages?
+              <input id="advCount" class="num" type="number" min="1" value="1" step="1">
+            </label>
+          </div>
+          <p class="help">Examples: Long rest grants advantage; class features, aid from allies, etc.</p>
+        </div>
+
+        <div class="section-title">Focus</div>
+        <div class="grid">
+          <div class="row">
+            <label class="checkline"><input type="radio" name="focus" value="None" checked> None</label>
+            <label class="checkline"><input type="radio" name="focus" value="Food"> Food</label>
+            <label class="checkline"><input type="radio" name="focus" value="Wild Ingredient"> Wild Ingredient</label>
+            <label class="checkline"><input type="radio" name="focus" value="Herb"> Herb</label>
+          </div>
+          <label class="checkline"><input id="includeMinerals" type="checkbox"> Include Minerals in overall ecosystem (sightings)</label>
+        </div>
+
+        <details id="packsPanel" class="panel" style="padding:10px; margin-top:10px">
+          <summary class="section-title" style="margin:0">Data Packs</summary>
+          <div id="fileProtocolNotice" class="help hidden" style="margin:6px 0 8px">
+            You opened this page from disk (<code>file://</code>). Browsers block <code>fetch()</code> in this mode.
+            Use the pickers below to load your packs from the same folder, or serve the folder with a tiny local server.
+          </div>
+          <div class="row" style="justify-content:space-between; align-items:center">
+            <button id="autoLoadBtn" class="btn">Auto-load from folder</button>
+            <span class="muted">or</span>
+            <button id="togglePickers" class="btn">Manual load…</button>
+          </div>
+          <div id="pickers" class="grid hidden" style="margin-top:8px">
+            <div class="row" style="justify-content:space-between; width:100%">
+              <label>foods.html <input id="pickFoods" type="file" accept=".html,.htm"/></label>
+              <span id="stFoods" class="chip">not loaded</span>
+            </div>
+            <div class="row" style="justify-content:space-between; width:100%">
+              <label>herbs.html <input id="pickHerbs" type="file" accept=".html,.htm"/></label>
+              <span id="stHerbs" class="chip">not loaded</span>
+            </div>
+            <div class="row" style="justify-content:space-between; width:100%">
+              <label>wildingredients.html <input id="pickWild" type="file" accept=".html,.htm"/></label>
+              <span id="stWild" class="chip">not loaded</span>
+            </div>
+            <div class="row" style="justify-content:space-between; width:100%">
+              <label>minerals.html <input id="pickMinerals" type="file" accept=".html,.htm"/></label>
+              <span id="stMinerals" class="chip">not loaded</span>
+            </div>
+            <div class="row" style="justify-content:space-between; width:100%">
+              <label>woods.html <input id="pickWoods" type="file" accept=".html,.htm"/></label>
+              <span id="stWoods" class="chip">not loaded</span>
+            </div>
+            <div class="row" style="justify-content:space-between; width:100%">
+              <label>animals.html <input id="pickAnimals" type="file" accept=".html,.htm"/></label>
+              <span id="stAnimals" class="chip">not loaded</span>
+            </div>
+          </div>
+          <p id="loadErr" class="error" style="margin-top:10px; display:none"></p>
+        </details>
+
+        <details class="panel" style="padding:10px; margin-top:10px">
+          <summary class="section-title" style="margin:0">Advanced</summary>
+          <div class="grid two">
+            <label>Adjacent-Biome Mixing % (0–30)
+              <input id="mixPct" class="num" type="number" min="0" max="30" value="15">
+            </label>
+            <label>Cave/Subterranean Spill % (0–10)
+              <input id="cavePct" class="num" type="number" min="0" max="10" value="5">
+            </label>
+            <label class="checkline"><input id="nat1Kept" type="checkbox" checked> NAT 1 by kept die only</label>
+            <label class="checkline"><input id="desolate" type="checkbox"> Desolate/Difficult Terrain (+5 DC)</label>
+          </div>
+        </details>
+
+        <div class="divider"></div>
+        <div class="row" style="justify-content:space-between">
+          <button id="forageBtn" class="btn">🌿 Forage</button>
+          <div class="right-actions">
+            <button id="clearBtn" class="btn">Clear</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right: Results -->
+      <main class="card panel">
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <div class="section-title" style="margin:0">Results</div>
+          <div class="right-actions">
+            <button id="forageBtnHeader" class="btn">🌿 Forage</button>
+            <button id="exportBtn" class="btn" disabled>Export JSON</button>
+            <button id="copyLogBtn" class="btn" disabled>Copy Log</button>
+          </div>
+        </div>
+
+        <div id="summary" class="item muted">Load your data packs (auto or manual), enter details, then press <b>Forage</b>.</div>
+
+        <div id="findingsWrap" class="grid cards" style="margin-top:10px"></div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <div class="section-title" style="margin:0">Sightings (Along the Way)</div>
+          <button id="openPacksFromResults" class="btn">Load Packs…</button>
+        </div>
+        <div class="grid cards" id="sightAnimals"></div>
+        <div class="grid cards" id="sightWoods" style="margin-top:10px"></div>
+        <div class="grid cards" id="sightMinerals" style="margin-top:10px"></div>
+
+        <div class="divider"></div>
+
+        <details open>
+          <summary class="section-title" style="margin:0">Roll Log</summary>
+          <pre id="log" class="log"></pre>
+        </details>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Utilities ----------
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const rnd = (n) => Math.floor(Math.random()*n);
+    const d = (s) => { const m=String(s).toLowerCase().match(/^\s*(\d+)\s*d\s*(\d+)\s*$/); if(!m) return {sum:0,rolls:[],N:0,M:0}; const N=+m[1],M=+m[2]; let sum=0, rolls=[]; for(let i=0;i<N;i++){ const r=1+rnd(M); sum+=r; rolls.push(r); } return {sum, rolls, N, M}; };
+    const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+    const pickWeighted = (pairs) => { const total=pairs.reduce((a,[_i,w])=>a+w,0); if(total<=0) return pairs[0]?.[0]; let r=Math.random()*total; for(const [it,w] of pairs){ if((r-=w)<=0) return it; } return pairs[pairs.length-1][0]; };
+    const sample = (arr)=>arr.length?arr[rnd(arr.length)]:null;
+
+    // --- JSON sanitizers (tolerate comments & trailing commas) ---
+    function stripJsonComments(str){
+      str = str.replace(/\/\*[\s\S]*?\*\//g, "");
+      str = str.replace(/(^|[^:])\/\/.*$/gm, "$1");
+      return str;
+    }
+    function stripTrailingCommas(str){ return str.replace(/,\s*([}\]])/g, "$1"); }
+
+    // ---------- Biomes & adjacency ----------
+    const BIOMES = [
+      "Forest / Woodlands","Mountains / Steppes","Water / Coastal","Plains / Meadow",
+      "Arid / Desert","Tropical / Jungle (Exotic)","Cave / Subterranean","Swamps / Wetlands",
+      "Tundra / Arctic","Wasteland / Corruptland","Ethereal Limbo","Astral Window","Fey Plane","UnderDark"
+    ];
+    const PLANAR = new Set(["Ethereal Limbo","Astral Window","Fey Plane","UnderDark"]);
+    const ADJ = {
+      "Forest / Woodlands": ["Plains / Meadow","Mountains / Steppes","Swamps / Wetlands","Water / Coastal"],
+      "Plains / Meadow": ["Forest / Woodlands","Arid / Desert","Mountains / Steppes"],
+      "Mountains / Steppes": ["Forest / Woodlands","Plains / Meadow","Tundra / Arctic"],
+      "Water / Coastal": ["Forest / Woodlands","Swamps / Wetlands"],
+      "Swamps / Wetlands": ["Forest / Woodlands","Water / Coastal"],
+      "Arid / Desert": ["Plains / Meadow","Wasteland / Corruptland"],
+      "Tundra / Arctic": ["Mountains / Steppes"],
+      "Wasteland / Corruptland": ["Plains / Meadow","Arid / Desert"],
+      "Cave / Subterranean": []
+    };
+
+    // Map wood groups <-> biomes
+    const WOOD_GROUPS = {
+      "temperate": ["Forest / Woodlands","Plains / Meadow","Mountains / Steppes"],
+      "tropical":  ["Tropical / Jungle (Exotic)","Water / Coastal","Swamps / Wetlands"],
+      "boreal":    ["Tundra / Arctic","Mountains / Steppes"]
+    };
+    function groupsForBiome(b){
+      const out=[];
+      for(const [g, list] of Object.entries(WOOD_GROUPS)){ if (list.includes(b)) out.push(g.toLowerCase()); }
+      return out;
+    }
+
+    // ---------- Threshold table ----------
+    const TABLE = [
+      { t:3,  patt:"1d2x1", cats:["Food","Nothing"], focus:[5,0,0] },
+      { t:5,  patt:"1d3x1", cats:["Wild Ingredient","Food","Nothing"], focus:[15,5,0] },
+      { t:10, patt:"1d3x2", cats:["Wild Ingredient","Food","Nothing"], focus:[25,15,0] },
+      { t:13, patt:"1d4x2", cats:["Herb","Wild Ingredient","Food","Nothing"], focus:[50,25,15] },
+      { t:15, patt:"1d3x3", cats:["Herb","Wild Ingredient","Food"], focus:[75,50,25] },
+      { t:18, patt:"1d3x3", cats:["Herb","Wild Ingredient","Food","Focus"], focus:[90,75,50] },
+      { t:20, patt:"1d3x4", cats:["Herb","Wild Ingredient","Food","Focus"], focus:[100,90,75] },
+      { t:25, patt:"1d3x5", cats:["Herb","Wild Ingredient","Food","Focus"], focus:[100,95,90] }
+    ];
+    const thresholds = TABLE.map(r=>r.t);
+
+    // Base rarity weights (used as starting point)
+    const BASE_WT = {"Very Common":3,"Common":3,"Uncommon":3,"Rare":2,"Very Rare":1,"Super Rare":1,"Legendary":1,"Epically Legendary":1,"Mythical":1,"Cosmic Mythical":1};
+
+    // ---------- Data packs ----------
+    const Packs = { foods:null, herbs:null, wild:null, minerals:null, woods:null, animals:null };
+
+    function chip(id, ok, msg){
+      const el = $(id);
+      el.textContent = msg || (ok?'loaded':'not loaded');
+      el.classList.toggle('ok', !!ok);
+      el.classList.toggle('bad', !ok);
+    }
+
+    // Load via fetch (works on http/https)
+    async function loadPack(file, scriptId, windowName){
+      const res = await fetch(file, {cache:'no-store'});
+      if(!res.ok) throw new Error(`${file} ${res.status}`);
+      const txt = await res.text();
+      return extractDataFromHtml(txt, scriptId, windowName);
+    }
+
+    // Load via <input type=file>
+    function loadPackFromFile(fileObj, scriptId, windowName){
+      return new Promise((resolve, reject)=>{
+        const fr = new FileReader();
+        fr.onerror = ()=>reject(new Error(`Failed to read ${fileObj.name}`));
+        fr.onload = () => {
+          try{ resolve(extractDataFromHtml(fr.result, scriptId, windowName)); }
+          catch(e){ reject(e); }
+        };
+        fr.readAsText(fileObj);
+      });
+    }
+
+    function extractDataFromHtml(txt, scriptId, windowName){
+      const doc = new DOMParser().parseFromString(txt, 'text/html');
+      let data = null;
+      const script = doc.querySelector(
+        `#${scriptId}, script[type="application/json"], script[type="application/jsonc"], script[type="application/json5"]`
+      );
+      if (script){
+        const raw = script.textContent || "";
+        try { data = JSON.parse(raw); }
+        catch{
+          const cleaned = stripTrailingCommas(stripJsonComments(raw));
+          try { data = JSON.parse(cleaned); } catch{}
+        }
+      }
+      if (!data){
+        const scripts = Array.from(doc.querySelectorAll('script')).map(s => s.textContent || '').join('\n');
+        try { const sandbox = {}; (function(window){ eval(scripts); })(sandbox); data = sandbox[windowName]; } catch{}
+      }
+      if (!data) throw new Error(`Missing or unparsable data in pack (looked for <script id="${scriptId}"> or window.${windowName}).`);
+      return data;
+    }
+
+    // ---------- Normalizers ----------
+    function normFoods(data){
+      const out=[], arr = data.items || data.i || [];
+      if (arr.length){
+        arr.forEach(it=>{
+          out.push({ name:it.name, pack:'foods',
+            envTags: it.environments||it.envTags||[it.environment].filter(Boolean),
+            seasons: it.seasons||[it.season].filter(Boolean),
+            rarity: it.rarity||null, origin: it.origin||null, desc: it.notes||it.desc||null, extra: it });
+        });
+      } else if (data.tables){
+        Object.entries(data.tables).forEach(([env, seasons])=>{
+          Object.entries(seasons).forEach(([season,list])=>{
+            list.forEach(n=> out.push({name:n, pack:'foods', envTags:[env], seasons:[season]}));
+          });
+        });
+      }
+      return out;
+    }
+    function normHerbs(data){
+      const out=[], arr = data.items || data.i || [];
+      if (arr.length){
+        arr.forEach(it=>{
+          out.push({ name:it.name, pack:'herbs',
+            envTags: it.environments||it.envTags||[it.environment].filter(Boolean),
+            rarity: it.rarity||null, desc: it.notes||it.desc||null, extra: it });
+        });
+      } else if (data.tables){
+        Object.entries(data.tables).forEach(([env,list])=>{
+          list.forEach(n=> out.push({name:n, pack:'herbs', envTags:[env]}));
+        });
+      }
+      return out;
+    }
+    function normWild(data){
+      const out=[], arr = data.items || data.i || data.entries || [];
+      if (arr.length){
+        arr.forEach(it=>{
+          out.push({ name:it.name, pack:'wild',
+            envTags: it.locations||it.envTags||[it.location].filter(Boolean),
+            rarity: it.rarity||it.Rarity||null, desc: it.notes||it.desc||null, extra: it });
+        });
+      } else if (data.table){
+        data.table.forEach(row=>{
+          out.push({ name: row.item||row.name, pack:'wild',
+            envTags: (row.location||"").split(';').map(s=>s.trim()),
+            rarity: row.rarity||row.Rarity||null });
+        });
+      }
+      return out;
+    }
+    function normMinerals(data){
+      const out=[], items = data.items || data.i || [];
+      items.forEach(it=>{
+        const tags = new Set();
+        (it.locations||it.s||[]).forEach(L => { const b = mapLocationToBiome(L); if (b) tags.add(b); });
+        const o = it.origin||it.o||""; const ob = mapLocationToBiome(o); if (ob) tags.add(ob);
+        out.push({ name: (it.name||it.n||"").trim(), pack:'minerals', envTags: Array.from(tags),
+          rarity: it.rarity||it.r||null, origin: it.origin||it.o||null, desc: it.description||it.d||it.l||null, extra: it });
+      });
+      return out;
+    }
+    function normWoods(data){
+      const out=[], items = data.items || data.i || data.woods || [];
+      items.forEach(it=>{
+        const name = (it.name||it.wood||"").trim();
+        const groupRaw = (it.group||it.environment||it.category||"").toString().trim().toLowerCase();
+        const group = groupRaw.includes("temperate") ? "Temperate"
+                    : groupRaw.includes("tropic")    ? "Tropical"
+                    : groupRaw.includes("boreal")    ? "Boreal"
+                    : it.group||"Temperate";
+        const dc = +((it.dc||it.chopDC||it.choppingDC||it["Chopping DC"])||0);
+        out.push({ name, pack:'woods', envGroup: group, chopDC: isFinite(dc)?dc:15 });
+      });
+      return out;
+    }
+    function normAnimals(data){
+      const out=[];
+      // Preferred schema: { biomes: { "Forest / Woodlands": { "Common":[{...}], ... } }, rarityDCs:{...} }
+      if (data.biomes){
+        for (const [biome, rar] of Object.entries(data.biomes)){
+          for (const [rarity, list] of Object.entries(rar||{})){
+            (list||[]).forEach(e=>{
+              out.push({
+                name: e.name || e.common || e.species || "(unnamed)",
+                sci: e.sci || e.scientific || null,
+                hook: e.hook || e.blurb || null,
+                cr: e.cr || e.CR || "0",
+                rarity, envTags:[biome], type: e.type || (e.sci ? "real" : "mythic")
+              });
+            });
+          }
+        }
+      } else if (data.items || data.creatures){
+        const arr = data.items || data.creatures;
+        (arr||[]).forEach(e=>{
+          const envs = e.envTags || e.environments || [e.biome].filter(Boolean);
+          out.push({
+            name: e.name, sci:e.sci||null, hook:e.hook||null, cr:e.cr||"0",
+            rarity: e.rarity||"Common", envTags: envs, type: e.type||"real"
+          });
+        });
+      }
+      return out;
+    }
+
+    function normString(s){ return (s||"").toLowerCase(); }
+    function envMatches(tags, biome){
+      const b = normString(biome);
+      return (tags||[]).some(t => normString(t).includes(b.split(' / ')[0]));
+    }
+    function mapLocationToBiome(loc){
+      const s = normString(loc);
+      if (s.includes("mountain")) return "Mountains / Steppes";
+      if (s.includes("coast")||s.includes("ocean")||s.includes("underwater")||s.includes("lake")||s.includes("river")) return "Water / Coastal";
+      if (s.includes("forest")||s.includes("wood")) return "Forest / Woodlands";
+      if (s.includes("hill")||s.includes("meadow")||s.includes("grass")) return "Plains / Meadow";
+      if (s.includes("desert")||s.includes("arid")||s.includes("waste")) return "Arid / Desert";
+      if (s.includes("tundra")||s.includes("arctic")) return "Tundra / Arctic";
+      if (s.includes("swamp")||s.includes("wetland")||s.includes("bog")||s.includes("marsh")) return "Swamps / Wetlands";
+      if (s.includes("cave")||s.includes("subterr")||s.includes("underdark")) return s.includes("underdark") ? "UnderDark" : "Cave / Subterranean";
+      if (s.includes("fey")) return "Fey Plane";
+      if (s.includes("astral")) return "Astral Window";
+      if (s.includes("ethereal")) return "Ethereal Limbo";
+      return null;
+    }
+
+    // ---------- Woods helpers ----------
+    function woodsGroupToBiomes(group){
+      const key = (group||"").toString().trim().toLowerCase();
+      if (key in WOOD_GROUPS) return WOOD_GROUPS[key];
+      if (/temperate/.test(key)) return WOOD_GROUPS.temperate;
+      if (/tropic/.test(key))    return WOOD_GROUPS.tropical;
+      if (/boreal/.test(key))    return WOOD_GROUPS.boreal;
+      return [];
+    }
+    function woodRarityFromDC(dc){
+      if (dc <= 14) return "Common";
+      if (dc <= 20) return "Uncommon";
+      if (dc <= 27) return "Rare";
+      return "Very Rare";
+    }
+
+    // ---------- Load All (auto via fetch) ----------
+    async function autoLoadAll(){
+      const err = $('#loadErr'); err.style.display='none';
+      try{
+        const [foods, herbs, wild, minerals, woods, animals] = await Promise.all([
+          loadPack('foods.html','foods-data','FoodsPack'),
+          loadPack('herbs.html','herbs-data','HerbsPack'),
+          loadPack('wildingredients.html','wildingredients-data','WildIngredientsPack'),
+          loadPack('minerals.html','minerals-data','MineralsPack'),
+          loadPack('woods.html','woods-data','WoodsPack'),
+          loadPack('animals.html','animals-data','AnimalsPack'),
+        ]);
+        Packs.foods = normFoods(foods); chip('#stFoods', true, 'loaded');
+        Packs.herbs = normHerbs(herbs); chip('#stHerbs', true, 'loaded');
+        Packs.wild = normWild(wild); chip('#stWild', true, 'loaded');
+        Packs.minerals = normMinerals(minerals); chip('#stMinerals', true, 'loaded');
+        Packs.woods = normWoods(woods); chip('#stWoods', true, 'loaded');
+        Packs.animals = normAnimals(animals); chip('#stAnimals', true, `loaded (${Packs.animals.length})`);
+        $('#summary').innerHTML = `Packs loaded. Enter details and press <b>Forage</b>.`;
+      }catch(e){
+        err.textContent = `Auto-load failed: ${e.message}. If you opened this file from disk (file://), use Manual load.`;
+        err.style.display='block';
+      }
+    }
+
+    // ---------- Manual pickers ----------
+    async function handlePicker(inputEl, destKey, scriptId, windowName, statusId){
+      const f = inputEl.files?.[0]; if(!f) return;
+      try{
+        const raw = await loadPackFromFile(f, scriptId, windowName);
+        let normed=null;
+        if (destKey==='foods') normed = normFoods(raw);
+        if (destKey==='herbs') normed = normHerbs(raw);
+        if (destKey==='wild') normed = normWild(raw);
+        if (destKey==='minerals') normed = normMinerals(raw);
+        if (destKey==='woods') normed = normWoods(raw);
+        if (destKey==='animals') normed = normAnimals(raw);
+        if(!normed || !normed.length) throw new Error('No items parsed');
+        Packs[destKey] = normed;
+        chip(statusId, true, `loaded (${normed.length})`);
+      }catch(e){
+        chip(statusId, false, `error`);
+        const err = $('#loadErr');
+        err.textContent = `Failed to load ${inputEl.files?.[0]?.name||''}: ${e.message}`;
+        err.style.display='block';
+      }
+    }
+
+    // ---------- Source pools ----------
+    const isPlanar = b => PLANAR.has(b);
+    function foodsFor(biome, season){
+      return (Packs.foods||[]).filter(it=>{
+        const envOk = envMatches(it.envTags, biome);
+        const seasOk = !it.seasons || it.seasons.includes(season);
+        return envOk && seasOk;
+      });
+    }
+    function herbsFor(biome){
+      return (Packs.herbs||[]).filter(it=>{
+        const planarTag = (it.envTags||[]).find(t=>PLANAR.has(t));
+        if (isPlanar(biome)) { if (planarTag) return normString(planarTag)===normString(biome); }
+        else { if (planarTag) return false; }
+        return envMatches(it.envTags, biome);
+      });
+    }
+    function wildFor(biome){
+      return (Packs.wild||[]).filter(it=>{
+        const planarTag = (it.envTags||[]).find(t=>PLANAR.has(t));
+        if (!isPlanar(biome) && planarTag) return false;
+        if (isPlanar(biome)) return (it.envTags||[]).some(t=>normString(t)===normString(biome));
+        return envMatches(it.envTags, biome);
+      });
+    }
+    function mineralsFor(biome){
+      return (Packs.minerals||[]).filter(it=>{
+        if (PLANAR.has(biome)) return it.envTags.some(t=>normString(t)===normString(biome));
+        return envMatches(it.envTags, biome);
+      });
+    }
+    function animalsFor(biome){
+      const arr = Packs.animals||[];
+      if (!arr.length) return [];
+      return arr.filter(a=>{
+        const hasPlanarTag = (a.envTags||[]).some(t=>PLANAR.has(t));
+        if (isPlanar(biome)) return (a.envTags||[]).some(t=>normString(t)===normString(biome));
+        if (hasPlanarTag) return false;
+        return envMatches(a.envTags, biome);
+      });
+    }
+
+    // ---------- Rarity & bias ----------
+    function rarityBias(rarity, tier){
+      const order = ["Very Common","Common","Uncommon","Rare","Very Rare","Super Rare","Legendary","Epically Legendary","Mythical","Cosmic Mythical"];
+      const idx = order.indexOf(rarity||"Common");
+      const base = BASE_WT[rarity||"Common"] || 1;
+      if (tier <= 10) return base;
+      if (tier <= 13) return base * (1 + (idx-1)*0.10);
+      if (tier <= 18) return base * (1 + (idx-1)*0.20);
+      if (tier <= 20) return base * (1 + (idx-1)*0.35);
+      if (tier <= 25) return base * (1 + (idx-1)*0.55);
+      return base * (1 + (idx-1)*0.80);
+    }
+
+    function pickFromPool(pool, tier=null){
+      if(!pool.length) return null;
+      const hasRarity = pool.some(it=>it.rarity);
+      if(!hasRarity) return sample(pool);
+      const pairs = pool.map(it=>[it, tier==null ? (BASE_WT[it.rarity]||1) : rarityBias(it.rarity, tier)]);
+      return pickWeighted(pairs);
+    }
+
+    function parseCR(cr){
+      if (cr==null) return 0;
+      const s = String(cr).trim();
+      if (s.includes('/')) { const [a,b]=s.split('/').map(Number); return b? a/b : 0; }
+      const n = Number(s); return isFinite(n)?n:0;
+    }
+
+    function rollQuality(focusPerc){
+      if(!focusPerc) return null;
+      const [hi,med,low] = focusPerc;
+      const r = 1 + Math.floor(Math.random()*100);
+      if(r <= hi) return "Poor";
+      if(r <= hi + med) return "Average";
+      if(r <= hi + med + low) return "Rich";
+      return null;
+    }
+    function rollQuantity(quality){
+      if(!quality) return 1;
+      if(quality==="Poor") return 1;
+      if(quality==="Average"){ const {sum}=d("1d2"); return sum; }
+      if(quality==="Rich"){ const {sum}=d("1d3"); return sum+1; }
+      return 1;
+    }
+    function cardHTML({title, subtitle, badges=[], tags=[], body=null, accent=null}){
+      return `<div class="card item">
+        <div class="title">${title}</div>
+        ${subtitle?`<div class="muted">${subtitle}</div>`:''}
+        <div style="margin:6px 0">${badges.map(b=>`<span class="badge">${b}</span>`).join(' ')}</div>
+        ${tags.length?`<div>${tags.map(t=>`<span class="tag">${t}</span>`).join(' ')}</div>`:''}
+        ${body?`<div style="margin-top:8px">${body}</div>`:''}
+        ${accent?`<div class="muted" style="margin-top:6px">${accent}</div>`:''}
+      </div>`;
+    }
+    const summarizeTier = t => `DC ${t} tier`;
+
+    // ---------- Foraging engine ----------
+    function parsePattern(patt){ const m=String(patt).toLowerCase().match(/^\s*(\d+d\d+)\s*[x×]\s*(\d+)\s*$/); if(!m) return {dice:"1d1", mult:1}; return {dice:m[1], mult:+m[2]}; }
+    function chooseRow(total, desolate){ const shift=desolate?5:0; const valid=thresholds.filter(t=>total>=(t+shift)); if(!valid.length) return TABLE[0]; const t=valid[valid.length-1]; return TABLE.find(r=>r.t===t); }
+    function resolveBiome(baseBiome, mixPct, cavePct){
+      if (!isPlanar(baseBiome) && baseBiome !== "Cave / Subterranean" && Math.random()*100 < cavePct) return "Cave / Subterranean";
+      if (!isPlanar(baseBiome) && Math.random()*100 < mixPct){ const neigh = ADJ[baseBiome]||[]; if(neigh.length) return sample(neigh); }
+      return baseBiome;
+    }
+
+    let lastResult = null;
+
+    function getInputs(){
+      const biome = $('#biome').value;
+      const season = $('#season').value;
+      const skill = $$('input[name="skill"]:checked')[0].value;
+      const totalBonus = Number($('#skillBonus').value||0);
+      const extraMods = Number($('#extraMods').value||0);
+      const hasAdv = $('#hasAdv').checked;
+      const advCount = hasAdv ? Math.max(1, Number($('#advCount').value||1)) : 1;
+      const focus = $$('input[name="focus"]:checked')[0].value;
+      const includeMinerals = $('#includeMinerals').checked;
+      const mixPct = clamp(Number($('#mixPct').value||15), 0, 30);
+      const cavePct = clamp(Number($('#cavePct').value||5), 0, 10);
+      const nat1Kept = $('#nat1Kept').checked;
+      const desolate = $('#desolate').checked;
+      return { biome, season, skill, totalBonus, extraMods, hasAdv, advCount, focus, includeMinerals, mixPct, cavePct, nat1Kept, desolate };
+    }
+    function validateInputs(inp){
+      if(!inp.biome) return "Choose a biome.";
+      if(!BIOMES.includes(inp.biome)) return "Invalid biome.";
+      if(!inp.season) return "Choose a season.";
+      const missing = [];
+      if(!Packs.foods) missing.push('foods');
+      if(!Packs.herbs) missing.push('herbs');
+      if(!Packs.wild) missing.push('wildingredients');
+      if(!Packs.woods) missing.push('woods');
+      if(missing.length) return `Load data packs first: ${missing.join(', ')}`;
+      return null;
+    }
+    function rollD20(n=1){ const out=[]; for(let i=0;i<n;i++) out.push(1+rnd(20)); return out; }
+
+    function forage(){
+      const inputs = getInputs();
+      const err = validateInputs(inputs);
+      if(err){ $('#summary').innerHTML = `<div class="bad">${err}</div>`; return; }
+
+      const {biome, season, totalBonus, extraMods, advCount, nat1Kept, desolate, focus, mixPct, cavePct, includeMinerals} = inputs;
+
+      const d20s = rollD20(advCount);
+      const kept = Math.max(...d20s);
+      const total = kept + totalBonus + extraMods;
+
+      const nat1 = nat1Kept ? (kept===1) : d20s.includes(1);
+      let log = [];
+      log.push(`Skill total: ${totalBonus >= 0?'+':''}${totalBonus}, Extra mods: ${extraMods >= 0?'+':''}${extraMods}`);
+      log.push(`Roll d20${advCount>1?` x${advCount} (kept highest)`:''}: [${d20s.join(', ')}] → kept ${kept}`);
+      log.push(`Total = ${kept} + ${totalBonus} + ${extraMods} = ${total}`);
+
+      let encounter = false;
+      let findings = [];
+      let rowUsed = null;
+      let draws = 0;
+
+      if(nat1){
+        const r = 1 + rnd(3);
+        const nat1Outcome = r===1?'Damage':r===2?'Encounter':'Nothing';
+        if(nat1Outcome==='Encounter') encounter = true;
+        log.push(`NAT 1 branch → 1d3 = ${r} → ${nat1Outcome}`);
+      } else {
+        rowUsed = chooseRow(total, desolate);
+        const patt = parsePattern(rowUsed.patt);
+        const dice = d(patt.dice);
+        draws = dice.sum * patt.mult;
+        log.push(`Thresholds ${desolate?`(+5 desolate applied)`:''}: chose ${summarizeTier(rowUsed.t)} · pattern ${rowUsed.patt} → NdM=${dice.N}d${dice.M} rolls [${dice.rolls.join(', ')}] = ${dice.sum} × ${patt.mult} → draws=${draws}`);
+
+        const encRoll = 1 + rnd(100);
+        if(encRoll <= 30){ encounter = true; log.push(`Encounter check: d100=${encRoll} ≤ 30 → Encounter flagged`); }
+        else { log.push(`Encounter check: d100=${encRoll} > 30 → No encounter`); }
+
+        for(let i=0;i<draws;i++){
+          const resolvedBiome = resolveBiome(biome, mixPct, cavePct);
+          const cats = rowUsed.cats.slice();
+          let pickedCat = sample(cats);
+          log.push(`Draw ${i+1}/${draws}: resolved biome ⇒ ${resolvedBiome}; category ⇒ ${pickedCat}`);
+
+          if (pickedCat==="Nothing"){ findings.push({category:"Nothing"}); continue; }
+          if (pickedCat==="Focus"){
+            if (focus==="None"){ pickedCat="Herb"; log.push(`  Focus drawn w/ none selected → fallback Herb`); }
+            else { pickedCat = focus; log.push(`  Focus resolved to player's focus: ${pickedCat}`); }
+          }
+
+          let pool = [];
+          if (pickedCat==="Food") pool = foodsFor(resolvedBiome, season);
+          else if (pickedCat==="Herb") pool = herbsFor(resolvedBiome);
+          else if (pickedCat==="Wild Ingredient") pool = wildFor(resolvedBiome);
+
+          if (!pool.length){
+            log.push(`  No compatible ${pickedCat} in ${resolvedBiome} (season=${season} for Food). Re-rolling category up to 10x.`);
+            let success=false;
+            for(let r=0; r<10 && !success; r++){
+              const tryCat = sample(cats);
+              if(tryCat==="Nothing"){ findings.push({category:"Nothing"}); success=true; log.push(`    Re-roll ${r+1}: chose Nothing`); break; }
+              let candidate=[];
+              if (tryCat==="Food") candidate = foodsFor(resolvedBiome, season);
+              if (tryCat==="Herb") candidate = herbsFor(resolvedBiome);
+              if (tryCat==="Wild Ingredient") candidate = wildFor(resolvedBiome);
+              if(candidate.length){
+                pickedCat = tryCat; pool = candidate; success=true; log.push(`    Re-roll ${r+1}: chose ${tryCat} with ${candidate.length} candidates`); break;
+              }
+            }
+            if(!success){ log.push(`    No valid category found after retries → Nothing`); findings.push({category:"Nothing"}); continue; }
+          } else {
+            log.push(`  Pool: ${pool.length} candidates`);
+          }
+
+          let quality = null;
+          if (focus !== "None" && pickedCat === focus && rowUsed.focus){
+            quality = rollQuality(rowUsed.focus);
+            log.push(`  Focus quality (High/Med/Low ${rowUsed.focus.join('/')}) → ${quality||'no hit'}`);
+          }
+
+          const chosen = pickFromPool(pool, rowUsed.t);
+          const qty = chosen ? rollQuantity(quality) : 0;
+
+          findings.push({
+            category: pickedCat,
+            name: chosen?.name || "(Nothing)",
+            pack: chosen?.pack || null,
+            rarity: chosen?.rarity || null,
+            env: chosen?.envTags || [],
+            season: chosen?.seasons || null,
+            quantity: chosen ? qty : 0,
+            quality: chosen ? quality : null,
+            notes: chosen?.desc || null
+          });
+
+          log.push(`  → Found: ${chosen?.name || 'Nothing'} ${chosen?.rarity?`[${chosen.rarity}]`:''} ${quality?`quality=${quality}`:''} qty=${qty}`);
+        }
+      }
+
+      const tier = rowUsed ? rowUsed.t : 3;
+      const woodsSeen = computeWoodsSightings(inputs.biome, tier);
+      const mineralsSeen = computeMineralSightings(inputs.biome, tier, inputs.includeMinerals);
+      const animalsSeen = computeAnimalSightings(inputs.biome, tier);
+
+      // encounter suggestion (animals)
+      let encounterSuggestion = null;
+      if (encounter){
+        encounterSuggestion = suggestAnimalEncounter(inputs.biome, tier);
+        if (encounterSuggestion){
+          log.push(`Encounter suggestion: ${encounterSuggestion.mood} ${encounterSuggestion.name} [CR ${encounterSuggestion.cr}] (${encounterSuggestion.rarity})`);
+        }
+      }
+
+      const result = { inputs, rolls:{d20s, kept, total}, nat1, tier, desolate, encounter, encounterSuggestion, findings, woodsSeen, mineralsSeen, animalsSeen, log: log.join('\n') };
+      lastResult = result;
+      renderResult(result);
+
+      // auto-scroll results into view
+      $('#summary').scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    // --- Woods sightings
+    function computeWoodsSightings(biome, tier){
+      if(!Packs.woods) return [];
+      const wantedGroups = groupsForBiome(biome);
+      let candidates = (Packs.woods||[]).filter(w=>{
+        const ok = woodsGroupToBiomes(w.envGroup).includes(biome);
+        const g = (w.envGroup||"").toString().trim().toLowerCase();
+        return ok || wantedGroups.includes(g);
+      });
+      if (!candidates.length){
+        if (biome==="Forest / Woodlands") {
+          candidates = (Packs.woods||[]).filter(w=>/temperate/i.test(w.envGroup||""));
+        } else if (biome==="Tropical / Jungle (Exotic)") {
+          candidates = (Packs.woods||[]).filter(w=>/tropic/i.test(w.envGroup||""));
+        }
+      }
+      if(!candidates.length) return [];
+      let count = (tier>=20)?3 : (tier>=13)?2 : 1;
+      const pool = candidates.map(w=>{
+        const r = woodRarityFromDC(w.chopDC);
+        let wt = r==="Common"?4 : r==="Uncommon"?3 : r==="Rare"?2 : 1;
+        if (tier>=20 && (r==="Rare"||r==="Very Rare")) wt += 1;
+        return [w, wt];
+      });
+      const out=[];
+      for(let i=0;i<count && pool.length;i++){
+        const w = pickWeighted(pool);
+        out.push({name:w.name, chopDC:w.chopDC, group:w.envGroup});
+        const idx = pool.findIndex(([it])=>it.name===w.name);
+        if(idx>=0) pool.splice(idx,1);
+      }
+      return out;
+    }
+
+    // --- Minerals sightings
+    function computeMineralSightings(biome, tier, includeMinerals){
+      if(!includeMinerals || !Packs.minerals) return [];
+      const poolRaw = mineralsFor(biome);
+      if(!poolRaw.length) return [];
+      const order = ["Very Common","Common","Uncommon","Rare","Very Rare","Super Rare","Legendary","Epically Legendary","Mythical","Cosmic Mythical"];
+      const allow = (r)=>{
+        const idx = order.indexOf(r||"Common");
+        if (tier<=10) return idx<=1;       // up to Common
+        if (tier<=13) return idx<=2;       // up to Uncommon
+        if (tier<=18) return idx<=3;       // up to Rare
+        if (tier<=20) return idx<=4;       // up to Very Rare
+        if (tier<=25) return idx<=6;       // up to Legendary
+        return true;
+      };
+      const pool = poolRaw.filter(m => !m.rarity || allow(m.rarity));
+      if(!pool.length) return [];
+      let count = tier>=20?3 : tier>=13?2 : 1;
+      if ((biome==="Mountains / Steppes" || biome==="Cave / Subterranean") && count<1) count=1;
+      const weighted = pool.map(m => [m, rarityBias(m.rarity, tier)]);
+      const out=[];
+      for(let i=0;i<count && weighted.length;i++){
+        const m = pickWeighted(weighted);
+        out.push({name:m.name, rarity:m.rarity||null, origin:m.origin||null, env:m.envTags});
+        const idx = weighted.findIndex(([it])=>it.name===m.name);
+        if(idx>=0) weighted.splice(idx,1);
+      }
+      return out;
+    }
+
+    // --- NEW: Animal sightings
+    function computeAnimalSightings(biome, tier){
+      if(!Packs.animals) return [];
+      const pool = animalsFor(biome);
+      if(!pool.length) return [];
+      const count = (tier>=20)?3 : (tier>=13)?2 : 1;
+      // weight by rarity; slight preference to real over mythic for casual sightings
+      const weighted = pool.map(a=>{
+        let w = rarityBias(a.rarity, tier);
+        if ((a.type||"").toLowerCase()==='real') w *= 1.2;
+        return [a, w];
+      });
+      const out=[];
+      for(let i=0;i<count && weighted.length;i++){
+        const a = pickWeighted(weighted);
+        out.push({name:a.name, rarity:a.rarity||'—', cr:a.cr||'0', sci:a.sci||null, type:a.type||null, hook:a.hook||null});
+        const idx = weighted.findIndex(([it])=>it.name===a.name);
+        if(idx>=0) weighted.splice(idx,1);
+      }
+      return out;
+    }
+
+    // --- NEW: Encounter suggestion (animals)
+    function suggestAnimalEncounter(biome, tier){
+      if(!Packs.animals) return null;
+      const pool = animalsFor(biome);
+      if(!pool.length) return null;
+
+      // target CR roughly scales with tier
+      let target = 1;
+      if (tier<=5) target=1;
+      else if (tier<=10) target=2;
+      else if (tier<=13) target=3;
+      else if (tier<=18) target=5;
+      else if (tier<=20) target=6;
+      else if (tier<=25) target=8;
+      else target=12;
+
+      const weighted = pool.map(a=>{
+        const crNum = parseCR(a.cr);
+        let w = rarityBias(a.rarity, Math.max(tier,13)); // bias a bit rarer for encounters
+        w *= (crNum<=target)? 1.4 : (crNum<=target*1.5? 1.0 : 0.5);
+        if ((a.type||"").toLowerCase()!=='real') w *= 1.15; // encounters skew a bit toward mythic
+        return [a,w];
+      });
+      const chosen = pickWeighted(weighted);
+      if(!chosen) return null;
+      const moods = ["aggressive","agitated","territorial","hungry","wounded","protective"];
+      const mood = sample(moods);
+      return { name:chosen.name, cr:chosen.cr||'0', rarity:chosen.rarity||'—', type:chosen.type||null, hook:chosen.hook||null, mood };
+    }
+
+    function renderResult(res){
+      const s = [];
+      s.push(`<span class="badge">${res.inputs.biome}</span> <span class="badge">${res.inputs.season}</span>`);
+      s.push(`Rolls: [${res.rolls.d20s.join(', ')}] → kept <b>${res.rolls.kept}</b>; total <b>${res.rolls.total}</b>`);
+      if(res.nat1) s.push(`<span class="bad">NAT 1 branch</span>`);
+      else s.push(`${summarizeTier(res.tier)}${res.desolate?' (Desolate +5 applied)':''}`);
+      if(res.encounter) s.push(`<span class="warn">Encounter flagged</span>`);
+      $('#summary').innerHTML = s.join(' • ');
+
+      const wrap = $('#findingsWrap'); wrap.innerHTML='';
+
+      // Encounter suggestion card (if applicable)
+      if (res.encounter && res.encounterSuggestion){
+        const e = res.encounterSuggestion;
+        const badges = ['Encounter suggestion','Animal', e.rarity, `CR ${e.cr}`].filter(Boolean);
+        const body = e.hook ? `<div class="help">${e.hook}</div>` : null;
+        wrap.insertAdjacentHTML('beforeend', cardHTML({
+          title:`${e.mood[0].toUpperCase()+e.mood.slice(1)} ${e.name}`,
+          badges, body, accent:'Use or ignore as GM sees fit'
+        }));
+      }
+
+      const items = res.findings.filter(f=>f.category && f.category!=="Nothing" && f.name);
+      if(!res.nat1 && !items.length) wrap.insertAdjacentHTML('beforeend', `<div class="muted item">No foraging items found.</div>`);
+      items.forEach(it=>{
+        const badges = [];
+        if (it.rarity) badges.push(it.rarity);
+        badges.push(it.category);
+        if (it.pack) badges.push(it.pack);
+        const tags = [];
+        if (it.env?.length) tags.push(...it.env.map(e=>e));
+        if (it.season?.length) tags.push(`Season: ${it.season.join(', ')}`);
+        const body = `${it.notes?(`<div class="help">${it.notes}</div>`):''}<div><b>Qty:</b> ${it.quantity}${it.quality?` · <b>Quality:</b> ${it.quality}`:''}</div>`;
+        wrap.insertAdjacentHTML('beforeend', cardHTML({title:it.name, subtitle:null, badges, tags, body}));
+      });
+
+      // Animal sightings
+      const awrap = $('#sightAnimals'); awrap.innerHTML='';
+      if(Packs.animals && res.animalsSeen.length){
+        res.animalsSeen.forEach(a=>{
+          const badges = [a.rarity, `CR ${a.cr}`, 'Animal'];
+          const body = a.hook ? `<div class="help">${a.hook}</div>` : (a.sci?`<div class="help"><i>${a.sci}</i></div>`:null);
+          awrap.insertAdjacentHTML('beforeend', cardHTML({title:a.name, badges, body, accent:'Seen nearby'}));
+        });
+      } else {
+        awrap.innerHTML = `<div class="muted item">${Packs.animals? 'No notable animals spotted.' : 'Load animals pack to show animal sightings.'}</div>`;
+      }
+
+      // Woods sightings
+      const wwrap = $('#sightWoods'); wwrap.innerHTML='';
+      if(res.woodsSeen.length){
+        res.woodsSeen.forEach(w=>{
+          const badges = [w.group, `Chop DC ${w.chopDC}`, woodRarityFromDC(w.chopDC)];
+          wwrap.insertAdjacentHTML('beforeend', cardHTML({title:w.name, badges, accent:'Seen nearby (scouting lead)'}));
+        });
+      } else {
+        wwrap.innerHTML = `<div class="muted item">No notable woods spotted.</div>`;
+      }
+
+      // Minerals sightings
+      const mwrap = $('#sightMinerals'); mwrap.innerHTML='';
+      if(res.mineralsSeen.length){
+        res.mineralsSeen.forEach(m=>{
+          const badges = [m.rarity||'—','Mineral'];
+          const tags = (m.env||[]);
+          const body = m.origin?`<div class="help">Origin: ${m.origin}</div>`:null;
+          mwrap.insertAdjacentHTML('beforeend', cardHTML({title:m.name, badges, tags, body, accent:'Vein spotted (scouting lead)'}));
+        });
+      } else {
+        mwrap.innerHTML = `<div class="muted item">${res.inputs.includeMinerals? 'No mineral veins spotted.' : 'Mineral sightings disabled.'}</div>`;
+      }
+
+      $('#log').textContent = res.log;
+      $('#exportBtn').disabled = false;
+      $('#copyLogBtn').disabled = false;
+    }
+
+    // ---------- Events ----------
+    const runForage = ()=> forage();
+
+    $('#hasAdv').addEventListener('change', (e)=> $('#advWrap').classList.toggle('hidden', !e.target.checked));
+    $('#clearBtn').addEventListener('click', ()=>{
+      $('#skillBonus').value = 0; $('#extraMods').value = 0;
+      $('#hasAdv').checked = false; $('#advWrap').classList.add('hidden'); $('#advCount').value = 1;
+      $$('input[name="focus"]').forEach(r=>{ if(r.value==="None") r.checked=true; });
+      $('#includeMinerals').checked = false;
+      $('#mixPct').value=15; $('#cavePct').value=5; $('#nat1Kept').checked=true; $('#desolate').checked=false;
+      $('#summary').innerHTML = `Load your data packs (auto or manual), enter details, then press <b>Forage</b>.`;
+      $('#findingsWrap').innerHTML='';
+      $('#sightAnimals').innerHTML=''; $('#sightWoods').innerHTML=''; $('#sightMinerals').innerHTML='';
+      $('#log').textContent=''; $('#exportBtn').disabled = true; $('#copyLogBtn').disabled = true;
+    });
+    $('#clearBtnTop').addEventListener('click', ()=> $('#clearBtn').click());
+
+    // forage buttons (3 locations)
+    $('#forageBtn').addEventListener('click', runForage);
+    $('#forageBtnTop').addEventListener('click', runForage);
+    $('#forageBtnHeader').addEventListener('click', runForage);
+
+    $('#exportBtn').addEventListener('click', ()=>{
+      if(!lastResult) return;
+      const blob = new Blob([JSON.stringify(lastResult,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'foraging_result.json';
+      document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+    });
+    $('#copyLogBtn').addEventListener('click', async ()=>{
+      if(!lastResult) return;
+      try{ await navigator.clipboard.writeText(lastResult.log); $('#copyLogBtn').textContent='Copied!'; setTimeout(()=>$('#copyLogBtn').textContent='Copy Log',1200); }catch(e){}
+    });
+
+    // pack controls
+    $('#autoLoadBtn').addEventListener('click', autoLoadAll);
+    $('#togglePickers').addEventListener('click', ()=> $('#pickers').classList.toggle('hidden'));
+    $('#quickPacks').addEventListener('click', ()=>{
+      $('#packsPanel').open = true;
+      $('#pickers').classList.remove('hidden');
+      $('#packsPanel').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+    $('#openPacksFromResults').addEventListener('click', ()=>$('#quickPacks').click());
+
+    // picker hooks
+    $('#pickFoods').addEventListener('change', e=> handlePicker(e.target,'foods','foods-data','FoodsPack','#stFoods'));
+    $('#pickHerbs').addEventListener('change', e=> handlePicker(e.target,'herbs','herbs-data','HerbsPack','#stHerbs'));
+    $('#pickWild').addEventListener('change', e=> handlePicker(e.target,'wild','wildingredients-data','WildIngredientsPack','#stWild'));
+    $('#pickMinerals').addEventListener('change', e=> handlePicker(e.target,'minerals','minerals-data','MineralsPack','#stMinerals'));
+    $('#pickWoods').addEventListener('change', e=> handlePicker(e.target,'woods','woods-data','WoodsPack','#stWoods'));
+    $('#pickAnimals').addEventListener('change', e=> handlePicker(e.target,'animals','animals-data','AnimalsPack','#stAnimals'));
+
+    // ---------- Init ----------
+    (function init(){
+      if (location.protocol === 'file:'){
+        $('#fileProtocolNotice').classList.remove('hidden');
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Woods Data Pack</title>
+  <!--
+    Woods Data Pack (HTML)
+    ---------------------------------------------
+    Usage (from another page on the same origin):
+    1) fetch('woods.html')
+       .then(r => r.text())
+       .then(html => {
+         const doc = new DOMParser().parseFromString(html, 'text/html');
+         const json = JSON.parse(doc.querySelector('#woods-data').textContent);
+         console.log(json.items); // your woods data
+       });
+
+    Or, if you <iframe src="woods.html"> and need the data, you can read
+    iframe.contentWindow.WoodsDataPack.getAll() once it loads (same-origin).
+
+    Global helpers exposed here:
+      window.WoodsDataPack = {
+        version: '1.0.0',
+        items: [...],
+        getAll(): items[],
+        byEnv(env: 'Temperate'|'Tropical'|'Boreal'): items[],
+        findByName(name: string): items[],
+        random(filter?: { env?: string, tier?: string }): item | null
+      }
+
+    Notes:
+    - "index" is preserved exactly as provided (gaps may exist).
+    - "uid" is unique per-record (env + index + slug).
+    - "dcTier" is derived for convenience:
+        Easy (≤14), Moderate (15–19), Hard (20–24), Very Hard (25–29), Extreme (≥30)
+  -->
+  <style>
+    :root{
+      --paper-0:#fbf6e9; --paper-1:#f3ead4; --paper-2:#e6d7bb;
+      --ink:#111; --ink-soft:rgba(0,0,0,.65); --ink-red:#7a1f1f;
+      --ring:#d9c9a7; --ring-2:#d7c6a1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(rgba(0,0,0,0.035) .8px, transparent .8px),
+        radial-gradient(1200px 800px at 50% 0%, #f8f1de 0%, #f0e6cf 60%, var(--paper-2) 100%);
+      background-size:6px 6px, auto;
+      background-blend-mode:multiply;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .container{max-width:1100px;margin:0 auto;padding:40px 16px 72px}
+    .paper{background:linear-gradient(180deg, rgba(255,255,255,.60), rgba(255,255,255,.52));backdrop-filter:blur(.3px)}
+    .round{border-radius:16px}
+    .shadow{box-shadow:0 10px 30px rgba(0,0,0,.10)}
+    .ring{border:1px solid var(--ring)}
+
+    header.card{position:relative;overflow:hidden}
+    header.card .burn:before, header.card .burn:after{
+      content:"";position:absolute;border-radius:999px;filter:blur(28px);opacity:.12;mix-blend-mode:multiply;pointer-events:none
+    }
+    header.card .burn:before{width:120px;height:120px;background:var(--ink-red);left:-32px;top:-32px;transform:rotate(12deg)}
+    header.card .burn:after{width:140px;height:140px;background:var(--ink-red);right:-40px;bottom:-48px;transform:rotate(-12deg)}
+
+    h1{margin:0;font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;font-weight:700;color:var(--ink-red)}
+    .sub{color:var(--ink-soft)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+    .input,.select{padding:10px 12px;border:1px solid var(--ring-2);border-radius:12px;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);outline:0}
+    .btn{border:1px solid var(--ring-2);background:linear-gradient(180deg, var(--paper-0), var(--paper-1));padding:10px 12px;border-radius:12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.02)}
+    .count{font-size:12px;color:var(--ink-soft);margin-left:auto}
+
+    .table-wrap{margin-top:16px;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:linear-gradient(180deg, var(--paper-0), var(--paper-1));border:1px solid var(--ring);border-radius:16px;overflow:hidden}
+    thead th{position:sticky;top:0;background:color-mix(in oklab, var(--paper-0) 70%, white 30%);text-align:left;padding:10px 12px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--ring)}
+    tbody td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.05)}
+    tbody tr:hover{background:rgba(0,0,0,.035)}
+    th.sortable{cursor:pointer}
+    th.sortable::after{content:" ↕";opacity:.5}
+    th.sortable[data-dir="asc"]::after{content:" ↑"}
+    th.sortable[data-dir="desc"]::after{content:" ↓"}
+
+    .badge{display:inline-block;border:1px solid var(--ring-2);border-radius:999px;padding:4px 8px;font:700 10px/1 system-ui;text-transform:uppercase;letter-spacing:.04em;background:#f3ead4;color:color-mix(in oklab, var(--ink-red) 90%, black 10%)}
+    .env{font-weight:600}
+    .muted{color:var(--ink-soft);font-size:14px}
+
+    .foot{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .small{font-size:12px;color:var(--ink-soft)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card paper round shadow ring">
+      <div class="burn" aria-hidden="true"></div>
+      <div style="padding:24px">
+        <h1 style="font-size:clamp(28px,3vw,38px)">Woods Data Pack</h1>
+        <p class="sub" style="margin:.25rem 0 0">Environment → Wood → Chopping DC (with computed DC Tiers). All values mirror your provided list.</p>
+
+        <div class="controls">
+          <input id="q" class="input" type="search" placeholder="Search name…" aria-label="Search by wood name" />
+          <select id="env" class="select" aria-label="Filter by environment">
+            <option value="">All environments</option>
+            <option value="Temperate">Temperate</option>
+            <option value="Tropical">Tropical</option>
+            <option value="Boreal">Boreal</option>
+          </select>
+          <select id="tier" class="select" aria-label="Filter by DC tier">
+            <option value="">All DC tiers</option>
+            <option>Easy (≤14)</option>
+            <option>Moderate (15–19)</option>
+            <option>Hard (20–24)</option>
+            <option>Very Hard (25–29)</option>
+            <option>Extreme (≥30)</option>
+          </select>
+          <button id="reset" class="btn" type="button">Reset</button>
+          <button id="export" class="btn" type="button" title="Download woods.json">Export JSON</button>
+          <span id="count" class="count" aria-live="polite"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="table-wrap">
+      <table aria-describedby="count">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="environment">Environment</th>
+            <th class="sortable" data-key="index" style="width:90px">Index</th>
+            <th class="sortable" data-key="name">Wood</th>
+            <th class="sortable" data-key="dc" style="width:130px">Chopping DC</th>
+            <th class="sortable" data-key="dcTier" style="width:160px">DC Tier</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <p id="empty" class="muted hidden" style="padding:14px">No results match that filter.</p>
+
+      <div class="foot">
+        <span class="small">Source: Heron’s Manual – Volume 1: Pursuing Activities (user-provided).</span>
+        <span class="small">Version: <code>1.0.0</code></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- The canonical dataset -->
+  <script type="application/json" id="woods-data">
+  {
+    "pack": "woods",
+    "version": "1.0.0",
+    "schema": "https://example.local/woods.schema.v1 (informal)",
+    "fields": ["uid","environment","index","name","dc","dcTier","source"],
+    "items": [
+      { "uid":"temperate-1-red-alder","environment":"Temperate","index":1,"name":"Red Alder","dc":12,"source":"user" },
+      { "uid":"temperate-2-cypress","environment":"Temperate","index":2,"name":"Cypress","dc":15,"source":"user" },
+      { "uid":"temperate-3-quaking-aspen","environment":"Temperate","index":3,"name":"Quaking Aspen","dc":10,"source":"user" },
+      { "uid":"temperate-4-black-cherry","environment":"Temperate","index":4,"name":"Black Cherry","dc":18,"source":"user" },
+      { "uid":"temperate-5-aqiun-ebony","environment":"Temperate","index":5,"name":"Aqiun Ebony","dc":30,"source":"user" },
+      { "uid":"temperate-6-slippery-elm","environment":"Temperate","index":6,"name":"Slippery Elm","dc":17,"source":"user" },
+      { "uid":"temperate-7-sweet-gum","environment":"Temperate","index":7,"name":"Sweet Gum","dc":17,"source":"user" },
+      { "uid":"temperate-8-hawthorn","environment":"Temperate","index":8,"name":"Hawthorn","dc":19,"source":"user" },
+      { "uid":"temperate-10-western-hemlock","environment":"Temperate","index":10,"name":"Western Hemlock","dc":15,"source":"user" },
+      { "uid":"temperate-11-holly","environment":"Temperate","index":11,"name":"Holly","dc":19,"source":"user" },
+      { "uid":"temperate-12-lacewood","environment":"Temperate","index":12,"name":"Lacewood","dc":17,"source":"user" },
+      { "uid":"temperate-13-black-locust","environment":"Temperate","index":13,"name":"Black Locust","dc":21,"source":"user" },
+      { "uid":"temperate-14-birds-eye-maple","environment":"Temperate","index":14,"name":"Birds Eye Maple","dc":21,"source":"user" },
+      { "uid":"temperate-15-common-oak","environment":"Temperate","index":15,"name":"Common Oak","dc":20,"source":"user" },
+      { "uid":"temperate-16-russian-olive","environment":"Temperate","index":16,"name":"Russian Olive","dc":22,"source":"user" },
+      { "uid":"temperate-17-osage-orange","environment":"Temperate","index":17,"name":"Osage Orange","dc":30,"source":"user" },
+      { "uid":"temperate-18-padauk","environment":"Temperate","index":18,"name":"Padauk","dc":26,"source":"user" },
+      { "uid":"temperate-19-persimmon","environment":"Temperate","index":19,"name":"Persimmon","dc":30,"source":"user" },
+      { "uid":"temperate-20-plum","environment":"Temperate","index":20,"name":"Plum","dc":23,"source":"user" },
+      { "uid":"temperate-21-yellow-poplar","environment":"Temperate","index":21,"name":"Yellow Poplar","dc":15,"source":"user" },
+      { "uid":"temperate-22-redwood","environment":"Temperate","index":22,"name":"Redwood","dc":11,"source":"user" },
+      { "uid":"temperate-23-east-indian-rosewood","environment":"Temperate","index":23,"name":"East Indian Rosewood","dc":28,"source":"user" },
+      { "uid":"temperate-24-sassafras","environment":"Temperate","index":24,"name":"Sassafras","dc":16,"source":"user" },
+      { "uid":"temperate-25-black-walnut","environment":"Temperate","index":25,"name":"Black Walnut","dc":19,"source":"user" },
+      { "uid":"temperate-26-white-walnut","environment":"Temperate","index":26,"name":"White Walnut","dc":12,"source":"user" },
+      { "uid":"temperate-27-western-yew","environment":"Temperate","index":27,"name":"Western Yew","dc":22,"source":"user" },
+
+      { "uid":"tropical-1-applewood","environment":"Tropical","index":1,"name":"Applewood","dc":22,"source":"user" },
+      { "uid":"tropical-2-bloodwood","environment":"Tropical","index":2,"name":"Bloodwood","dc":26,"source":"user" },
+      { "uid":"tropical-3-bocote","environment":"Tropical","index":3,"name":"Bocote","dc":23,"source":"user" },
+      { "uid":"tropical-4-bubinga","environment":"Tropical","index":4,"name":"Bubinga","dc":23,"source":"user" },
+      { "uid":"tropical-5-canarywood","environment":"Tropical","index":5,"name":"Canarywood","dc":20,"source":"user" },
+      { "uid":"tropical-6-chakte-kok","environment":"Tropical","index":6,"name":"Chakte Kok","dc":19,"source":"user" },
+      { "uid":"tropical-7-sweet-chestnut","environment":"Tropical","index":7,"name":"Sweet Chestnut","dc":16,"source":"user" },
+      { "uid":"tropical-8-cocobolo","environment":"Tropical","index":8,"name":"Cocobolo","dc":26,"source":"user" },
+      { "uid":"tropical-9-makassar-ebony","environment":"Tropical","index":9,"name":"Makassar Ebony","dc":30,"source":"user" },
+      { "uid":"tropical-10-khaya","environment":"Tropical","index":10,"name":"Khaya","dc":19,"source":"user" },
+      { "uid":"tropical-11-kingwood","environment":"Tropical","index":11,"name":"Kingwood","dc":30,"source":"user" },
+      { "uid":"tropical-12-koa","environment":"Tropical","index":12,"name":"Koa","dc":19,"source":"user" },
+      { "uid":"tropical-13-lignum-vitae","environment":"Tropical","index":13,"name":"Lignum Vitae","dc":33,"source":"user" },
+      { "uid":"tropical-14-black-limba","environment":"Tropical","index":14,"name":"Black Limba","dc":16,"source":"user" },
+      { "uid":"tropical-15-fijian-mahogany","environment":"Tropical","index":15,"name":"Fijian Mahogany","dc":18,"source":"user" },
+      { "uid":"tropical-16-ovangkol","environment":"Tropical","index":16,"name":"Ovangkol","dc":23,"source":"user" },
+      { "uid":"tropical-17-pau-amarello","environment":"Tropical","index":17,"name":"Pau Amarello","dc":24,"source":"user" },
+      { "uid":"tropical-18-black-poisonwood","environment":"Tropical","index":18,"name":"Black Poisonwood","dc":29,"source":"user" },
+      { "uid":"tropical-19-purpleheart","environment":"Tropical","index":19,"name":"Purpleheart","dc":27,"source":"user" },
+      { "uid":"tropical-20-honduran-rosewood","environment":"Tropical","index":20,"name":"Honduran Rosewood","dc":28,"source":"user" },
+      { "uid":"tropical-21-sapele","environment":"Tropical","index":21,"name":"Sapele","dc":23,"source":"user" },
+      { "uid":"tropical-22-teak","environment":"Tropical","index":22,"name":"Teak","dc":19,"source":"user" },
+      { "uid":"tropical-23-tulipwood","environment":"Tropical","index":23,"name":"Tulipwood","dc":27,"source":"user" },
+      { "uid":"tropical-24-verawood","environment":"Tropical","index":24,"name":"Verawood","dc":40,"source":"user" },
+      { "uid":"tropical-25-andean-walnut","environment":"Tropical","index":25,"name":"Andean Walnut","dc":19,"source":"user" },
+      { "uid":"tropical-26-wenge","environment":"Tropical","index":26,"name":"Wenge","dc":26,"source":"user" },
+      { "uid":"tropical-27-weeping-willow","environment":"Tropical","index":27,"name":"Weeping Willow","dc":12,"source":"user" },
+      { "uid":"tropical-28-zebrawood","environment":"Tropical","index":28,"name":"Zebrawood","dc":26,"source":"user" },
+
+      { "uid":"boreal-1-basswood","environment":"Boreal","index":1,"name":"Basswood","dc":10,"source":"user" },
+      { "uid":"boreal-2-white-ash","environment":"Boreal","index":2,"name":"White Ash","dc":19,"source":"user" },
+      { "uid":"boreal-3-beech","environment":"Boreal","index":3,"name":"Beech","dc":19,"source":"user" },
+      { "uid":"boreal-4-yellow-birch","environment":"Boreal","index":4,"name":"Yellow Birch","dc":19,"source":"user" },
+      { "uid":"boreal-5-aromatic-cedar","environment":"Boreal","index":5,"name":"Aromatic Cedar","dc":17,"source":"user" },
+      { "uid":"boreal-6-cedar-of-lebanon","environment":"Boreal","index":6,"name":"Cedar of Lebanon","dc":16,"source":"user" },
+      { "uid":"boreal-7-western-red-cedar","environment":"Boreal","index":7,"name":"Western Red Cedar","dc":10,"source":"user" },
+      { "uid":"boreal-8-black-cherry","environment":"Boreal","index":8,"name":"Black Cherry","dc":18,"source":"user" },
+      { "uid":"boreal-9-douglas-fir","environment":"Boreal","index":9,"name":"Douglas Fir","dc":15,"source":"user" },
+      { "uid":"boreal-10-shagbark-hickory","environment":"Boreal","index":10,"name":"Shagbark Hickory","dc":21,"source":"user" },
+      { "uid":"boreal-11-hornbeam","environment":"Boreal","index":11,"name":"Hornbeam","dc":22,"source":"user" },
+      { "uid":"boreal-12-curly-maple","environment":"Boreal","index":12,"name":"Curly Maple","dc":21,"source":"user" },
+      { "uid":"boreal-13-sugar-maple","environment":"Boreal","index":13,"name":"Sugar Maple","dc":21,"source":"user" },
+      { "uid":"boreal-14-red-oak","environment":"Boreal","index":14,"name":"Red Oak","dc":22,"source":"user" },
+      { "uid":"boreal-15-white-oak","environment":"Boreal","index":15,"name":"White Oak","dc":23,"source":"user" },
+      { "uid":"boreal-16-northern-white-pine","environment":"Boreal","index":16,"name":"Northern White Pine","dc":10,"source":"user" },
+      { "uid":"boreal-17-sumac","environment":"Boreal","index":17,"name":"Sumac","dc":16,"source":"user" },
+      { "uid":"boreal-18-rowan","environment":"Boreal","index":18,"name":"Rowan","dc":24,"source":"user" },
+      { "uid":"boreal-19-sycamore","environment":"Boreal","index":19,"name":"Sycamore","dc":17,"source":"user" },
+      { "uid":"boreal-20-black-willow","environment":"Boreal","index":20,"name":"Black Willow","dc":12,"source":"user" }
+    ]
+  }
+  </script>
+
+  <script>
+    (function initPack(){
+      const raw = document.getElementById('woods-data').textContent.trim();
+      /** @type {{items:any[]}} */
+      const data = JSON.parse(raw);
+
+      // compute dcTier & attach
+      data.items.forEach(it => {
+        it.dcTier = dcToTier(it.dc);
+      });
+
+      function dcToTier(dc){
+        if (dc <= 14) return 'Easy (≤14)';
+        if (dc <= 19) return 'Moderate (15–19)';
+        if (dc <= 24) return 'Hard (20–24)';
+        if (dc <= 29) return 'Very Hard (25–29)';
+        return 'Extreme (≥30)';
+      }
+
+      // Expose helpers
+      window.WoodsDataPack = {
+        version: data.version || '1.0.0',
+        items: data.items.slice(),
+        getAll(){ return data.items.slice(); },
+        byEnv(env){ return data.items.filter(x => x.environment === env); },
+        findByName(name){
+          const n = (name||'').trim().toLowerCase();
+          return data.items.filter(x => x.name.toLowerCase().includes(n));
+        },
+        random(filter){
+          let pool = data.items;
+          if (filter?.env) pool = pool.filter(x => x.environment === filter.env);
+          if (filter?.tier) pool = pool.filter(x => x.dcTier === filter.tier);
+          if (!pool.length) return null;
+          return pool[Math.floor(Math.random() * pool.length)];
+        }
+      };
+
+      // --- minimal viewer ---
+      const rows = document.getElementById('rows');
+      const qEl   = document.getElementById('q');
+      const envEl = document.getElementById('env');
+      const tierEl= document.getElementById('tier');
+      const count = document.getElementById('count');
+      const empty = document.getElementById('empty');
+      const reset = document.getElementById('reset');
+      const exportBtn = document.getElementById('export');
+      const ths = Array.from(document.querySelectorAll('th.sortable'));
+
+      let view = data.items.slice();
+      let sortKey = 'environment';
+      let sortDir = 'asc';
+
+      function applyFilters(){
+        const q = (qEl.value||'').trim().toLowerCase();
+        const env = envEl.value;
+        const tier = tierEl.value;
+
+        view = data.items.filter(it => {
+          if (env && it.environment !== env) return false;
+          if (tier && it.dcTier !== tier) return false;
+          if (q && !it.name.toLowerCase().includes(q)) return false;
+          return true;
+        });
+        applySort();
+        render();
+      }
+
+      function applySort(){
+        const dir = sortDir === 'asc' ? 1 : -1;
+        view.sort((a,b) => {
+          const av = a[sortKey], bv = b[sortKey];
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+          return String(av).localeCompare(String(bv)) * dir;
+        });
+      }
+
+      function render(){
+        rows.innerHTML = '';
+        view.forEach(it => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="env">${it.environment}</span></td>
+            <td>${it.index ?? ''}</td>
+            <td>${it.name}</td>
+            <td>${it.dc}</td>
+            <td><span class="badge">${it.dcTier}</span></td>
+          `;
+          rows.appendChild(tr);
+        });
+        empty.classList.toggle('hidden', view.length !== 0);
+        count.textContent = `${view.length}/${data.items.length}`;
+      }
+
+      function setSort(key){
+        if (sortKey === key){
+          sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
+        } else {
+          sortKey = key; sortDir = 'asc';
+        }
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        const active = ths.find(th => th.dataset.key === sortKey);
+        if (active) active.dataset.dir = sortDir;
+        applySort(); render();
+      }
+
+      // events
+      qEl.addEventListener('input', applyFilters);
+      envEl.addEventListener('change', applyFilters);
+      tierEl.addEventListener('change', applyFilters);
+      reset.addEventListener('click', () => {
+        qEl.value = ''; envEl.value = ''; tierEl.value = '';
+        sortKey = 'environment'; sortDir = 'asc';
+        ths.forEach(th => th.removeAttribute('data-dir'));
+        applyFilters();
+      });
+      ths.forEach(th => th.addEventListener('click', () => setSort(th.dataset.key)));
+
+      exportBtn.addEventListener('click', () => {
+        const payload = {
+          pack: 'woods',
+          version: data.version || '1.0.0',
+          items: data.items
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'woods.json';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+      });
+
+      // initial state
+      setSort('environment');
+      applyFilters();
+    })();
+  </script>
+</body>
+</html>
