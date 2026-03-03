@@ -3,414 +3,483 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>War Table — Battle Sandbox (MVP)</title>
+  <title>War Table — Fairgard Battle Engine</title>
   <style>
+    /* ── Fairgard Palette ─────────────────────────────────────────── */
     :root {
-      --bg0: #0b0b0c;
-      --bg1: #111114;
-      --panel: rgba(255,255,255,0.06);
-      --panel2: rgba(255,255,255,0.08);
-      --stroke: rgba(255,255,255,0.12);
-      --stroke2: rgba(255,255,255,0.18);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.68);
-      --faint: rgba(255,255,255,0.50);
-      --good: #5dd39e;
-      --bad: #ff6b6b;
-      --warn: #ffd166;
-      --att: #ff3d71;
-      --def: #4dabf7;
-      --focus: rgba(255,255,255,0.25);
-      --shadow: 0 10px 40px rgba(0,0,0,0.45);
-      --radius: 16px;
-      --radius2: 24px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --ui: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --crimson:    #B00020;
+      --crimson2:   #C41E3A;
+      --parchment:  #E6D3A3;
+      --parchment2: #D8C59A;
+      --leather:    #5A3A1E;
+      --ink:        #1C1C1C;
+      --cream:      #F4F1E8;
+      --tan:        #8C6239;
+      --gold:       #C9A227;
+
+      /* Semantic tokens */
+      --bg0:     #0f0d0b;
+      --bg1:     #1a1410;
+      --panel:   rgba(90,58,30,0.18);
+      --panel2:  rgba(90,58,30,0.28);
+      --stroke:  rgba(201,162,39,0.22);
+      --stroke2: rgba(201,162,39,0.40);
+      --text:    #F4F1E8;
+      --muted:   #D8C59A;
+      --faint:   rgba(230,211,163,0.55);
+      --good:    #7ec98a;
+      --bad:     #e05555;
+      --warn:    var(--gold);
+      --att:     var(--crimson2);
+      --def:     #4a90c4;
+      --focus:   rgba(201,162,39,0.35);
+      --shadow:  0 10px 40px rgba(0,0,0,0.6);
+      --radius:  14px;
+      --radius2: 20px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+      --ui:  'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
+
+    *, *::before, *::after { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: var(--ui);
+      font-family: var(--sans);
       color: var(--text);
       background:
-        radial-gradient(1200px 600px at 20% 0%, rgba(255,61,113,0.08), transparent 60%),
-        radial-gradient(1200px 600px at 80% 0%, rgba(77,171,247,0.08), transparent 60%),
-        radial-gradient(900px 500px at 50% 120%, rgba(255,209,102,0.06), transparent 60%),
+        radial-gradient(900px 500px at 15% 0%,  rgba(176,0,32,0.12),  transparent 65%),
+        radial-gradient(900px 500px at 85% 10%,  rgba(74,144,196,0.08), transparent 65%),
+        radial-gradient(700px 400px at 50% 110%, rgba(201,162,39,0.10), transparent 60%),
         linear-gradient(180deg, var(--bg0), var(--bg1));
       min-height: 100vh;
     }
 
+    /* Parchment grain overlay */
     body::before {
       content: "";
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%),
+        radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,0.4) 100%),
         repeating-linear-gradient(0deg,
-          rgba(255,255,255,0.015) 0px,
-          rgba(255,255,255,0.015) 1px,
-          transparent 2px,
-          transparent 4px
+          rgba(201,162,39,0.025) 0px, rgba(201,162,39,0.025) 1px,
+          transparent 2px, transparent 5px
         );
       mix-blend-mode: overlay;
-      opacity: 0.85;
+      opacity: 0.8;
     }
 
     .app {
-      position: relative;
-      z-index: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 18px 16px 30px;
+      position: relative; z-index: 1;
+      max-width: 1280px; margin: 0 auto;
+      padding: 16px 16px 40px;
     }
 
+    /* ── Header ───────────────────────────────────────────────────── */
     header {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 12px 16px;
+      display: flex; gap: 16px; align-items: flex-start;
+      justify-content: space-between; padding: 12px 12px 18px;
+      border-bottom: 1px solid var(--stroke); margin-bottom: 14px;
     }
 
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 240px;
-    }
+    .brand { display: flex; flex-direction: column; gap: 5px; min-width: 220px; }
     .brand h1 {
-      font-size: 18px;
-      margin: 0;
-      letter-spacing: 0.4px;
+      margin: 0; font-size: 22px; font-family: var(--ui);
+      color: var(--gold); letter-spacing: 1px;
+      text-shadow: 0 0 20px rgba(201,162,39,0.4);
     }
-    .brand .sub {
-      font-size: 13px;
-      color: var(--muted);
-    }
+    .brand .sub { font-size: 12px; color: var(--muted); letter-spacing: 0.3px; }
     .brand .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--stroke);
-      font-size: 12px;
-      color: var(--muted);
+      display: inline-flex; align-items: center; gap: 8px;
+      width: fit-content; padding: 5px 10px; border-radius: 999px;
+      background: rgba(201,162,39,0.08); border: 1px solid var(--stroke);
+      font-size: 11px; color: var(--muted);
     }
     .brand .pill code {
-      font-family: var(--mono);
-      color: var(--text);
-      background: rgba(255,255,255,0.04);
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid var(--stroke);
+      font-family: var(--mono); color: var(--gold); font-size: 11px;
+      background: rgba(201,162,39,0.08); padding: 1px 5px;
+      border-radius: 6px; border: 1px solid var(--stroke);
     }
 
-    nav {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
+    /* ── Nav tabs ─────────────────────────────────────────────────── */
+    nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .tab {
-      appearance: none;
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.04);
-      color: var(--muted);
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 13px;
-      cursor: default;
-      user-select: none;
+      appearance: none; cursor: pointer; user-select: none;
+      border: 1px solid var(--stroke); background: rgba(90,58,30,0.12);
+      color: var(--muted); padding: 7px 14px; border-radius: 999px;
+      font-size: 12px; font-family: var(--sans); letter-spacing: 0.3px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
+    .tab:hover { background: rgba(201,162,39,0.12); color: var(--text); }
     .tab.active {
-      color: var(--text);
-      border-color: var(--stroke2);
-      background: rgba(255,255,255,0.07);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      color: var(--gold); border-color: var(--stroke2);
+      background: rgba(201,162,39,0.14);
+      box-shadow: 0 0 12px rgba(201,162,39,0.15);
     }
-    .tab[aria-disabled="true"] { opacity: 0.55; }
+    .tab[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
 
-    .grid {
-      display: grid;
-      gap: 14px;
+    /* ── Tab pages ────────────────────────────────────────────────── */
+    .tabPage { display: none; }
+    .tabPage.active { display: block; }
+
+    /* ── Layout grid ──────────────────────────────────────────────── */
+    .battleGrid {
+      display: grid; gap: 12px;
       grid-template-columns: 1fr;
     }
     @media (min-width: 980px) {
-      .grid { grid-template-columns: 1fr 320px 1fr; align-items: start; }
+      .battleGrid { grid-template-columns: 1fr 300px 1fr; align-items: start; }
     }
 
+    /* ── Cards ────────────────────────────────────────────────────── */
     .card {
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow);
-      overflow: clip;
+      background: var(--panel); border: 1px solid var(--stroke);
+      border-radius: var(--radius2); box-shadow: var(--shadow); overflow: clip;
     }
     .card .cardHead {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 14px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 14px 10px;
+      border-bottom: 1px solid rgba(201,162,39,0.15);
+      background: linear-gradient(180deg, rgba(201,162,39,0.06), transparent);
     }
     .sideTitle { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-    .sideTitle h2 { margin: 0; font-size: 15px; letter-spacing: 0.3px; }
+    .sideTitle h2 {
+      margin: 0; font-size: 15px; font-family: var(--ui);
+      color: var(--parchment); letter-spacing: 0.5px;
+    }
+
     .badge {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.04);
+      font-size: 11px; padding: 3px 8px; border-radius: 999px;
+      border: 1px solid var(--stroke); background: rgba(90,58,30,0.20);
       color: var(--muted);
     }
     .badge.att {
-      border-color: rgba(255,61,113,0.35);
-      color: rgba(255,61,113,0.95);
-      background: rgba(255,61,113,0.07);
+      border-color: rgba(196,30,58,0.45); color: #e06070;
+      background: rgba(176,0,32,0.15);
     }
     .badge.def {
-      border-color: rgba(77,171,247,0.35);
-      color: rgba(77,171,247,0.95);
-      background: rgba(77,171,247,0.07);
+      border-color: rgba(74,144,196,0.40); color: #7ab8e8;
+      background: rgba(74,144,196,0.12);
+    }
+    .badge.gold {
+      border-color: rgba(201,162,39,0.45); color: var(--gold);
+      background: rgba(201,162,39,0.12);
     }
 
-    .content { padding: 14px; }
+    .content { padding: 13px; }
 
+    /* ── Form elements ────────────────────────────────────────────── */
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .row.single { grid-template-columns: 1fr; }
+    .row.triple { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-    label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+    label { display: grid; gap: 5px; font-size: 12px; color: var(--muted); }
+    label.req::after { content: " *"; color: var(--crimson2); }
 
-    input, select, button, textarea { font-family: inherit; font-size: 14px; }
+    input, select, button, textarea { font-family: var(--sans); font-size: 13px; }
 
-    input[type="number"], select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 10px;
-      border-radius: 12px;
+    input[type="number"], input[type="text"], select, textarea {
+      width: 100%; padding: 9px 10px; border-radius: 10px;
       border: 1px solid var(--stroke);
-      background: rgba(0,0,0,0.28);
-      color: var(--text);
-      outline: none;
+      background: rgba(15,13,11,0.55); color: var(--text); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    input[type="number"]:focus, select:focus, button:focus {
+    input:focus, select:focus, textarea:focus {
       box-shadow: 0 0 0 3px var(--focus);
-      border-color: rgba(255,255,255,0.25);
+      border-color: rgba(201,162,39,0.5);
     }
+    input::placeholder { color: var(--faint); }
+    select option { background: #1a1410; color: var(--text); }
 
-    .help { margin-top: 6px; font-size: 12px; color: var(--faint); line-height: 1.35; }
-    .mono { font-family: var(--mono); color: var(--text); }
+    .help { margin-top: 4px; font-size: 11px; color: var(--faint); line-height: 1.4; }
+    .mono { font-family: var(--mono); color: var(--parchment); }
 
+    /* ── KPI boxes ────────────────────────────────────────────────── */
     .kpi {
-      display: grid;
-      gap: 8px;
-      padding: 12px;
-      border-radius: var(--radius);
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.04);
+      display: grid; gap: 6px; padding: 10px; border-radius: var(--radius);
+      border: 1px solid var(--stroke); background: rgba(0,0,0,0.25);
+      margin-top: 10px;
     }
     .kpiRow {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
     }
-    .kpiRow .label { font-size: 12px; color: var(--muted); }
-    .kpiRow .value { font-family: var(--mono); font-size: 14px; color: var(--text); }
+    .kpiRow .label { font-size: 11px; color: var(--muted); }
+    .kpiRow .value { font-family: var(--mono); font-size: 13px; color: var(--parchment); }
 
     .breakdown {
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px dashed rgba(255,255,255,0.18);
-      border-radius: 14px;
-      background: rgba(0,0,0,0.18);
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.45;
+      margin-top: 10px; padding: 10px;
+      border: 1px dashed rgba(201,162,39,0.25); border-radius: 12px;
+      background: rgba(0,0,0,0.20); font-size: 11px;
+      color: var(--muted); line-height: 1.5;
     }
-    .breakdown b { color: var(--text); font-weight: 650; }
+    .breakdown b { color: var(--parchment); }
     .breakdown code {
-      font-family: var(--mono);
-      color: var(--text);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.10);
-      padding: 1px 6px;
-      border-radius: 8px;
+      font-family: var(--mono); color: var(--gold); font-size: 11px;
+      background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.2);
+      padding: 1px 5px; border-radius: 6px;
     }
 
+    /* ── Controls / steppers ──────────────────────────────────────── */
     .controls { display: grid; gap: 10px; margin-top: 12px; }
 
     .stepper {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px;
-      border: 1px solid var(--stroke);
-      border-radius: 14px;
-      background: rgba(255,255,255,0.04);
+      display: flex; gap: 8px; align-items: center; justify-content: space-between;
+      padding: 10px; border: 1px solid var(--stroke); border-radius: 12px;
+      background: rgba(0,0,0,0.20);
     }
     .stepper .left { display: grid; gap: 2px; }
-    .stepper .left .t { font-size: 12px; color: var(--muted); }
-    .stepper .left .n { font-family: var(--mono); font-size: 14px; color: var(--text); }
+    .stepper .left .t { font-size: 11px; color: var(--muted); }
+    .stepper .left .n { font-family: var(--mono); font-size: 13px; color: var(--parchment); }
     .btnRow { display: flex; gap: 6px; align-items: center; }
 
-    .miniBtn {
-      appearance: none;
-      border: 1px solid var(--stroke);
-      background: rgba(0,0,0,0.20);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 12px;
-      cursor: pointer;
-      user-select: none;
+    /* ── Buttons ──────────────────────────────────────────────────── */
+    .btn {
+      appearance: none; cursor: pointer; user-select: none; font-family: var(--sans);
+      border-radius: 10px; font-size: 12px; padding: 8px 12px;
+      border: 1px solid var(--stroke); background: rgba(90,58,30,0.25);
+      color: var(--muted); transition: all 0.15s;
     }
-    .miniBtn:active { transform: translateY(1px); }
-    .miniBtn.subtle { color: var(--muted); }
+    .btn:hover { background: rgba(201,162,39,0.15); border-color: var(--stroke2); color: var(--text); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary {
+      background: linear-gradient(180deg, rgba(176,0,32,0.7), rgba(140,0,25,0.8));
+      border-color: rgba(196,30,58,0.6); color: var(--cream);
+      font-weight: 600;
+    }
+    .btn.primary:hover { background: linear-gradient(180deg, var(--crimson2), var(--crimson)); }
+    .btn.ghost { background: transparent; color: var(--faint); }
+    .btn.ghost:hover { color: var(--muted); background: rgba(255,255,255,0.05); }
+    .btn.danger { border-color: rgba(176,0,32,0.5); color: #e06070; }
+    .btn.danger:hover { background: rgba(176,0,32,0.2); }
+    .btn.small { padding: 5px 9px; font-size: 11px; border-radius: 8px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+    .battleBtn {
+      width: 100%; display: inline-flex; align-items: center;
+      justify-content: center; gap: 10px; padding: 14px;
+      border-radius: 14px; cursor: pointer;
+      border: 1px solid rgba(201,162,39,0.45);
+      background: linear-gradient(180deg, rgba(176,0,32,0.65), rgba(90,20,10,0.8));
+      color: var(--cream); font-weight: 700; letter-spacing: 0.8px;
+      font-size: 14px; font-family: var(--ui);
+      box-shadow: 0 6px 28px rgba(176,0,32,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+      transition: all 0.15s;
+    }
+    .battleBtn:hover { background: linear-gradient(180deg, var(--crimson2), var(--crimson)); }
+    .battleBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .battleBtn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 12px rgba(176,0,32,0.4); }
+
+    /* ── Details/summary ──────────────────────────────────────────── */
     details {
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,0.03);
-      padding: 10px 10px;
+      border: 1px solid rgba(201,162,39,0.15); border-radius: var(--radius);
+      background: rgba(0,0,0,0.18); padding: 10px;
     }
     summary {
-      cursor: pointer;
-      color: var(--text);
-      font-size: 13px;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      cursor: pointer; color: var(--muted); font-size: 12px;
+      list-style: none; display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
     }
     summary::-webkit-details-marker { display: none; }
-    .summaryRight { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+    .summaryRight { font-size: 11px; color: var(--faint); font-family: var(--mono); }
 
+    /* ── Center / VS panel ────────────────────────────────────────── */
     .center { position: sticky; top: 12px; }
     @media (max-width: 979px) { .center { position: static; } }
 
-    .vs { display: grid; gap: 12px; padding: 14px; }
-    .vsTop { display: grid; gap: 10px; text-align: center; }
-    .vsTop .big { font-size: 20px; letter-spacing: 1px; color: var(--text); }
-    .vsTop .small { font-size: 12px; color: var(--muted); line-height: 1.35; }
-
-    .battleBtn {
-      width: 100%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 14px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.20);
-      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
-      color: var(--text);
-      cursor: pointer;
-      font-weight: 650;
-      letter-spacing: 0.3px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    .vs { display: grid; gap: 12px; padding: 13px; }
+    .vsTop { display: grid; gap: 8px; text-align: center; padding: 6px 0; }
+    .vsTop .big {
+      font-size: 26px; letter-spacing: 3px;
+      font-family: var(--ui); color: var(--gold);
+      text-shadow: 0 0 20px rgba(201,162,39,0.5);
     }
-    .battleBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .battleBtn:active:not(:disabled) { transform: translateY(1px); }
+    .vsTop .small { font-size: 11px; color: var(--muted); line-height: 1.4; }
 
-    .icon { width: 22px; height: 22px; display: inline-block; }
-
+    /* ── Alerts ───────────────────────────────────────────────────── */
     .alert {
-      padding: 10px 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(0,0,0,0.25);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
+      padding: 9px 11px; border-radius: 12px;
+      border: 1px solid rgba(201,162,39,0.2);
+      background: rgba(0,0,0,0.30); color: var(--muted);
+      font-size: 12px; line-height: 1.4;
     }
-    .alert.bad { border-color: rgba(255,107,107,0.35); background: rgba(255,107,107,0.08); }
+    .alert.bad  { border-color: rgba(224,85,85,0.4); background: rgba(176,0,32,0.12); color: #e08080; }
+    .alert.good { border-color: rgba(126,201,138,0.4); background: rgba(50,140,70,0.12); color: var(--good); }
+    .alert.warn { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.08); color: var(--gold); }
 
+    /* ── Result display ───────────────────────────────────────────── */
     .result { display: grid; gap: 10px; }
-    .result .title { font-size: 13px; color: var(--muted); }
-    .result .who { font-size: 15px; font-weight: 700; color: var(--text); }
+    .result .title { font-size: 12px; color: var(--muted); }
+    .result .who { font-size: 16px; font-weight: 700; font-family: var(--ui); color: var(--parchment); }
 
-    .diceLine { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .diceLine { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 5px; }
     .die {
-      font-family: var(--mono);
-      padding: 6px 8px;
-      border-radius: 12px;
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.04);
-      font-size: 12px;
-      color: var(--text);
+      font-family: var(--mono); padding: 5px 8px; border-radius: 10px;
+      border: 1px solid var(--stroke); background: rgba(0,0,0,0.25);
+      font-size: 11px; color: var(--text);
     }
-    .die.att { border-color: rgba(255,61,113,0.35); }
-    .die.def { border-color: rgba(77,171,247,0.35); }
+    .die.att { border-color: rgba(196,30,58,0.4); }
+    .die.def { border-color: rgba(74,144,196,0.4); }
 
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(0,0,0,0.18);
-      font-size: 12px;
+    /* ── Table ────────────────────────────────────────────────────── */
+    .tbl {
+      width: 100%; border-collapse: collapse; overflow: hidden;
+      border-radius: var(--radius); border: 1px solid rgba(201,162,39,0.15);
+      background: rgba(0,0,0,0.22); font-size: 12px;
     }
-    .table th, .table td {
-      padding: 8px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      text-align: left;
-      vertical-align: top;
-      color: var(--muted);
+    .tbl th, .tbl td {
+      padding: 8px 10px; border-bottom: 1px solid rgba(201,162,39,0.08);
+      text-align: left; vertical-align: top; color: var(--muted);
     }
-    .table th {
-      color: rgba(255,255,255,0.75);
-      font-weight: 650;
-      background: rgba(255,255,255,0.04);
+    .tbl th {
+      color: var(--parchment); font-weight: 600;
+      background: rgba(201,162,39,0.07); font-size: 11px; letter-spacing: 0.4px;
     }
-    .table tr:last-child td { border-bottom: none; }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl tr:hover td { background: rgba(201,162,39,0.05); }
+    .tbl td.mono { font-family: var(--mono); color: var(--parchment); }
 
-    .footer {
-      margin-top: 16px;
-      padding: 10px 12px;
-      color: var(--muted);
-      font-size: 12px;
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      border-top: 1px solid rgba(255,255,255,0.08);
+    /* ── Army row in armies tab ───────────────────────────────────── */
+    .armyRow {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 8px; align-items: center; padding: 10px 12px;
+      border: 1px solid var(--stroke); border-radius: 12px;
+      background: rgba(0,0,0,0.20); margin-bottom: 7px;
+      transition: border-color 0.15s;
     }
-    .footer code { font-family: var(--mono); color: var(--text); }
+    .armyRow:hover { border-color: var(--stroke2); }
+    .armyName { font-size: 13px; color: var(--parchment); font-weight: 600; }
+    .armyMeta { font-size: 11px; color: var(--faint); margin-top: 2px; }
+    .armyActions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ── Faction chip ─────────────────────────────────────────────── */
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px; border-radius: 999px; font-size: 11px;
+      border: 1px solid var(--stroke); background: rgba(90,58,30,0.20);
+      color: var(--muted); margin: 2px;
+    }
+    .chip button {
+      appearance: none; border: none; background: transparent;
+      color: var(--faint); cursor: pointer; font-size: 13px;
+      padding: 0; line-height: 1;
+    }
+    .chip button:hover { color: var(--bad); }
+
+    /* ── Battle history ───────────────────────────────────────────── */
+    .historyCard {
+      padding: 10px 12px; border: 1px solid var(--stroke);
+      border-radius: 12px; background: rgba(0,0,0,0.20);
+      margin-bottom: 7px; font-size: 12px;
+    }
+    .historyCard .hHead {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 8px; flex-wrap: wrap; margin-bottom: 5px;
+    }
+    .historyCard .hTitle { font-size: 13px; color: var(--parchment); font-weight: 600; }
+    .historyCard .hDate { font-size: 11px; color: var(--faint); }
+    .historyCard .hDetail { color: var(--muted); line-height: 1.5; }
+
+    /* ── Load army selector (battle panel) ────────────────────────── */
+    .loadRow {
+      display: flex; gap: 6px; align-items: center; margin-top: 6px;
+    }
+    .loadRow select { flex: 1; }
+
+    /* ── Empty state ──────────────────────────────────────────────── */
+    .empty {
+      text-align: center; padding: 30px 20px;
+      color: var(--faint); font-size: 13px; line-height: 1.6;
+    }
+    .empty .emptyIcon { font-size: 28px; display: block; margin-bottom: 8px; }
+
+    /* ── Page header ──────────────────────────────────────────────── */
+    .pageHead {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .pageHead h2 {
+      margin: 0; font-size: 17px; font-family: var(--ui);
+      color: var(--gold); letter-spacing: 0.5px;
+    }
+
+    /* ── Section divider ──────────────────────────────────────────── */
+    .divider {
+      border: none; border-top: 1px solid var(--stroke);
+      margin: 14px 0;
+    }
+
+    /* ── Modal (dialog) ───────────────────────────────────────────── */
+    dialog {
+      max-width: 680px; width: calc(100% - 28px);
+      border: 1px solid var(--stroke2); border-radius: 18px;
+      background: #18130e; color: var(--text);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.75); padding: 0;
+    }
+    dialog::backdrop { background: rgba(0,0,0,0.65); }
+    .dlgHead {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 14px 16px 12px;
+      border-bottom: 1px solid rgba(201,162,39,0.15);
+      background: linear-gradient(180deg, rgba(201,162,39,0.06), transparent);
+    }
+    .dlgHead h3 { margin: 0; font-size: 15px; font-family: var(--ui); color: var(--gold); }
+    .dlgBody { padding: 14px 16px; display: grid; gap: 12px; }
+    .dlgFoot {
+      display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px;
+    }
+
+    /* ── Search bar ───────────────────────────────────────────────── */
+    .searchBar { position: relative; }
+    .searchBar input { padding-left: 30px; }
+    .searchBar::before {
+      content: "🔍"; position: absolute; left: 9px; top: 50%;
+      transform: translateY(-50%); font-size: 11px; pointer-events: none;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    footer {
+      margin-top: 18px; padding: 10px 12px;
+      color: var(--faint); font-size: 11px;
+      display: flex; gap: 10px; justify-content: space-between;
+      flex-wrap: wrap; border-top: 1px solid rgba(201,162,39,0.12);
+    }
+    footer code { font-family: var(--mono); color: var(--muted); }
+
+    /* ── Icon ─────────────────────────────────────────────────────── */
+    .icon { width: 20px; height: 20px; display: inline-block; vertical-align: middle; }
+
+    /* ── Scrollable area ──────────────────────────────────────────── */
+    .scrollable { max-height: 420px; overflow-y: auto; padding-right: 4px; }
+    .scrollable::-webkit-scrollbar { width: 5px; }
+    .scrollable::-webkit-scrollbar-track { background: transparent; }
+    .scrollable::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.2); border-radius: 4px; }
   </style>
 </head>
 <body>
-  <div class="app" id="app">
-    <header>
-      <div class="brand">
-        <h1>War Table</h1>
-        <div class="sub">Battle Sandbox (MVP) — fast setup, transparent math, roll results.</div>
-        <div class="pill">
-          Ruleset <code id="rulesetVersion"></code>
-          <span style="opacity:0.6;">•</span>
-          <span style="opacity:0.7;">Offline-ready</span>
-        </div>
-      </div>
-      <nav aria-label="Primary navigation (future)">
-        <div class="tab active" aria-current="page">Battle</div>
-        <div class="tab" aria-disabled="true" title="Coming soon">Armies</div>
-        <div class="tab" aria-disabled="true" title="Coming soon">Factions</div>
-        <div class="tab" aria-disabled="true" title="Coming soon">Doctrines</div>
-        <div class="tab" aria-disabled="true" title="Coming soon">Terrain & Weather</div>
-        <div class="tab" aria-disabled="true" title="Coming soon">Settings</div>
-        <div class="tab" aria-disabled="true" title="Coming soon">Help</div>
-      </nav>
-    </header>
+<div class="app" id="app">
 
-    <main class="grid" aria-label="Battle Sandbox">
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <header>
+    <div class="brand">
+      <h1>⚔ War Table</h1>
+      <div class="sub">Fairgard Battle Engine — offline-ready, transparent math</div>
+      <div class="pill">Ruleset <code id="rulesetVersion"></code> &nbsp;•&nbsp; Local-only</div>
+    </div>
+    <nav aria-label="Primary navigation" id="mainNav">
+      <button class="tab active" data-tab="battle">Battle</button>
+      <button class="tab" data-tab="armies">Armies</button>
+      <button class="tab" data-tab="factions">Factions</button>
+      <button class="tab" data-tab="history">History</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <!-- ═══ TAB: BATTLE ══════════════════════════════════════════════ -->
+  <div class="tabPage active" id="tab-battle">
+    <div class="battleGrid" aria-label="Battle Sandbox">
+
       <!-- Attacker -->
       <section class="card" aria-label="Attacker panel">
         <div class="cardHead">
@@ -421,24 +490,31 @@
           <span class="badge" id="attackerPoolBadge">—</span>
         </div>
         <div class="content">
+          <!-- Load from saved -->
+          <div class="loadRow">
+            <select id="attLoaderSelect" aria-label="Load saved army into Attacker">
+              <option value="">— Load saved army —</option>
+            </select>
+            <button class="btn small" id="attLoadBtn" type="button">Load</button>
+          </div>
+
+          <hr class="divider" />
+
           <div class="row single">
-            <label>
-              Army Class
+            <label>Army Class
               <select id="attackerClass" aria-describedby="attackerClassHelp"></select>
-              <div class="help" id="attackerClassHelp">Pick an army type. Matchup modifiers apply automatically (Immunity/Resistance/Vulnerability/Deadly).</div>
+              <div class="help" id="attackerClassHelp">Matchup modifiers (Immunity/Resistance/Vulnerability/Deadly) apply automatically.</div>
             </label>
           </div>
 
-          <div class="row">
-            <label>
-              Army Size
-              <input id="attackerSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 150" />
-              <div class="help">Every <span class="mono">50</span> Size (rounded down) = <span class="mono">+1 die</span>.</div>
+          <div class="row" style="margin-top:10px;">
+            <label>Army Size
+              <input id="attackerSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 150" />
+              <div class="help">Every <span class="mono">50</span> Size = <span class="mono">+1 die</span>.</div>
             </label>
-            <label>
-              STR
-              <input id="attackerStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 120" />
-              <div class="help">Every <span class="mono">10</span> STR (rounded down) = <span class="mono">+1 die</span>.</div>
+            <label>STR
+              <input id="attackerStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 120" />
+              <div class="help">Every <span class="mono">10</span> STR = <span class="mono">+1 die</span>.</div>
             </label>
           </div>
 
@@ -462,14 +538,13 @@
                 <div class="n"><span id="attackerManualDelta">0</span> dice</div>
               </div>
               <div class="btnRow">
-                <button class="miniBtn" id="attackerMinus" type="button" aria-label="Attacker: subtract 1 die">−</button>
-                <button class="miniBtn" id="attackerPlus" type="button" aria-label="Attacker: add 1 die">+</button>
-                <button class="miniBtn subtle" id="attackerManualReset" type="button">Reset</button>
+                <button class="btn small" id="attackerMinus" type="button">−</button>
+                <button class="btn small" id="attackerPlus" type="button">+</button>
+                <button class="btn small ghost" id="attackerManualReset" type="button">Reset</button>
               </div>
             </div>
 
-            <label>
-              Dice type override (optional)
+            <label>Dice type override (optional)
               <select id="attackerDiceOverride">
                 <option value="auto">Auto (by class)</option>
                 <option value="4">d4</option>
@@ -478,97 +553,75 @@
                 <option value="10">d10</option>
                 <option value="12">d12</option>
               </select>
-              <div class="help">Auto picks a recommended dice type for some classes (e.g., Siege/Warforged/Builders). You can override any time.</div>
             </label>
 
             <details>
-              <summary>
-                Commit dice (optional, per rules)
-                <span class="summaryRight" id="attackerCommitSummary">—</span>
-              </summary>
+              <summary>Commit dice (optional) <span class="summaryRight" id="attackerCommitSummary">—</span></summary>
               <div class="row" style="margin-top:10px;">
-                <label>
-                  Dice to commit
+                <label>Dice to commit
                   <input id="attackerCommit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto" />
-                  <div class="help">Rule: attacker must commit <span class="mono">≥ 5</span> dice to initiate an attack.</div>
+                  <div class="help">Rule: attacker must commit <span class="mono">≥5</span> dice.</div>
                 </label>
-                <label>
-                  Auto-commit
+                <label>Auto-commit
                   <select id="attackerAutoCommit">
-                    <option value="yes">Yes (use full pool)</option>
-                    <option value="no">No (use the number above)</option>
+                    <option value="yes">Yes (full pool)</option>
+                    <option value="no">Manual number above</option>
                   </select>
-                  <div class="help">Most battles just roll the full pool.</div>
                 </label>
               </div>
             </details>
           </div>
+
+          <div style="margin-top:10px;">
+            <button class="btn small" id="openSaveAttModal" type="button">💾 Save as Army</button>
+          </div>
         </div>
       </section>
 
-      <!-- Center -->
+      <!-- Center / Engagement -->
       <section class="card center" aria-label="Battle controls and results">
         <div class="cardHead">
           <div class="sideTitle">
             <h2>Engagement</h2>
             <span class="badge">Sandbox</span>
           </div>
-          <button class="miniBtn subtle" id="swapSides" type="button" title="Swap attacker/defender">Swap</button>
+          <button class="btn small ghost" id="swapSides" type="button" title="Swap attacker/defender">⇄ Swap</button>
         </div>
 
         <div class="vs">
           <div class="vsTop">
             <div class="big">VS</div>
-            <div class="small">Set both armies, review the math, then smash <span class="mono">Battle</span>. Defaults follow the rules: defenders win ties.</div>
+            <div class="small">Configure both armies → review dice math → smash <strong>Battle</strong>. Defenders win ties.</div>
           </div>
 
           <details>
-            <summary>
-              Conditions (future-proof)
-              <span class="summaryRight" id="conditionsSummary">—</span>
-            </summary>
-
-            <div class="row single" style="margin-top:10px;">
-              <label>
-                Defender has structures (walls/towers)?
+            <summary>Conditions &amp; Settings <span class="summaryRight" id="conditionsSummary">—</span></summary>
+            <div style="display:grid; gap:10px; margin-top:10px;">
+              <label>Defender has structures?
                 <select id="defenderStructures">
                   <option value="no">No (open field)</option>
-                  <option value="yes">Yes (structures/defense score)</option>
+                  <option value="yes">Yes (walls / towers)</option>
                 </select>
-                <div class="help"><b>MVP support:</b> If the attacker is <span class="mono">Siege</span>, this switches their dice to <span class="mono">d8</span> (no structures) or <span class="mono">d10</span> (structures).</div>
+                <div class="help">Switches Siege dice: d8 (no structures) → d10 (structures).</div>
               </label>
-            </div>
-
-            <div class="row single" style="margin-top:10px;">
-              <label>
-                Resolution mode
+              <label>Resolution mode
                 <select id="resolutionMode">
                   <option value="risk">Risk-style (rules accurate)</option>
                   <option value="quick">Quick total (simple)</option>
                 </select>
-                <div class="help">Risk-style compares highest dice vs highest dice and applies size losses per comparison.</div>
               </label>
-            </div>
-
-            <div class="row single" style="margin-top:10px;">
-              <label>
-                Quick mode losses (only used in Quick total)
+              <label>Quick mode losses
                 <select id="quickLossPreset">
                   <option value="standard">Standard: loser −10, tie −5 each</option>
                   <option value="flat10">Flat: loser −10, tie 0</option>
                   <option value="flat20">Heavy: loser −20, tie −10 each</option>
                 </select>
               </label>
-            </div>
-
-            <div class="row single" style="margin-top:10px;">
-              <label>
-                Caps & overrides
+              <label>Dice caps
                 <select id="allowOverCap">
                   <option value="no">Enforce caps (recommended)</option>
                   <option value="yes">Allow manual overrides beyond caps</option>
                 </select>
-                <div class="help">Rules cap dice rolled: attacker 10, defender 8. This toggle is here for GM edge-cases.</div>
               </label>
             </div>
           </details>
@@ -576,32 +629,25 @@
           <div class="alert bad" id="validationMsg" style="display:none;"></div>
 
           <button class="battleBtn" id="battleBtn" type="button">
-            <span class="icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 20l5-5m0 0L6 6l2-2 9 9-2 2-1.2-1.2M8 15l1.2 1.2M21 20l-5-5m0 0 2-9-2-2-9 9 2 2 1.2-1.2M16 15l-1.2 1.2" stroke="rgba(255,255,255,0.92)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M3 20l5-5m0 0L6 6l2-2 9 9-2 2-1.2-1.2M8 15l1.2 1.2M21 20l-5-5m0 0 2-9-2-2-9 9 2 2 1.2-1.2M16 15l-1.2 1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Battle
           </button>
 
           <div class="row">
-            <button class="miniBtn" id="prefillExample" type="button" title="Loads the worked example from the rules (Cavalry vs Pikes)">Load Example</button>
-            <button class="miniBtn" id="resetBtn" type="button" title="Clears everything (kill switch)">Reset</button>
+            <button class="btn" id="prefillExample" type="button">Load Example</button>
+            <button class="btn ghost" id="resetBtn" type="button">Reset</button>
           </div>
-          <div class="row single" style="margin-top:8px;">
-            <button class="miniBtn" id="openSaveArmyModal" type="button" title="Save an army (temporary button for Phase 2)">Save Army</button>
-          </div>
-          <div class="alert" id="saveArmyToast" style="display:none; margin-top:10px;"></div>
 
-          <div class="result" aria-label="Battle result" id="resultArea" style="display:none;">
+          <div class="alert" id="saveArmyToast" style="display:none;"></div>
+
+          <div class="result" id="resultArea" style="display:none;">
+            <hr class="divider" />
             <div class="title">Result</div>
             <div class="who" id="resultHeadline">—</div>
-
             <div class="alert" id="resultSummary"></div>
-
             <div>
               <div class="title" style="margin-top:8px;">Rolls</div>
-              <div class="alert" style="margin-top:6px;">
+              <div class="alert" style="margin-top:5px;">
                 <div style="display:grid; gap:10px;">
                   <div>
                     <div class="title">Attacker</div>
@@ -616,24 +662,16 @@
                 </div>
               </div>
             </div>
-
             <div id="riskCompareWrap" style="display:none;">
-              <div class="title" style="margin-top:10px;">Risk-style comparisons</div>
-              <table class="table" aria-label="Per-die comparisons">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Attacker die</th>
-                    <th>Defender die</th>
-                    <th>Loss</th>
-                  </tr>
-                </thead>
+              <div class="title" style="margin-top:8px;">Risk-style comparisons</div>
+              <table class="tbl" aria-label="Per-die comparisons">
+                <thead><tr><th>#</th><th>Att die</th><th>Def die</th><th>Loss</th></tr></thead>
                 <tbody id="riskCompareBody"></tbody>
               </table>
             </div>
-
-            <div class="row single" style="margin-top:10px;">
-              <button class="miniBtn" id="copyResult" type="button">Copy summary</button>
+            <div class="row" style="margin-top:8px;">
+              <button class="btn" id="copyResult" type="button">Copy summary</button>
+              <button class="btn ghost small" id="saveBattleToHistory" type="button">Save to History</button>
             </div>
           </div>
         </div>
@@ -649,24 +687,31 @@
           <span class="badge" id="defenderPoolBadge">—</span>
         </div>
         <div class="content">
+          <!-- Load from saved -->
+          <div class="loadRow">
+            <select id="defLoaderSelect" aria-label="Load saved army into Defender">
+              <option value="">— Load saved army —</option>
+            </select>
+            <button class="btn small" id="defLoadBtn" type="button">Load</button>
+          </div>
+
+          <hr class="divider" />
+
           <div class="row single">
-            <label>
-              Army Class
+            <label>Army Class
               <select id="defenderClass" aria-describedby="defenderClassHelp"></select>
-              <div class="help" id="defenderClassHelp">Pick an army type. Matchup modifiers apply automatically (Immunity/Resistance/Vulnerability/Deadly).</div>
+              <div class="help" id="defenderClassHelp">Matchup modifiers apply automatically.</div>
             </label>
           </div>
 
-          <div class="row">
-            <label>
-              Army Size
-              <input id="defenderSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 100" />
-              <div class="help">Every <span class="mono">50</span> Size (rounded down) = <span class="mono">+1 die</span>.</div>
+          <div class="row" style="margin-top:10px;">
+            <label>Army Size
+              <input id="defenderSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 100" />
+              <div class="help">Every <span class="mono">50</span> Size = <span class="mono">+1 die</span>.</div>
             </label>
-            <label>
-              STR
-              <input id="defenderStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 80" />
-              <div class="help">Every <span class="mono">10</span> STR (rounded down) = <span class="mono">+1 die</span>.</div>
+            <label>STR
+              <input id="defenderStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 80" />
+              <div class="help">Every <span class="mono">10</span> STR = <span class="mono">+1 die</span>.</div>
             </label>
           </div>
 
@@ -690,14 +735,13 @@
                 <div class="n"><span id="defenderManualDelta">0</span> dice</div>
               </div>
               <div class="btnRow">
-                <button class="miniBtn" id="defenderMinus" type="button" aria-label="Defender: subtract 1 die">−</button>
-                <button class="miniBtn" id="defenderPlus" type="button" aria-label="Defender: add 1 die">+</button>
-                <button class="miniBtn subtle" id="defenderManualReset" type="button">Reset</button>
+                <button class="btn small" id="defenderMinus" type="button">−</button>
+                <button class="btn small" id="defenderPlus" type="button">+</button>
+                <button class="btn small ghost" id="defenderManualReset" type="button">Reset</button>
               </div>
             </div>
 
-            <label>
-              Dice type override (optional)
+            <label>Dice type override (optional)
               <select id="defenderDiceOverride">
                 <option value="auto">Auto (by class)</option>
                 <option value="4">d4</option>
@@ -706,105 +750,204 @@
                 <option value="10">d10</option>
                 <option value="12">d12</option>
               </select>
-              <div class="help">Auto picks a recommended dice type for some classes (e.g., Siege/Warforged/Builders). You can override any time.</div>
             </label>
 
             <details>
-              <summary>
-                Commit dice (optional, per rules)
-                <span class="summaryRight" id="defenderCommitSummary">—</span>
-              </summary>
+              <summary>Commit dice (optional) <span class="summaryRight" id="defenderCommitSummary">—</span></summary>
               <div class="row" style="margin-top:10px;">
-                <label>
-                  Dice to commit
+                <label>Dice to commit
                   <input id="defenderCommit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto" />
-                  <div class="help">Rule: defender has no minimum. If defender pool is <span class="mono">≤ 0</span>, they auto-lose and suffer the standard loss.</div>
+                  <div class="help">Rule: defender min 1 die. Pool ≤0 = auto-loss.</div>
                 </label>
-                <label>
-                  Auto-commit
+                <label>Auto-commit
                   <select id="defenderAutoCommit">
-                    <option value="yes">Yes (use full pool)</option>
-                    <option value="no">No (use the number above)</option>
+                    <option value="yes">Yes (full pool)</option>
+                    <option value="no">Manual number above</option>
                   </select>
-                  <div class="help">Most battles just roll the full pool.</div>
                 </label>
               </div>
             </details>
           </div>
+
+          <div style="margin-top:10px;">
+            <button class="btn small" id="openSaveDefModal" type="button">💾 Save as Army</button>
+          </div>
         </div>
       </section>
-    </main>
+    </div><!-- /battleGrid -->
+  </div><!-- /tab-battle -->
 
-    <footer class="footer" aria-label="Footer">
-      <div>Ruleset: <code id="rulesFooter"></code> • Dice caps: Att 10 / Def 8 • Matchup shorthand: +3/+1/−1/−3</div>
-      <div>Local MVP build • No accounts • No tracking</div>
-    </footer>
+  <!-- ═══ TAB: ARMIES ══════════════════════════════════════════════ -->
+  <div class="tabPage" id="tab-armies">
+    <div class="pageHead">
+      <h2>⚔ Armies</h2>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn primary" id="newArmyBtn" type="button">+ New Army</button>
+        <button class="btn ghost small" id="exportArmiesBtn" type="button">Export JSON</button>
+        <button class="btn ghost small" id="importArmiesBtn" type="button">Import JSON</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;" />
+      </div>
+    </div>
+
+    <div style="max-width:360px; margin-bottom:12px;">
+      <div class="searchBar">
+        <input type="text" id="armySearch" placeholder="Search armies or factions…" />
+      </div>
+    </div>
+
+    <div id="armyList" class="scrollable"></div>
   </div>
 
-  <!-- Phase 2 (Slice 2.2): Save / Edit Army Modal -->
-  <dialog id="armyModal" style="max-width:720px; width: calc(100% - 28px); border:1px solid var(--stroke); border-radius: 18px; background: rgba(10,10,12,0.92); color: var(--text); box-shadow: var(--shadow);">
-    <form method="dialog" id="armyModalForm" style="margin:0;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 14px 10px; border-bottom:1px solid rgba(255,255,255,0.08);">
-        <div style="display:grid; gap:2px;">
-          <div style="font-weight:700;">Save Army</div>
-          <div class="help" id="armyModalSub" style="margin:0;">Create a new army or update an existing one.</div>
+  <!-- ═══ TAB: FACTIONS ════════════════════════════════════════════ -->
+  <div class="tabPage" id="tab-factions">
+    <div class="pageHead">
+      <h2>🏰 Factions</h2>
+      <span class="badge gold" id="factionCount">0 factions</span>
+    </div>
+    <p style="font-size:12px; color:var(--muted); margin:0 0 14px;">
+      Factions are derived automatically from your saved armies. Rename or delete them here — changes propagate to all linked armies.
+    </p>
+    <div id="factionList" class="scrollable"></div>
+  </div>
+
+  <!-- ═══ TAB: HISTORY ═════════════════════════════════════════════ -->
+  <div class="tabPage" id="tab-history">
+    <div class="pageHead">
+      <h2>📜 Battle History</h2>
+      <div style="display:flex; gap:8px;">
+        <button class="btn ghost small" id="exportHistoryBtn" type="button">Export JSON</button>
+        <button class="btn danger small" id="clearHistoryBtn" type="button">Clear All</button>
+      </div>
+    </div>
+    <div id="historyList" class="scrollable"></div>
+  </div>
+
+  <!-- ═══ TAB: SETTINGS ════════════════════════════════════════════ -->
+  <div class="tabPage" id="tab-settings">
+    <div class="pageHead"><h2>⚙ Settings &amp; Data</h2></div>
+    <div style="display:grid; gap:16px; max-width:520px;">
+
+      <div class="card">
+        <div class="cardHead"><div class="sideTitle"><h2>Export / Import</h2></div></div>
+        <div class="content">
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Export your full War Table state (armies + factions + history) as a JSON file. Import to restore or merge.</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn primary" id="exportAllBtn" type="button">Export full state (JSON)</button>
+            <button class="btn" id="importAllBtn" type="button">Import state (JSON)</button>
+            <input type="file" id="importAllInput" accept=".json" style="display:none;" />
+          </div>
+          <div class="alert" id="importMsg" style="display:none; margin-top:10px;"></div>
         </div>
-        <button class="miniBtn subtle" id="armyModalClose" type="button">Close</button>
       </div>
 
-      <div style="padding:14px; display:grid; gap:10px;">
-        <input type="hidden" id="armyModalArmyId" value="" />
-
-        <div class="row">
-          <label>
-            Army name <span class="mono">(required)</span>
-            <input id="armyName" type="text" placeholder="e.g., 3rd Dawn Phalanx" style="padding:10px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(0,0,0,0.28); color: var(--text);" />
-            <div class="help">Names are unique (case-insensitive). Using an existing name updates it.</div>
-          </label>
-          <label>
-            Faction
-            <input id="armyFaction" type="text" list="factionDatalist" placeholder="e.g., Heartland Coalition" style="padding:10px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(0,0,0,0.28); color: var(--text);" />
-            <datalist id="factionDatalist"></datalist>
-            <div class="help">Type a faction or pick a previous one. New factions are remembered.</div>
-          </label>
-        </div>
-
-        <div class="row">
-          <label>
-            Army class
-            <select id="armyClass"></select>
-          </label>
-          <label>
-            Notes (optional)
-            <input id="armyNotes" type="text" placeholder="Anything you need to remember…" style="padding:10px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(0,0,0,0.28); color: var(--text);" />
-          </label>
-        </div>
-
-        <div class="row">
-          <label>
-            Size
-            <input id="armySize" type="number" min="0" step="1" inputmode="numeric" />
-          </label>
-          <label>
-            STR
-            <input id="armyStr" type="number" min="0" step="1" inputmode="numeric" />
-          </label>
-        </div>
-
-        <div class="alert bad" id="armyModalError" style="display:none;"></div>
-
-        <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:4px;">
-          <button class="miniBtn subtle" id="armyModalCancel" type="button">Cancel</button>
-          <button class="miniBtn" id="armyModalSave" type="button">Save</button>
+      <div class="card">
+        <div class="cardHead"><div class="sideTitle"><h2>Danger Zone</h2></div></div>
+        <div class="content">
+          <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Permanently erase all stored data. Cannot be undone.</p>
+          <button class="btn danger" id="nukeBtn" type="button">🗑 Wipe all local data</button>
         </div>
       </div>
-    </form>
-  </dialog>
+
+      <div class="card">
+        <div class="cardHead"><div class="sideTitle"><h2>About</h2></div></div>
+        <div class="content" style="font-size:12px; color:var(--muted); line-height:1.7;">
+          <div>Version: <span class="mono">Phase 2 (Slices 2.1–2.7)</span></div>
+          <div>Ruleset: <span class="mono" id="settingsRulesetVer"></span></div>
+          <div>Dice caps: <span class="mono">Att 10 / Def 8</span></div>
+          <div>Storage: <span class="mono">localStorage (warTableState)</span></div>
+          <div style="margin-top:8px; color:var(--faint);">Single-file HTML — no build tools, no accounts, no tracking. Works offline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer aria-label="Footer">
+    <div>Ruleset: <code id="rulesFooter"></code> &nbsp;•&nbsp; Caps: Att 10 / Def 8 &nbsp;•&nbsp; Modifiers: +3/+1/−1/−3</div>
+    <div>War Table v2 &nbsp;•&nbsp; Local-only &nbsp;•&nbsp; No tracking</div>
+  </footer>
+</div><!-- /app -->
+
+<!-- ═══ MODAL: SAVE / EDIT ARMY ══════════════════════════════════ -->
+<dialog id="armyModal">
+  <div class="dlgHead">
+    <h3 id="armyModalTitle">Save Army</h3>
+    <button class="btn small ghost" id="armyModalClose" type="button">✕ Close</button>
+  </div>
+  <div class="dlgBody">
+    <input type="hidden" id="armyModalArmyId" value="" />
+    <div class="row">
+      <label class="req">Army name
+        <input id="armyName" type="text" placeholder="e.g. 3rd Dawn Phalanx" />
+        <div class="help">Unique (case-insensitive). Existing name = update.</div>
+      </label>
+      <label>Faction
+        <input id="armyFaction" type="text" list="factionDatalist" placeholder="e.g. Heartland Coalition" />
+        <datalist id="factionDatalist"></datalist>
+      </label>
+    </div>
+    <div class="row">
+      <label>Army class
+        <select id="armyClass"></select>
+      </label>
+      <label>Notes (optional)
+        <input id="armyNotes" type="text" placeholder="Anything to remember…" />
+      </label>
+    </div>
+    <div class="row">
+      <label>Size
+        <input id="armySize" type="number" min="0" step="1" inputmode="numeric" />
+      </label>
+      <label>STR
+        <input id="armyStr" type="number" min="0" step="1" inputmode="numeric" />
+      </label>
+    </div>
+    <div class="alert bad" id="armyModalError" style="display:none;"></div>
+    <div class="dlgFoot">
+      <button class="btn ghost" id="armyModalCancel" type="button">Cancel</button>
+      <button class="btn primary" id="armyModalSave" type="button">Save Army</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ═══ MODAL: RENAME FACTION ════════════════════════════════════ -->
+<dialog id="renameFactionModal">
+  <div class="dlgHead">
+    <h3>Rename Faction</h3>
+    <button class="btn small ghost" id="renameFactionClose" type="button">✕</button>
+  </div>
+  <div class="dlgBody">
+    <label>New faction name
+      <input id="renameFactionInput" type="text" placeholder="New name…" />
+    </label>
+    <div class="alert bad" id="renameFactionError" style="display:none;"></div>
+    <div class="dlgFoot">
+      <button class="btn ghost" id="renameFactionCancel" type="button">Cancel</button>
+      <button class="btn primary" id="renameFactionSave" type="button">Rename</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ═══ MODAL: CONFIRM ════════════════════════════════════════════ -->
+<dialog id="confirmModal">
+  <div class="dlgHead">
+    <h3 id="confirmTitle">Confirm</h3>
+    <button class="btn small ghost" id="confirmClose" type="button">✕</button>
+  </div>
+  <div class="dlgBody">
+    <p id="confirmMsg" style="margin:0; font-size:13px; color:var(--muted); line-height:1.5;"></p>
+    <div class="dlgFoot">
+      <button class="btn ghost" id="confirmCancel" type="button">Cancel</button>
+      <button class="btn danger" id="confirmOk" type="button">Confirm</button>
+    </div>
+  </div>
+</dialog>
 
 
-  <script>
-    // Embedded rules data (Phase 2+: move to rules.json)
-    const RULES = 
+<script>
+// ═══════════════════════════════════════════════════════════════
+// RULES DATA (embedded for offline use)
+// ═══════════════════════════════════════════════════════════════
+const RULES =
 {
   "productName": "War Table",
   "rulesetVersion": "2026-02-24",
@@ -1802,923 +1945,967 @@
   ]
 };
 
-    const $ = (id) => document.getElementById(id);
+// ═══════════════════════════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════════════════════════
+const $ = (id) => document.getElementById(id);
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+function toInt(val) {
+  if (val === null || val === undefined) return null;
+  const s = String(val).trim();
+  if (!s) return null;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return null;
+  return Math.trunc(n);
+}
+function nowIso() { return new Date().toISOString(); }
+function uuid() {
+  if (window.crypto?.randomUUID) return crypto.randomUUID();
+  return "id-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+}
+function normalizeName(s) { return String(s || "").trim().toLowerCase(); }
+function safeJsonParse(str) { try { return JSON.parse(str); } catch { return null; } }
+function fmtDate(iso) {
+  try { return new Date(iso).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" }); }
+  catch { return iso || ""; }
+}
+function escHtml(s) {
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 
-    // =========================
-    // Phase 2 (Slice 2.1): Persistence Core (no UI)
-    // =========================
-    const STORAGE_KEY = "warTableState";
-    const SCHEMA_VERSION = 2;
+// ═══════════════════════════════════════════════════════════════
+// PERSISTENCE (schema v3)
+// ═══════════════════════════════════════════════════════════════
+const STORAGE_KEY = "warTableState";
+const SCHEMA_VERSION = 3;
 
-    function nowIso() { return new Date().toISOString(); }
+function emptyState() {
+  return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [] };
+}
 
-    function uuid() {
-      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-      return "id-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+function loadPersisted() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return emptyState();
+  const obj = safeJsonParse(raw);
+  if (!obj || typeof obj !== "object") return emptyState();
+  // migrate v1/v2 → v3
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    updatedAt: obj.updatedAt || nowIso(),
+    armies: Array.isArray(obj.armies) ? obj.armies : [],
+    factions: Array.isArray(obj.factions) ? obj.factions : [],
+    battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : []
+  };
+}
+
+function persist(saved) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      schemaVersion: SCHEMA_VERSION,
+      updatedAt: nowIso(),
+      armies: saved.armies || [],
+      factions: saved.factions || [],
+      battleHistory: saved.battleHistory || []
+    }));
+  } catch (e) { console.warn("War Table: localStorage write failed", e); }
+}
+
+function recomputeFactions(saved) {
+  const seen = new Map();
+  for (const a of (saved.armies || [])) {
+    const f = String(a?.faction || "").trim();
+    if (!f) continue;
+    const k = f.toLowerCase();
+    if (!seen.has(k)) seen.set(k, f);
+  }
+  saved.factions = Array.from(seen.values()).sort((a,b)=>a.localeCompare(b));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RULES ENGINE INDEX
+// ═══════════════════════════════════════════════════════════════
+function buildClassIndex() {
+  const byId = new Map(), byName = new Map();
+  for (const c of RULES.armyClasses) {
+    byId.set(c.id, c);
+    byName.set(c.name, c);
+  }
+  return { byId, byName };
+}
+const INDEX = buildClassIndex();
+
+function groupOptions(selectEl, selectedId) {
+  selectEl.innerHTML = "";
+  const groups = new Map([["Standard",[]], ["Special",[]], ["Faction",[]]]);
+  for (const c of RULES.armyClasses) {
+    if (!groups.has(c.category)) groups.set(c.category, []);
+    groups.get(c.category).push(c);
+  }
+  for (const [cat, arr] of groups) {
+    if (!arr.length) continue;
+    const og = document.createElement("optgroup");
+    og.label = cat;
+    for (const c of arr) {
+      const opt = document.createElement("option");
+      opt.value = c.id; opt.textContent = c.name;
+      if (c.desc) opt.title = c.desc;
+      og.appendChild(opt);
     }
+    selectEl.appendChild(og);
+  }
+  if (selectedId && INDEX.byId.has(selectedId)) selectEl.value = selectedId;
+  else selectEl.selectedIndex = 0;
+}
 
-    function normalizeName(s) {
-      return String(s || "").trim().toLowerCase();
+// ═══════════════════════════════════════════════════════════════
+// DICE ENGINE
+// ═══════════════════════════════════════════════════════════════
+function getCryptoInt(max) {
+  if (window.crypto?.getRandomValues) {
+    const arr = new Uint32Array(1);
+    const lim = 0xFFFFFFFF - (0xFFFFFFFF % max);
+    while (true) {
+      window.crypto.getRandomValues(arr);
+      if (arr[0] < lim) return arr[0] % max;
     }
+  }
+  return Math.floor(Math.random() * max);
+}
+function rollDie(sides) { return 1 + getCryptoInt(sides); }
+function formatDiceList(list) {
+  if (!list || !list.length) return "0 dice";
+  const uniform = list.every(d=>d===list[0]);
+  if (uniform) return `${list.length}d${list[0]}`;
+  const counts = new Map();
+  for (const d of list) counts.set(d, (counts.get(d)||0)+1);
+  return Array.from(counts.entries()).sort((a,b)=>a[0]-b[0]).map(([s,c])=>`${c}d${s}`).join(" + ");
+}
 
-    function safeJsonParse(str) {
-      try { return JSON.parse(str); } catch (e) { return null; }
-    }
+function autoDiceType(cls, matchups, oppCls, conditions) {
+  let sides = 6;
+  if (cls?.name === "Warforged (Artificial Constructs)") {
+    sides = 8;
+    const opp = oppCls?.name;
+    const imm = matchups.immunities.includes(opp) || matchups.resistances.includes(opp);
+    const vuln = matchups.vulnerabilities.includes(opp) || matchups.vulnerabilities.includes("__ALL__");
+    const dead = matchups.deadly.includes(opp);
+    if (imm) sides = 10;
+    if (vuln) sides = 6;
+    if (dead) sides = 4;
+  }
+  if (cls?.name === "Siege") sides = conditions.defenderHasStructures ? 10 : 8;
+  if (cls?.name === "Builders") {
+    const hasEdge = matchups.immunities.includes(oppCls?.name)||matchups.resistances.includes(oppCls?.name);
+    const oppVuln = oppCls?.matchups.vulnerabilities?.includes("Builders");
+    const oppDead = oppCls?.matchups.deadly?.includes("Builders");
+    sides = (hasEdge||oppVuln||oppDead) ? 6 : 4;
+  }
+  return sides;
+}
 
-    function loadPersisted() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [] };
-      }
-      const obj = safeJsonParse(raw);
-      if (!obj || typeof obj !== "object") {
-        return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [] };
-      }
-      const v = Number(obj.schemaVersion || 1);
-      if (v < SCHEMA_VERSION) {
-        return {
-          schemaVersion: SCHEMA_VERSION,
-          updatedAt: nowIso(),
-          armies: Array.isArray(obj.armies) ? obj.armies : [],
-          factions: Array.isArray(obj.factions) ? obj.factions : [],
-          battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : []
-        };
-      }
-      return {
-        schemaVersion: SCHEMA_VERSION,
-        updatedAt: obj.updatedAt || nowIso(),
-        armies: Array.isArray(obj.armies) ? obj.armies : [],
-        factions: Array.isArray(obj.factions) ? obj.factions : [],
-        battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : []
-      };
-    }
+function applyMutantMix(clsName, list) {
+  if (clsName !== "Mutants" || !list.length) return list;
+  const c = list.slice(); c[0] = 10; return c;
+}
 
-    function recomputeFactionsFromArmies(saved) {
-      const set = new Map();
-      const armies = Array.isArray(saved?.armies) ? saved.armies : [];
-      for (const a of armies) {
-        const f = String(a?.faction || "").trim();
-        if (!f) continue;
-        const key = f.toLowerCase();
-        if (!set.has(key)) set.set(key, f);
-      }
-      saved.factions = Array.from(set.values()).sort((a,b)=>a.localeCompare(b));
-    }
+function matchupMod(selfCls, oppCls) {
+  if (!selfCls || !oppCls) return { total:0, lines:[] };
+  const name = oppCls.name;
+  const { immunities:imm=[], resistances:res=[], vulnerabilities:vul=[], deadly:dea=[] } = selfCls.matchups;
+  let total = 0; const lines = [];
+  if (vul.includes("__ALL__")) { total += RULES.modifierShorthand.vulnerability; lines.push(`Vulnerability (All): <b>${RULES.modifierShorthand.vulnerability}</b> die`); }
+  if (imm.includes(name)) { total += RULES.modifierShorthand.immunity; lines.push(`Immunity vs <b>${escHtml(name)}</b>: <b>+${RULES.modifierShorthand.immunity}</b> dice`); }
+  if (res.includes(name)) { total += RULES.modifierShorthand.resistance; lines.push(`Resistance vs <b>${escHtml(name)}</b>: <b>+${RULES.modifierShorthand.resistance}</b> die`); }
+  if (vul.includes(name)) { total += RULES.modifierShorthand.vulnerability; lines.push(`Vulnerability vs <b>${escHtml(name)}</b>: <b>${RULES.modifierShorthand.vulnerability}</b> die`); }
+  if (dea.includes(name)) { total += RULES.modifierShorthand.deadly; lines.push(`Deadly vs <b>${escHtml(name)}</b>: <b>${RULES.modifierShorthand.deadly}</b> dice`); }
+  return { total, lines };
+}
 
-    function persist(saved) {
-      const payload = {
-        schemaVersion: SCHEMA_VERSION,
-        updatedAt: nowIso(),
-        armies: Array.isArray(saved?.armies) ? saved.armies : [],
-        factions: Array.isArray(saved?.factions) ? saved.factions : [],
-        battleHistory: Array.isArray(saved?.battleHistory) ? saved.battleHistory : []
-      };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      } catch (e) {
-        // Ignore persistence errors in Slices 2.1–2.2.
-      }
-    }
+function computePool(sideKey, st) {
+  const self = st[sideKey];
+  const oppKey = sideKey === "attacker" ? "defender" : "attacker";
+  const opp = st[oppKey];
+  const roleCap = sideKey === "attacker" ? RULES.diceCaps.attacker : RULES.diceCaps.defender;
+  const cls = INDEX.byId.get(self.classId);
+  const oppCls = INDEX.byId.get(opp.classId);
+  const size = Math.max(0, self.size ?? 0);
+  const str  = Math.max(0, self.str ?? 0);
+  const sizeDice = Math.floor(size / RULES.sizePerDie);
+  const strDice  = Math.floor(str / RULES.strPerDie);
+  const base = sizeDice + strDice;
+  const mu = matchupMod(cls, oppCls);
+  const preCap = base + mu.total;
+  const capped = clamp(preCap, 0, roleCap);
+  const allowOver = st.settings.allowOverCap;
+  let afterManual = capped + (self.manualDiceDelta || 0);
+  afterManual = Math.max(0, afterManual);
+  const finalCount = allowOver ? afterManual : clamp(afterManual, 0, roleCap);
+  const autoSides = autoDiceType(cls, cls?.matchups || {immunities:[],resistances:[],vulnerabilities:[],deadly:[]}, oppCls, st.conditions);
+  const sides = (self.diceOverride && self.diceOverride !== "auto") ? Number(self.diceOverride) : autoSides;
+  let diceSidesList = Array.from({length: finalCount}, ()=>sides);
+  diceSidesList = applyMutantMix(cls?.name, diceSidesList);
 
-    // =========================
-    // Phase 2 (Slice 2.2): Save Army Modal (minimal UI)
-    // =========================
-    function upsertFaction(saved, name) {
-      const v = String(name || "").trim();
-      if (!v) return;
-      const key = v.toLowerCase();
-      const factions = Array.isArray(saved.factions) ? saved.factions : [];
-      const exists = factions.some(f => String(f).toLowerCase() === key);
-      if (!exists) {
-        factions.push(v);
-        factions.sort((a,b)=>String(a).localeCompare(String(b)));
-        saved.factions = factions;
-      }
-    }
+  const lines = [];
+  lines.push(`<div><b>Base</b>: Size <code>${sizeDice}</code> (⌊${size}/50⌋) + STR <code>${strDice}</code> (⌊${str}/10⌋) = <code>${base}</code></div>`);
+  if (mu.lines.length) {
+    lines.push(`<div><b>Matchup</b>:</div><div style="margin-left:10px;">${mu.lines.map(l=>`• ${l}`).join("<br>")}</div>`);
+  } else {
+    lines.push(`<div><b>Matchup</b>: <span style="color:var(--faint)">No listed modifiers.</span></div>`);
+  }
+  lines.push(`<div style="margin-top:5px;"><b>Pre-cap</b>: <code>${preCap}</code> → Cap (${roleCap}): <code>${capped}</code></div>`);
+  if (self.manualDiceDelta) {
+    const sign = self.manualDiceDelta > 0 ? "+" : "";
+    lines.push(`<div><b>Manual</b>: <code>${sign}${self.manualDiceDelta}</code> → <code>${afterManual}</code></div>`);
+    if (!allowOver) lines.push(`<div><b>After cap</b>: <code>${finalCount}</code></div>`);
+  }
+  const notes = [];
+  if (cls?.raw?.deadlyDoctrines) notes.push(`Deadly doctrines: ${cls.raw.deadlyDoctrines}`);
+  if (cls?.raw?.preferredWeather) notes.push(`Preferred weather: ${cls.raw.preferredWeather}`);
+  if (cls?.raw?.undesiredWeather) notes.push(`Undesired: ${cls.raw.undesiredWeather}`);
+  if (cls?.raw?.preferredTerrain) notes.push(`Preferred terrain: ${cls.raw.preferredTerrain}`);
+  const notesHtml = notes.length ? `<div style="margin-top:6px;color:var(--faint)"><b>Class notes</b>:<br>${notes.map(n=>`• ${n}`).join("<br>")}</div>` : "";
 
-    function findArmyById(id) {
-      const armies = Array.isArray(state.saved?.armies) ? state.saved.armies : [];
-      return armies.find(a => a && a.id === id) || null;
-    }
+  return {
+    classObj: cls, opponentObj: oppCls,
+    size, str, base, preCap, capped, finalCount,
+    diceSidesList, diceSidesDisplay: formatDiceList(diceSidesList),
+    dieSidesPrimary: sides,
+    breakdownHtml: lines.join("") + notesHtml
+  };
+}
 
-    function findArmyByName(name) {
-      const key = normalizeName(name);
-      if (!key) return null;
-      const armies = Array.isArray(state.saved?.armies) ? state.saved.armies : [];
-      return armies.find(a => normalizeName(a?.name) === key) || null;
-    }
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const state = {
+  attacker: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
+  defender: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
+  conditions: { defenderHasStructures: false },
+  settings: { resolutionMode: "risk", quickLossPreset: "standard", allowOverCap: false },
+  lastResult: null,
+  saved: loadPersisted(),
+  _computed: {}
+};
+state.saved.armies = state.saved.armies || [];
+state.saved.battleHistory = state.saved.battleHistory || [];
+recomputeFactions(state.saved);
+persist(state.saved);
 
-    function saveArmyRecord(data) {
-      const name = String(data?.name || "").trim();
-      if (!name) return { ok:false, error:"Army name is required." };
+// ═══════════════════════════════════════════════════════════════
+// ARMY CRUD
+// ═══════════════════════════════════════════════════════════════
+function findArmyById(id) { return (state.saved.armies || []).find(a=>a?.id===id) || null; }
+function findArmyByName(name) {
+  const k = normalizeName(name);
+  return (state.saved.armies || []).find(a=>normalizeName(a?.name)===k) || null;
+}
+function upsertFaction(name) {
+  const v = String(name||"").trim();
+  if (!v) return;
+  const k = v.toLowerCase();
+  const facs = state.saved.factions || [];
+  if (!facs.some(f=>String(f).toLowerCase()===k)) {
+    facs.push(v);
+    facs.sort((a,b)=>String(a).localeCompare(String(b)));
+    state.saved.factions = facs;
+  }
+}
 
-      const classId = String(data?.classId || "").trim();
-      if (!INDEX.byId.has(classId)) return { ok:false, error:"Invalid army class." };
+function saveArmyRecord(data) {
+  const name = String(data?.name||"").trim();
+  if (!name) return { ok:false, error:"Army name is required." };
+  const classId = String(data?.classId||"").trim();
+  if (!INDEX.byId.has(classId)) return { ok:false, error:"Invalid army class." };
+  const size = Math.max(0, Number.isFinite(Number(data?.size)) ? Math.trunc(Number(data.size)) : 0);
+  const str  = Math.max(0, Number.isFinite(Number(data?.str)) ? Math.trunc(Number(data.str)) : 0);
+  const faction = String(data?.faction||"").trim();
+  const notes = String(data?.notes||"").trim();
 
-      const size = Math.max(0, Number.isFinite(Number(data?.size)) ? Math.trunc(Number(data.size)) : 0);
-      const str  = Math.max(0, Number.isFinite(Number(data?.str)) ? Math.trunc(Number(data.str)) : 0);
-      const faction = String(data?.faction || "").trim();
-      const notes = String(data?.notes || "").trim();
+  let target = null;
+  if (data?.id) target = findArmyById(String(data.id));
+  if (!target) target = findArmyByName(name);
 
-      let target = null;
-      if (data?.id) target = findArmyById(String(data.id));
-      if (!target) target = findArmyByName(name);
-
-      if (target) {
-        target.name = name;
-        target.faction = faction;
-        target.classId = classId;
-        target.size = size;
-        target.str = str;
-        target.notes = notes;
-        target.updatedAt = nowIso();
-        upsertFaction(state.saved, faction);
-        recomputeFactionsFromArmies(state.saved);
-        persist(state.saved);
-        return { ok:true, mode:"update", army: target };
-      }
-
-      const army = {
-        id: uuid(),
-        name,
-        faction,
-        classId,
-        size,
-        str,
-        notes,
-        createdAt: nowIso(),
-        updatedAt: nowIso()
-      };
-      state.saved.armies = Array.isArray(state.saved.armies) ? state.saved.armies : [];
-      state.saved.armies.unshift(army);
-      upsertFaction(state.saved, faction);
-      recomputeFactionsFromArmies(state.saved);
-      persist(state.saved);
-      return { ok:true, mode:"create", army };
-    }
-
-    function renderFactionDatalist() {
-      const dl = $("factionDatalist");
-      if (!dl) return;
-      dl.innerHTML = "";
-      const factions = Array.isArray(state.saved?.factions) ? state.saved.factions : [];
-      for (const f of factions) {
-        const opt = document.createElement("option");
-        opt.value = String(f);
-        dl.appendChild(opt);
-      }
-    }
-
-    function showSaveArmyToast(html, kind) {
-      const el = $("saveArmyToast");
-      if (!el) return;
-      el.style.display = "block";
-      el.className = "alert" + (kind ? " " + kind : "");
-      el.innerHTML = html;
-      clearTimeout(el._t);
-      el._t = setTimeout(() => { el.style.display = "none"; }, 2200);
-    }
-
-    function openArmyModalPrefillFromAttacker() {
-      const dlg = $("armyModal");
-      if (!dlg) return;
-
-      const classId = $("attackerClass")?.value || "";
-      const size = toInt($("attackerSize")?.value) ?? 0;
-      const str  = toInt($("attackerStr")?.value) ?? 0;
-
-      $("armyModalSub").textContent = "Saves a named army to this browser (local).";
-      $("armyModalArmyId").value = "";
-      $("armyName").value = "";
-      $("armyFaction").value = "";
-      $("armyNotes").value = "";
-      $("armySize").value = size;
-      $("armyStr").value = str;
-
-      groupOptions($("armyClass"), classId);
-      $("armyModalError").style.display = "none";
-      renderFactionDatalist();
-
-      if (typeof dlg.showModal === "function") dlg.showModal();
-      else dlg.setAttribute("open", "");
-
-      $("armyName").focus();
-    }
-
-    function closeArmyModal() {
-      const dlg = $("armyModal");
-      if (!dlg) return;
-      if (dlg.open && typeof dlg.close === "function") dlg.close();
-      else dlg.removeAttribute("open");
-    }
-
-    function commitArmyModal() {
-      const err = $("armyModalError");
-      const id = String($("armyModalArmyId")?.value || "").trim() || null;
-      const name = $("armyName")?.value;
-      const faction = $("armyFaction")?.value;
-      const classId = $("armyClass")?.value;
-      const size = toInt($("armySize")?.value);
-      const str = toInt($("armyStr")?.value);
-      const notes = $("armyNotes")?.value;
-
-      const res = saveArmyRecord({ id, name, faction, classId, size, str, notes });
-      if (!res.ok) {
-        if (err) {
-          err.style.display = "block";
-          err.textContent = res.error;
-        }
-        return;
-      }
-
-      if (err) err.style.display = "none";
-      closeArmyModal();
-      renderFactionDatalist();
-      showSaveArmyToast(res.mode === "update" ? "<b>Army updated.</b>" : "<b>Army saved.</b>");
-    }
-
-
-    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-
-    function toInt(val) {
-      if (val === null || val === undefined) return null;
-      const s = String(val).trim();
-      if (!s) return null;
-      const n = Number(s);
-      if (!Number.isFinite(n)) return null;
-      return Math.trunc(n);
-    }
-
-    function formatDiceList(diceSidesList) {
-      if (!diceSidesList || diceSidesList.length === 0) return "0 dice";
-      const uniform = diceSidesList.every(d => d === diceSidesList[0]);
-      if (uniform) return `${diceSidesList.length}d${diceSidesList[0]}`;
-      const counts = new Map();
-      for (const d of diceSidesList) counts.set(d, (counts.get(d) || 0) + 1);
-      const parts = Array.from(counts.entries())
-        .sort((a,b)=>a[0]-b[0])
-        .map(([sides,c]) => `${c}d${sides}`);
-      return parts.join(" + ");
-    }
-
-    function getCryptoInt(maxExclusive) {
-      if (window.crypto && window.crypto.getRandomValues) {
-        const arr = new Uint32Array(1);
-        const maxUint = 0xFFFFFFFF;
-        const limit = maxUint - (maxUint % maxExclusive);
-        while (true) {
-          window.crypto.getRandomValues(arr);
-          const x = arr[0];
-          if (x < limit) return x % maxExclusive;
-        }
-      }
-      return Math.floor(Math.random() * maxExclusive);
-    }
-
-    function rollDie(sides) { return 1 + getCryptoInt(sides); }
-
-    function buildClassIndex() {
-      const byId = new Map();
-      const byName = new Map();
-      for (const c of RULES.armyClasses) {
-        byId.set(c.id, c);
-        byName.set(c.name, c);
-      }
-      return { byId, byName };
-    }
-
-    const INDEX = buildClassIndex();
-
-    function groupOptions(selectEl, selectedId) {
-      selectEl.innerHTML = "";
-      const groups = new Map([["Standard", []], ["Special", []], ["Faction", []]]);
-      for (const c of RULES.armyClasses) {
-        if (!groups.has(c.category)) groups.set(c.category, []);
-        groups.get(c.category).push(c);
-      }
-      for (const [cat, arr] of groups.entries()) {
-        if (!arr.length) continue;
-        const og = document.createElement("optgroup");
-        og.label = cat;
-        for (const c of arr) {
-          const opt = document.createElement("option");
-          opt.value = c.id;
-          opt.textContent = c.name;
-          if (c.desc) opt.title = c.desc;
-          og.appendChild(opt);
-        }
-        selectEl.appendChild(og);
-      }
-      if (selectedId && INDEX.byId.has(selectedId)) selectEl.value = selectedId;
-      else selectEl.selectedIndex = 0;
-    }
-
-    // Dice type “auto” rules (MVP subset)
-    function autoDiceTypeForClass(className, selfMatchups, opponentClassName, battleCtx) {
-      let sides = 6;
-
-      if (className === "Warforged (Artificial Constructs)") {
-        sides = 8;
-        const opp = opponentClassName;
-        const isImmune = selfMatchups.immunities.includes(opp);
-        const isResist = selfMatchups.resistances.includes(opp);
-        const isVuln = selfMatchups.vulnerabilities.includes(opp) || selfMatchups.vulnerabilities.includes("__ALL__");
-        const isDeadly = selfMatchups.deadly.includes(opp);
-        if (isImmune || isResist) sides = 10;
-        if (isVuln) sides = 6;
-        if (isDeadly) sides = 4;
-      }
-
-      if (className === "Siege") {
-        sides = battleCtx.defenderHasStructures ? 10 : 8;
-      }
-
-      if (className === "Builders") {
-        const opp = opponentClassName;
-        const hasEdge = selfMatchups.immunities.includes(opp) || selfMatchups.resistances.includes(opp);
-        const oppClass = INDEX.byName.get(opp);
-        const oppIsVulnToBuilders = oppClass && (oppClass.matchups.vulnerabilities || []).includes("Builders");
-        const oppIsDeadlyToBuilders = oppClass && (oppClass.matchups.deadly || []).includes("Builders");
-        sides = (hasEdge || oppIsVulnToBuilders || oppIsDeadlyToBuilders) ? 6 : 4;
-      }
-
-      if (className === "Mutants") {
-        sides = 6;
-      }
-
-      return sides;
-    }
-
-    function applyMutantDieMix(className, diceSidesList) {
-      if (className !== "Mutants") return diceSidesList;
-      if (!diceSidesList || diceSidesList.length === 0) return [10];
-      const copy = diceSidesList.slice();
-      copy[0] = 10;
-      return copy;
-    }
-
-    function matchupModifierFor(sideClass, opponentClass) {
-      const name = opponentClass?.name || null;
-      if (!sideClass || !name) return { total: 0, lines: [] };
-
-      const imm = sideClass.matchups.immunities || [];
-      const res = sideClass.matchups.resistances || [];
-      const vul = sideClass.matchups.vulnerabilities || [];
-      const dea = sideClass.matchups.deadly || [];
-
-      let total = 0;
-      const lines = [];
-
-      if (vul.includes("__ALL__")) {
-        total += RULES.modifierShorthand.vulnerability;
-        lines.push(`Vulnerability (All): <b>${RULES.modifierShorthand.vulnerability}</b> die`);
-      }
-      if (imm.includes(name)) {
-        total += RULES.modifierShorthand.immunity;
-        lines.push(`Immunity vs <b>${name}</b>: <b>+${RULES.modifierShorthand.immunity}</b> dice`);
-      }
-      if (res.includes(name)) {
-        total += RULES.modifierShorthand.resistance;
-        lines.push(`Resistance vs <b>${name}</b>: <b>+${RULES.modifierShorthand.resistance}</b> die`);
-      }
-      if (vul.includes(name)) {
-        total += RULES.modifierShorthand.vulnerability;
-        lines.push(`Vulnerability vs <b>${name}</b>: <b>${RULES.modifierShorthand.vulnerability}</b> die`);
-      }
-      if (dea.includes(name)) {
-        total += RULES.modifierShorthand.deadly;
-        lines.push(`Deadly matchup vs <b>${name}</b>: <b>${RULES.modifierShorthand.deadly}</b> dice`);
-      }
-
-      return { total, lines };
-    }
-
-    function computeDicePool(sideKey, state) {
-      const self = state[sideKey];
-      const otherKey = sideKey === "attacker" ? "defender" : "attacker";
-      const opp = state[otherKey];
-
-      const roleCap = sideKey === "attacker" ? RULES.diceCaps.attacker : RULES.diceCaps.defender;
-
-      const cls = INDEX.byId.get(self.classId);
-      const oppCls = INDEX.byId.get(opp.classId);
-
-      const size = Math.max(0, self.size ?? 0);
-      const str  = Math.max(0, self.str ?? 0);
-
-      const sizeDice = Math.floor(size / RULES.sizePerDie);
-      const strDice  = Math.floor(str / RULES.strPerDie);
-
-      const base = sizeDice + strDice;
-
-      const matchup = matchupModifierFor(cls, oppCls);
-      const preCap = base + matchup.total;
-      const capped = clamp(preCap, 0, roleCap);
-
-      const allowOverCap = state.settings.allowOverCap;
-      let afterManual = capped + (self.manualDiceDelta || 0);
-      afterManual = Math.max(0, afterManual);
-      const finalCount = allowOverCap ? afterManual : clamp(afterManual, 0, roleCap);
-
-      const autoSides = autoDiceTypeForClass(
-        cls?.name,
-        cls?.matchups || {immunities:[],resistances:[],vulnerabilities:[],deadly:[]},
-        oppCls?.name,
-        state.conditions
-      );
-
-      const sides = (self.diceOverride && self.diceOverride !== "auto")
-        ? Number(self.diceOverride)
-        : autoSides;
-
-      let diceSidesList = Array.from({length: finalCount}, () => sides);
-      diceSidesList = applyMutantDieMix(cls?.name, diceSidesList);
-
-      const lines = [];
-      lines.push(`<div><b>Base</b>: Size dice <code>${sizeDice}</code> (⌊${size}/50⌋) + STR dice <code>${strDice}</code> (⌊${str}/10⌋) = <code>${base}</code></div>`);
-      if (matchup.lines.length) {
-        lines.push(`<div><b>Matchup</b>:</div><div style="margin-left:10px;">${matchup.lines.map(l=>`• ${l}`).join("<br/>")}</div>`);
-      } else {
-        lines.push(`<div><b>Matchup</b>: <span style="color: rgba(255,255,255,0.55);">No listed modifiers in MVP.</span></div>`);
-      }
-      lines.push(`<div style="margin-top:6px;"><b>Pre-cap</b>: <code>${preCap}</code> → <b>Cap</b> (${sideKey==="attacker" ? "10" : "8"}): <code>${capped}</code></div>`);
-      if (self.manualDiceDelta) {
-        const sign = self.manualDiceDelta > 0 ? "+" : "";
-        lines.push(`<div><b>Manual</b>: <code>${capped}</code> ${sign} <code>${self.manualDiceDelta}</code> = <code>${afterManual}</code></div>`);
-        if (!state.settings.allowOverCap) lines.push(`<div><b>After cap enforcement</b>: <code>${finalCount}</code></div>`);
-      }
-
-      const notes = [];
-      if (cls?.raw?.deadlyDoctrines) notes.push(`Deadly doctrines: ${cls.raw.deadlyDoctrines}`);
-      if (cls?.raw?.preferredWeather) notes.push(`Preferred weather: ${cls.raw.preferredWeather}`);
-      if (cls?.raw?.undesiredWeather) notes.push(`Undesired weather: ${cls.raw.undesiredWeather}`);
-      if (cls?.raw?.preferredTerrain) notes.push(`Preferred terrain: ${cls.raw.preferredTerrain}`);
-      if (cls?.raw?.undesiredTerrain) notes.push(`Undesired terrain: ${cls.raw.undesiredTerrain}`);
-
-      const notesHtml = notes.length
-        ? `<div style="margin-top:8px; color: rgba(255,255,255,0.55);"><b>Class notes (not auto-modeled yet)</b>:<br/>${notes.map(n=>`• ${n}`).join("<br/>")}</div>`
-        : "";
-
-      return {
-        classObj: cls,
-        opponentObj: oppCls,
-        size, str,
-        base,
-        preCap,
-        capped,
-        finalCount,
-        diceSidesList,
-        diceSidesDisplay: formatDiceList(diceSidesList),
-        dieSidesPrimary: sides,
-        breakdownHtml: lines.join("") + notesHtml
-      };
-    }
-
-    const state = {
-      attacker: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
-      defender: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
-      conditions: { defenderHasStructures: false },
-      settings: { resolutionMode: "risk", quickLossPreset: "standard", allowOverCap: false },
-      lastResult: null,
-      saved: loadPersisted()
-    };
-
-    // Phase 2 (Slices 2.1–2.2): normalize + persist once so storage exists
-    state.saved.armies = Array.isArray(state.saved.armies) ? state.saved.armies : [];
-    state.saved.battleHistory = Array.isArray(state.saved.battleHistory) ? state.saved.battleHistory : [];
-    recomputeFactionsFromArmies(state.saved);
+  if (target) {
+    Object.assign(target, { name, faction, classId, size, str, notes, updatedAt: nowIso() });
+    recomputeFactions(state.saved);
     persist(state.saved);
+    return { ok:true, mode:"update", army: target };
+  }
+  const army = { id: uuid(), name, faction, classId, size, str, notes, createdAt: nowIso(), updatedAt: nowIso() };
+  state.saved.armies.unshift(army);
+  upsertFaction(faction);
+  recomputeFactions(state.saved);
+  persist(state.saved);
+  return { ok:true, mode:"create", army };
+}
 
+function deleteArmy(id) {
+  state.saved.armies = (state.saved.armies||[]).filter(a=>a?.id!==id);
+  recomputeFactions(state.saved);
+  persist(state.saved);
+}
 
-    function validateReady(attComputed) {
-      const issues = [];
-      const attSize = toInt($("attackerSize").value);
-      const attStr  = toInt($("attackerStr").value);
-      const defSize = toInt($("defenderSize").value);
-      const defStr  = toInt($("defenderStr").value);
+function renameFaction(oldName, newName) {
+  const newTrimmed = String(newName||"").trim();
+  if (!newTrimmed) return { ok:false, error:"Name cannot be empty." };
+  const newKey = newTrimmed.toLowerCase();
+  const conflict = (state.saved.factions||[]).some(f=>f.toLowerCase()===newKey && f.toLowerCase()!==oldName.toLowerCase());
+  if (conflict) return { ok:false, error:"That faction name already exists." };
+  for (const a of (state.saved.armies||[])) {
+    if (String(a?.faction||"").toLowerCase() === oldName.toLowerCase()) a.faction = newTrimmed;
+  }
+  recomputeFactions(state.saved);
+  persist(state.saved);
+  return { ok:true };
+}
 
-      if (attSize === null) issues.push("Attacker Army Size is required.");
-      if (attStr === null) issues.push("Attacker STR is required.");
-      if (defSize === null) issues.push("Defender Army Size is required.");
-      if (defStr === null) issues.push("Defender STR is required.");
+function deleteFaction(name) {
+  for (const a of (state.saved.armies||[])) {
+    if (String(a?.faction||"").toLowerCase() === name.toLowerCase()) a.faction = "";
+  }
+  recomputeFactions(state.saved);
+  persist(state.saved);
+}
 
-      if (!state.attacker.classId) issues.push("Attacker Army Class is required.");
-      if (!state.defender.classId) issues.push("Defender Army Class is required.");
+// ═══════════════════════════════════════════════════════════════
+// BATTLE HISTORY
+// ═══════════════════════════════════════════════════════════════
+function appendHistory(result, attRoll, defRoll) {
+  const attCls = INDEX.byId.get(state.attacker.classId);
+  const defCls = INDEX.byId.get(state.defender.classId);
+  const entry = {
+    id: uuid(),
+    ts: nowIso(),
+    attacker: { class: attCls?.name||"?", size: state.attacker.size, str: state.attacker.str, pool: state._computed.att?.diceSidesDisplay },
+    defender: { class: defCls?.name||"?", size: state.defender.size, str: state.defender.str, pool: state._computed.def?.diceSidesDisplay },
+    winner: result.winner,
+    attLoss: result.attLoss, defLoss: result.defLoss,
+    newAttSize: result.newAtt, newDefSize: result.newDef,
+    summary: result.summary,
+    mode: result.mode
+  };
+  state.saved.battleHistory = state.saved.battleHistory || [];
+  state.saved.battleHistory.unshift(entry);
+  if (state.saved.battleHistory.length > 200) state.saved.battleHistory.length = 200;
+  persist(state.saved);
+}
 
-      if (state.settings.resolutionMode === "risk" && attComputed.finalCount > 0 && attComputed.finalCount < 5) {
-        issues.push("Attacker dice pool is below 5 after modifiers. Per rules, the attacker cannot initiate this battle phase.");
-      }
-      return issues;
+// ═══════════════════════════════════════════════════════════════
+// BATTLE RESOLUTION
+// ═══════════════════════════════════════════════════════════════
+function validateReady(attComp) {
+  const issues = [];
+  if (toInt($("attackerSize").value)===null) issues.push("Attacker Army Size is required.");
+  if (toInt($("attackerStr").value)===null)  issues.push("Attacker STR is required.");
+  if (toInt($("defenderSize").value)===null) issues.push("Defender Army Size is required.");
+  if (toInt($("defenderStr").value)===null)  issues.push("Defender STR is required.");
+  if (!state.attacker.classId) issues.push("Attacker Army Class is required.");
+  if (!state.defender.classId) issues.push("Defender Army Class is required.");
+  if (state.settings.resolutionMode==="risk" && attComp.finalCount>0 && attComp.finalCount<5)
+    issues.push("Attacker pool <5 dice — cannot initiate attack (per rules).");
+  return issues;
+}
+
+function rollPool(list, commit) {
+  const committed = clamp(commit, 0, list.length);
+  const used = list.slice(0, committed);
+  const rolls = used.map(sides=>({ sides, roll: rollDie(sides) }));
+  return { committed, rolls, total: rolls.reduce((a,b)=>a+b.roll,0) };
+}
+
+function getCommitCount(sideKey, comp) {
+  const self = state[sideKey];
+  if (self.autoCommit) return comp.diceSidesList.length;
+  const n = toInt($(sideKey+"Commit").value);
+  return n===null ? comp.diceSidesList.length : clamp(n,0,comp.diceSidesList.length);
+}
+
+function resolveQuick(att, def, aRoll, dRoll) {
+  const winner = aRoll.total > dRoll.total ? "attacker" : "defender";
+  let lossL=10, lossT=5;
+  if (state.settings.quickLossPreset==="flat10") { lossL=10; lossT=0; }
+  if (state.settings.quickLossPreset==="flat20") { lossL=20; lossT=10; }
+  const attLoss = winner==="defender" ? lossL : 0;
+  const defLoss = winner==="attacker" ? lossL : 0;
+  return { mode:"quick", winner, attLoss, defLoss,
+    newAtt: Math.max(0, att.size-attLoss), newDef: Math.max(0, def.size-defLoss),
+    summary: `Quick total: Att ${aRoll.total} vs Def ${dRoll.total}.`, comparisons:null };
+}
+
+function resolveRisk(att, def, aRoll, dRoll) {
+  const aS = aRoll.rolls.map(r=>r.roll).sort((a,b)=>b-a);
+  const dS = dRoll.rolls.map(r=>r.roll).sort((a,b)=>b-a);
+  const n = Math.min(aS.length, dS.length);
+  let attLoss=0, defLoss=0;
+  let attSz=att.size, defSz=def.size;
+  const rows=[];
+  for (let i=0;i<n;i++) {
+    const a=aS[i], d=dS[i], diff=a-d;
+    if (diff>0) {
+      const amt=Math.min(diff>=3?20:10, defSz);
+      defSz=Math.max(0,defSz-amt); defLoss+=amt;
+      rows.push({i:i+1,a,d,loss:`Defender −${amt}`});
+    } else if (diff<0) {
+      const amt=Math.min(Math.abs(diff)>=3?20:10, attSz);
+      attSz=Math.max(0,attSz-amt); attLoss+=amt;
+      rows.push({i:i+1,a,d,loss:`Attacker −${amt}`});
+    } else {
+      const aAmt=Math.min(5,attSz), dAmt=Math.min(5,Math.max(0,defSz-1));
+      attSz=Math.max(0,attSz-aAmt); defSz=Math.max(0,defSz-dAmt);
+      attLoss+=aAmt; defLoss+=dAmt;
+      rows.push({i:i+1,a,d,loss:`Tie: Att −${aAmt}, Def −${dAmt}`});
     }
+    if (attSz<=0||defSz<=0) break;
+  }
+  const winner = defLoss>attLoss ? "attacker" : "defender";
+  return { mode:"risk", winner, attLoss, defLoss, newAtt:attSz, newDef:defSz,
+    summary:`Risk-style: ${rows.length} comparisons. Losses — Att −${attLoss}, Def −${defLoss}.`,
+    comparisons:rows };
+}
 
-    function rollPool(diceSidesList, commitCount) {
-      const committed = clamp(commitCount, 0, diceSidesList.length);
-      const used = diceSidesList.slice(0, committed);
-      const rolls = used.map(sides => ({ sides, roll: rollDie(sides) }));
-      const total = rolls.reduce((a,b)=>a + b.roll, 0);
-      return { committed, usedSides: used, rolls, total };
+// ═══════════════════════════════════════════════════════════════
+// RENDER — BATTLE TAB
+// ═══════════════════════════════════════════════════════════════
+function renderFactionDatalist() {
+  const dl = $("factionDatalist");
+  if (!dl) return;
+  dl.innerHTML = "";
+  for (const f of (state.saved.factions||[])) {
+    const opt = document.createElement("option");
+    opt.value = String(f); dl.appendChild(opt);
+  }
+}
+
+function renderArmyLoaders() {
+  const armies = state.saved.armies || [];
+  for (const selId of ["attLoaderSelect","defLoaderSelect"]) {
+    const sel = $(selId);
+    if (!sel) continue;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Load saved army —</option>';
+    for (const a of armies) {
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      opt.textContent = a.name + (a.faction ? ` [${a.faction}]` : "");
+      sel.appendChild(opt);
     }
+    if (cur) sel.value = cur;
+  }
+}
 
-    function resolveQuick(att, def, attRoll, defRoll) {
-      let winner = "defender";
-      if (attRoll.total > defRoll.total) winner = "attacker";
-      else if (defRoll.total > attRoll.total) winner = "defender";
-      else winner = "defender"; // tie favors defender
+function loadArmyIntoSide(sideKey, army) {
+  if (!army) return;
+  const pfx = sideKey;
+  $(pfx+"Size").value = army.size || "";
+  $(pfx+"Str").value = army.str || "";
+  state[sideKey].size = army.size || 0;
+  state[sideKey].str = army.str || 0;
+  const cls = INDEX.byId.get(army.classId);
+  if (cls) {
+    $(pfx+"Class").value = army.classId;
+    state[sideKey].classId = army.classId;
+  }
+  render();
+  showToast(`Loaded "${escHtml(army.name)}" into ${sideKey==="attacker"?"Attacker":"Defender"}.`);
+}
 
-      let lossLoser = 10, lossTie = 5;
-      if (state.settings.quickLossPreset === "flat10") { lossLoser = 10; lossTie = 0; }
-      if (state.settings.quickLossPreset === "flat20") { lossLoser = 20; lossTie = 10; }
+function showToast(html, kind) {
+  const el = $("saveArmyToast");
+  if (!el) return;
+  el.style.display = "block";
+  el.className = "alert" + (kind ? " "+kind : "");
+  el.innerHTML = html;
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.display="none"; }, 2500);
+}
 
-      let attLoss = 0, defLoss = 0;
-      if (winner === "attacker") defLoss = lossLoser;
-      else if (winner === "defender") attLoss = lossLoser;
-      else { attLoss = lossTie; defLoss = lossTie; }
-
-      return {
-        mode: "quick",
-        winner,
-        attLoss, defLoss,
-        newAtt: Math.max(0, att.size - attLoss),
-        newDef: Math.max(0, def.size - defLoss),
-        summary: `Quick total: Attacker ${attRoll.total} vs Defender ${defRoll.total}.`,
-        comparisons: null
-      };
+function renderResult(result, attRoll, defRoll) {
+  $("resultArea").style.display = "block";
+  $("resultHeadline").textContent = result.winner==="attacker" ? "⚔ Attacker wins" : "🛡 Defender holds";
+  $("resultSummary").innerHTML =
+    `${result.summary}<br><b>Updated Size</b> — Attacker: <span class="mono">${result.newAtt}</span> (−${result.attLoss}), Defender: <span class="mono">${result.newDef}</span> (−${result.defLoss}).`;
+  $("attackerRolls").innerHTML = "";
+  $("defenderRolls").innerHTML = "";
+  for (const r of attRoll.rolls) {
+    const s=document.createElement("span"); s.className="die att"; s.textContent=`${r.roll}(d${r.sides})`; $("attackerRolls").appendChild(s);
+  }
+  for (const r of defRoll.rolls) {
+    const s=document.createElement("span"); s.className="die def"; s.textContent=`${r.roll}(d${r.sides})`; $("defenderRolls").appendChild(s);
+  }
+  $("attackerTotal").textContent = String(attRoll.total);
+  $("defenderTotal").textContent = String(defRoll.total);
+  if (result.mode==="risk" && result.comparisons) {
+    $("riskCompareWrap").style.display = "block";
+    const tb = $("riskCompareBody"); tb.innerHTML = "";
+    for (const row of result.comparisons) {
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td class="mono">${row.i}</td><td class="mono">${row.a}</td><td class="mono">${row.d}</td><td>${row.loss}</td>`;
+      tb.appendChild(tr);
     }
+  } else { $("riskCompareWrap").style.display="none"; }
+}
 
-    function resolveRisk(att, def, attRoll, defRoll) {
-      const aSorted = attRoll.rolls.map(r=>r.roll).sort((a,b)=>b-a);
-      const dSorted = defRoll.rolls.map(r=>r.roll).sort((a,b)=>b-a);
+function render() {
+  $("rulesetVersion").textContent = RULES.rulesetVersion;
+  $("rulesFooter").textContent = RULES.rulesetVersion;
+  if ($("settingsRulesetVer")) $("settingsRulesetVer").textContent = RULES.rulesetVersion;
 
-      const n = Math.min(aSorted.length, dSorted.length);
-      let attLoss = 0, defLoss = 0;
-      const rows = [];
+  const att = computePool("attacker", state);
+  const def = computePool("defender", state);
+  state._computed = { att, def };
 
-      let attSizeNow = att.size;
-      let defSizeNow = def.size;
+  $("attackerPoolBadge").textContent = att.diceSidesDisplay;
+  $("defenderPoolBadge").textContent = def.diceSidesDisplay;
+  $("attackerPoolFinal").textContent = att.diceSidesDisplay;
+  $("defenderPoolFinal").textContent = def.diceSidesDisplay;
+  $("attackerDiceType").textContent = `d${att.dieSidesPrimary}`+(state.attacker.diceOverride!=="auto"?" (override)":" (auto)");
+  $("defenderDiceType").textContent = `d${def.dieSidesPrimary}`+(state.defender.diceOverride!=="auto"?" (override)":" (auto)");
+  $("attackerManualDelta").textContent = String(state.attacker.manualDiceDelta||0);
+  $("defenderManualDelta").textContent = String(state.defender.manualDiceDelta||0);
+  $("attackerBreakdown").innerHTML = att.breakdownHtml;
+  $("defenderBreakdown").innerHTML = def.breakdownHtml;
+  const attCommit = getCommitCount("attacker",att);
+  const defCommit = getCommitCount("defender",def);
+  $("attackerCommitSummary").textContent = state.attacker.autoCommit?`auto: ${attCommit}`:`manual: ${attCommit}`;
+  $("defenderCommitSummary").textContent = state.defender.autoCommit?`auto: ${defCommit}`:`manual: ${defCommit}`;
+  $("conditionsSummary").textContent = state.conditions.defenderHasStructures?"structures: yes":"structures: no";
 
-      for (let i=0; i<n; i++) {
-        const a = aSorted[i];
-        const d = dSorted[i];
-        const diff = a - d;
+  const issues = validateReady(att);
+  if (issues.length) {
+    $("validationMsg").style.display="block";
+    $("validationMsg").innerHTML="<b>Not ready:</b><br>"+issues.map(i=>`• ${i}`).join("<br>");
+    $("battleBtn").disabled=true;
+  } else {
+    $("validationMsg").style.display="none";
+    $("battleBtn").disabled=false;
+  }
+}
 
-        if (diff > 0) {
-          const amt = (diff >= 3) ? 20 : 10;
-          const actual = Math.min(amt, defSizeNow);
-          defSizeNow = Math.max(0, defSizeNow - actual);
-          defLoss += actual;
-          rows.push({ i:i+1, a, d, loss: `Defender −${actual}` });
-        } else if (diff < 0) {
-          const amt = (Math.abs(diff) >= 3) ? 20 : 10;
-          const actual = Math.min(amt, attSizeNow);
-          attSizeNow = Math.max(0, attSizeNow - actual);
-          attLoss += actual;
-          rows.push({ i:i+1, a, d, loss: `Attacker −${actual}` });
-        } else {
-          const attAmt = Math.min(5, attSizeNow);
-          const defAmtMax = Math.max(0, defSizeNow - 1);
-          const defAmt = Math.min(5, defAmtMax);
+// ═══════════════════════════════════════════════════════════════
+// RENDER — ARMIES TAB
+// ═══════════════════════════════════════════════════════════════
+function renderArmyList(filter) {
+  const container = $("armyList");
+  if (!container) return;
+  const armies = state.saved.armies || [];
+  const query = String(filter||"").trim().toLowerCase();
+  const filtered = query ? armies.filter(a=>
+    normalizeName(a.name).includes(query) ||
+    normalizeName(a.faction||"").includes(query) ||
+    normalizeName(INDEX.byId.get(a.classId)?.name||"").includes(query)
+  ) : armies;
 
-          attSizeNow = Math.max(0, attSizeNow - attAmt);
-          defSizeNow = Math.max(0, defSizeNow - defAmt);
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty"><span class="emptyIcon">🗡</span>${armies.length?"No armies match your search.":"No armies saved yet. Create one from the Battle tab or click New Army."}</div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(a=>{
+    const cls = INDEX.byId.get(a.classId);
+    const clsName = cls?.name || a.classId || "?";
+    const meta = [
+      a.faction?`<span>⚑ ${escHtml(a.faction)}</span>`:"",
+      `<span>${escHtml(clsName)}</span>`,
+      `<span>Size ${a.size||0} / STR ${a.str||0}</span>`,
+      a.notes?`<span>${escHtml(a.notes)}</span>`:""
+    ].filter(Boolean).join(" · ");
+    return `<div class="armyRow" data-id="${escHtml(a.id)}">
+      <div>
+        <div class="armyName">${escHtml(a.name)}</div>
+        <div class="armyMeta">${meta}</div>
+      </div>
+      <div class="armyActions">
+        <button class="btn small" onclick="loadArmyToSide('${escHtml(a.id)}','attacker')">→ Att</button>
+        <button class="btn small" onclick="loadArmyToSide('${escHtml(a.id)}','defender')">→ Def</button>
+        <button class="btn small ghost" onclick="openEditArmyModal('${escHtml(a.id)}')">Edit</button>
+        <button class="btn small danger" onclick="confirmDeleteArmy('${escHtml(a.id)}')">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+}
 
-          attLoss += attAmt;
-          defLoss += defAmt;
+function loadArmyToSide(id, side) {
+  const army = findArmyById(id);
+  if (!army) return;
+  loadArmyIntoSide(side, army);
+  switchTab("battle");
+}
 
-          rows.push({ i:i+1, a, d, loss: `Tie: Att −${attAmt}, Def −${defAmt}` });
-        }
+// ═══════════════════════════════════════════════════════════════
+// RENDER — FACTIONS TAB
+// ═══════════════════════════════════════════════════════════════
+function renderFactionList() {
+  const container = $("factionList");
+  if (!container) return;
+  const factions = state.saved.factions || [];
+  const armyCount = (f) => (state.saved.armies||[]).filter(a=>String(a.faction||"").toLowerCase()===f.toLowerCase()).length;
+  if ($("factionCount")) $("factionCount").textContent = `${factions.length} faction${factions.length!==1?"s":""}`;
+  if (!factions.length) {
+    container.innerHTML = `<div class="empty"><span class="emptyIcon">🏰</span>No factions yet. Add a faction when saving an army.</div>`;
+    return;
+  }
+  container.innerHTML = factions.map(f=>`
+    <div class="armyRow">
+      <div>
+        <div class="armyName">${escHtml(f)}</div>
+        <div class="armyMeta">${armyCount(f)} arm${armyCount(f)!==1?"ies":"y"}</div>
+      </div>
+      <div class="armyActions">
+        <button class="btn small ghost" onclick="openRenameFaction('${escHtml(f)}')">Rename</button>
+        <button class="btn small danger" onclick="confirmDeleteFaction('${escHtml(f)}')">✕ Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
 
-        if (attSizeNow <= 0 || defSizeNow <= 0) break;
-      }
+// ═══════════════════════════════════════════════════════════════
+// RENDER — HISTORY TAB
+// ═══════════════════════════════════════════════════════════════
+function renderHistoryList() {
+  const container = $("historyList");
+  if (!container) return;
+  const hist = state.saved.battleHistory || [];
+  if (!hist.length) {
+    container.innerHTML = `<div class="empty"><span class="emptyIcon">📜</span>No battles recorded yet. After rolling, hit "Save to History" in the Battle tab.</div>`;
+    return;
+  }
+  container.innerHTML = hist.map((h,i)=>`
+    <div class="historyCard">
+      <div class="hHead">
+        <div class="hTitle">${escHtml(h.attacker?.class||"?")} vs ${escHtml(h.defender?.class||"?")} — <span style="color:var(--gold)">${h.winner==="attacker"?"Attacker wins":"Defender holds"}</span></div>
+        <div class="hDate">${fmtDate(h.ts)}</div>
+      </div>
+      <div class="hDetail">
+        Att: Size ${h.attacker?.size||0} / STR ${h.attacker?.str||0} / Pool ${escHtml(h.attacker?.pool||"?")} →
+        lost −${h.attLoss||0} (new size ${h.newAttSize||0})<br>
+        Def: Size ${h.defender?.size||0} / STR ${h.defender?.str||0} / Pool ${escHtml(h.defender?.pool||"?")} →
+        lost −${h.defLoss||0} (new size ${h.newDefSize||0})<br>
+        <span style="color:var(--faint)">${escHtml(h.summary||"")}</span>
+      </div>
+    </div>
+  `).join("");
+}
 
-      let winner = "defender";
-      if (defLoss > attLoss) winner = "attacker";
-      else if (attLoss > defLoss) winner = "defender";
-      else winner = "defender";
+// ═══════════════════════════════════════════════════════════════
+// ARMY MODAL
+// ═══════════════════════════════════════════════════════════════
+function openSaveArmyModal(prefillSide) {
+  const dlg = $("armyModal");
+  $("armyModalTitle").textContent = "Save Army";
+  $("armyModalArmyId").value = "";
+  $("armyName").value = "";
+  $("armyFaction").value = "";
+  $("armyNotes").value = "";
+  $("armySize").value = "";
+  $("armyStr").value = "";
+  if (prefillSide) {
+    const pfx = prefillSide;
+    $("armySize").value = state[pfx]?.size || "";
+    $("armyStr").value  = state[pfx]?.str  || "";
+    groupOptions($("armyClass"), state[pfx]?.classId);
+  } else {
+    groupOptions($("armyClass"));
+  }
+  $("armyModalError").style.display = "none";
+  renderFactionDatalist();
+  dlg.showModal?.() || dlg.setAttribute("open","");
+  $("armyName").focus();
+}
 
-      return {
-        mode: "risk",
-        winner,
-        attLoss, defLoss,
-        newAtt: attSizeNow,
-        newDef: defSizeNow,
-        summary: `Risk-style: ${rows.length} comparisons. Losses — Attacker −${attLoss}, Defender −${defLoss}.`,
-        comparisons: rows
-      };
+function openEditArmyModal(id) {
+  const army = findArmyById(id);
+  if (!army) return;
+  $("armyModalTitle").textContent = "Edit Army";
+  $("armyModalArmyId").value = army.id;
+  $("armyName").value = army.name;
+  $("armyFaction").value = army.faction || "";
+  $("armyNotes").value = army.notes || "";
+  $("armySize").value = army.size || "";
+  $("armyStr").value = army.str || "";
+  groupOptions($("armyClass"), army.classId);
+  $("armyModalError").style.display = "none";
+  renderFactionDatalist();
+  $("armyModal").showModal?.() || $("armyModal").setAttribute("open","");
+  $("armyName").focus();
+}
+
+function closeArmyModal() {
+  const d=$("armyModal");
+  if (d.open && typeof d.close==="function") d.close(); else d.removeAttribute("open");
+}
+
+function commitArmyModal() {
+  const res = saveArmyRecord({
+    id: $("armyModalArmyId")?.value || null,
+    name: $("armyName")?.value,
+    faction: $("armyFaction")?.value,
+    classId: $("armyClass")?.value,
+    size: $("armySize")?.value,
+    str: $("armyStr")?.value,
+    notes: $("armyNotes")?.value
+  });
+  if (!res.ok) { $("armyModalError").style.display="block"; $("armyModalError").textContent=res.error; return; }
+  $("armyModalError").style.display="none";
+  closeArmyModal();
+  renderFactionDatalist();
+  renderArmyLoaders();
+  renderArmyList($("armySearch")?.value);
+  renderFactionList();
+  showToast(res.mode==="update"?"<b>Army updated.</b>":"<b>Army saved.</b>", "good");
+}
+
+function confirmDeleteArmy(id) {
+  const army = findArmyById(id);
+  openConfirm(`Delete Army: ${army?.name||id}?`, `This will permanently remove "${army?.name||id}" from your saved armies.`, ()=>{
+    deleteArmy(id);
+    renderArmyList($("armySearch")?.value);
+    renderFactionList();
+    renderArmyLoaders();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FACTION RENAME MODAL
+// ═══════════════════════════════════════════════════════════════
+let _renameFactionOld = "";
+function openRenameFaction(name) {
+  _renameFactionOld = name;
+  $("renameFactionInput").value = name;
+  $("renameFactionError").style.display="none";
+  const d=$("renameFactionModal");
+  d.showModal?.() || d.setAttribute("open","");
+  $("renameFactionInput").focus();
+}
+function closeRenameFaction() {
+  const d=$("renameFactionModal");
+  if (d.open&&typeof d.close==="function") d.close(); else d.removeAttribute("open");
+}
+function commitRenameFaction() {
+  const res = renameFaction(_renameFactionOld, $("renameFactionInput").value);
+  if (!res.ok) { $("renameFactionError").style.display="block"; $("renameFactionError").textContent=res.error; return; }
+  closeRenameFaction();
+  renderFactionList();
+  renderArmyList($("armySearch")?.value);
+  renderArmyLoaders();
+}
+function confirmDeleteFaction(name) {
+  openConfirm(`Delete Faction: ${name}?`, `This removes the faction label from all armies in that faction. The armies themselves are kept.`, ()=>{
+    deleteFaction(name);
+    renderFactionList();
+    renderArmyList($("armySearch")?.value);
+    renderArmyLoaders();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIRM MODAL
+// ═══════════════════════════════════════════════════════════════
+let _confirmCb = null;
+function openConfirm(title, msg, cb) {
+  $("confirmTitle").textContent = title;
+  $("confirmMsg").textContent = msg;
+  _confirmCb = cb;
+  const d=$("confirmModal");
+  d.showModal?.() || d.setAttribute("open","");
+}
+function closeConfirm() {
+  const d=$("confirmModal");
+  if (d.open&&typeof d.close==="function") d.close(); else d.removeAttribute("open");
+  _confirmCb = null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════════════
+function exportJson(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+}
+
+function importJsonFromFile(file, onData) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = (e) => {
+    const data = safeJsonParse(e.target.result);
+    if (!data) { alert("Invalid JSON file."); return; }
+    onData(data);
+  };
+  r.readAsText(file);
+}
+
+function doExportAll() {
+  exportJson({ schemaVersion: SCHEMA_VERSION, exportedAt: nowIso(), ...state.saved }, "war_table_export.json");
+}
+
+function doImportAll(data) {
+  if (!data || typeof data !== "object") { showImportMsg("Invalid file format.", "bad"); return; }
+  if (Array.isArray(data.armies)) state.saved.armies = data.armies;
+  if (Array.isArray(data.battleHistory)) state.saved.battleHistory = data.battleHistory;
+  recomputeFactions(state.saved);
+  persist(state.saved);
+  renderArmyList(); renderFactionList(); renderHistoryList(); renderArmyLoaders(); renderFactionDatalist();
+  showImportMsg("State imported successfully.", "good");
+}
+
+function showImportMsg(msg, kind) {
+  const el=$("importMsg"); if(!el) return;
+  el.style.display="block"; el.className="alert"+(kind?" "+kind:""); el.textContent=msg;
+  setTimeout(()=>{ el.style.display="none"; }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB ROUTING
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tabId) {
+  document.querySelectorAll(".tabPage").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  const page = $(`tab-${tabId}`);
+  if (page) page.classList.add("active");
+  const btn = document.querySelector(`.tab[data-tab="${tabId}"]`);
+  if (btn) btn.classList.add("active");
+  // Refresh tab content
+  if (tabId==="armies")   { renderArmyList($("armySearch")?.value); }
+  if (tabId==="factions") { renderFactionList(); }
+  if (tabId==="history")  { renderHistoryList(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESET / PREFILL
+// ═══════════════════════════════════════════════════════════════
+function resetAll() {
+  for (const side of ["attacker","defender"]) {
+    state[side].size=null; state[side].str=null;
+    state[side].manualDiceDelta=0; state[side].diceOverride="auto"; state[side].autoCommit=true;
+    $(side+"Size").value=""; $(side+"Str").value="";
+    $(side+"DiceOverride").value="auto"; $(side+"AutoCommit").value="yes"; $(side+"Commit").value="";
+  }
+  state.settings.resolutionMode="risk"; state.settings.quickLossPreset="standard"; state.settings.allowOverCap=false;
+  state.conditions.defenderHasStructures=false;
+  $("resolutionMode").value="risk"; $("quickLossPreset").value="standard";
+  $("allowOverCap").value="no"; $("defenderStructures").value="no";
+  $("resultArea").style.display="none"; state.lastResult=null;
+  render();
+}
+
+function prefillExample() {
+  const attId = INDEX.byName.get("Cavalry")?.id;
+  const defId = INDEX.byName.get("Pikes")?.id;
+  if (attId) { $("attackerClass").value=attId; state.attacker.classId=attId; }
+  if (defId) { $("defenderClass").value=defId; state.defender.classId=defId; }
+  $("attackerSize").value=150; state.attacker.size=150;
+  $("attackerStr").value=120;  state.attacker.str=120;
+  $("defenderSize").value=100; state.defender.size=100;
+  $("defenderStr").value=80;   state.defender.str=80;
+  state.attacker.manualDiceDelta=0; state.defender.manualDiceDelta=0;
+  state.attacker.diceOverride="auto"; state.defender.diceOverride="auto";
+  $("resultArea").style.display="none"; state.lastResult=null;
+  render();
+}
+
+function swapSides() {
+  const a = JSON.parse(JSON.stringify(state.attacker));
+  const d = JSON.parse(JSON.stringify(state.defender));
+  state.attacker=d; state.defender=a;
+  const map = [["attackerClass","defenderClass"],["attackerSize","defenderSize"],
+    ["attackerStr","defenderStr"],["attackerDiceOverride","defenderDiceOverride"],
+    ["attackerAutoCommit","defenderAutoCommit"],["attackerCommit","defenderCommit"]];
+  for (const [aId,dId] of map) {
+    const tmp=$( aId).value; $(aId).value=$(dId).value; $(dId).value=tmp;
+  }
+  $("resultArea").style.display="none"; state.lastResult=null;
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BIND — wire up all events
+// ═══════════════════════════════════════════════════════════════
+function bind() {
+  // Class selects
+  groupOptions($("attackerClass")); groupOptions($("defenderClass"));
+  state.attacker.classId=$("attackerClass").value;
+  state.defender.classId=$("defenderClass").value;
+  $("attackerClass").addEventListener("change",()=>{ state.attacker.classId=$("attackerClass").value; render(); });
+  $("defenderClass").addEventListener("change",()=>{ state.defender.classId=$("defenderClass").value; render(); });
+
+  // Size / STR inputs
+  for (const side of ["attacker","defender"]) {
+    $(side+"Size").addEventListener("input",()=>{ state[side].size=toInt($(side+"Size").value); render(); });
+    $(side+"Str").addEventListener("input",()=>{  state[side].str=toInt($(side+"Str").value);  render(); });
+    $(side+"DiceOverride").addEventListener("change",()=>{ state[side].diceOverride=$(side+"DiceOverride").value; render(); });
+    $(side+"Plus").addEventListener("click",()=>{ state[side].manualDiceDelta=(state[side].manualDiceDelta||0)+1; render(); });
+    $(side+"Minus").addEventListener("click",()=>{ state[side].manualDiceDelta=(state[side].manualDiceDelta||0)-1; render(); });
+    $(side+"ManualReset").addEventListener("click",()=>{ state[side].manualDiceDelta=0; render(); });
+    $(side+"AutoCommit").addEventListener("change",()=>{ state[side].autoCommit=$(side+"AutoCommit").value==="yes"; render(); });
+    $(side+"Commit").addEventListener("input",()=>render());
+  }
+
+  // Settings
+  $("defenderStructures").addEventListener("change",()=>{ state.conditions.defenderHasStructures=$("defenderStructures").value==="yes"; render(); });
+  $("resolutionMode").addEventListener("change",()=>{ state.settings.resolutionMode=$("resolutionMode").value; render(); });
+  $("quickLossPreset").addEventListener("change",()=>{ state.settings.quickLossPreset=$("quickLossPreset").value; render(); });
+  $("allowOverCap").addEventListener("change",()=>{ state.settings.allowOverCap=$("allowOverCap").value==="yes"; render(); });
+
+  // Battle controls
+  $("resetBtn").addEventListener("click", resetAll);
+  $("prefillExample").addEventListener("click", prefillExample);
+  $("swapSides").addEventListener("click", swapSides);
+
+  // Load army from battle panel
+  $("attLoadBtn").addEventListener("click",()=>{
+    const id=$("attLoaderSelect").value;
+    if (id) loadArmyIntoSide("attacker", findArmyById(id));
+  });
+  $("defLoadBtn").addEventListener("click",()=>{
+    const id=$("defLoaderSelect").value;
+    if (id) loadArmyIntoSide("defender", findArmyById(id));
+  });
+
+  // Save army from battle panel
+  $("openSaveAttModal").addEventListener("click",()=>openSaveArmyModal("attacker"));
+  $("openSaveDefModal").addEventListener("click",()=>openSaveArmyModal("defender"));
+
+  // Army modal
+  $("armyModalClose").addEventListener("click", closeArmyModal);
+  $("armyModalCancel").addEventListener("click", closeArmyModal);
+  $("armyModalSave").addEventListener("click", commitArmyModal);
+  $("armyName").addEventListener("keydown",(e)=>{ if(e.key==="Enter") commitArmyModal(); });
+
+  // Battle button
+  $("battleBtn").addEventListener("click",()=>{
+    const att=state._computed.att, def=state._computed.def;
+    const issues=validateReady(att); if(issues.length){ render(); return; }
+    const attC=getCommitCount("attacker",att), defC=getCommitCount("defender",def);
+    if (state.settings.resolutionMode==="risk"&&attC<5) {
+      $("validationMsg").style.display="block";
+      $("validationMsg").innerHTML="Attacker must commit <b>≥5</b> dice to initiate an attack."; return;
     }
-
-    function getCommitCount(sideKey, computed) {
-      const self = state[sideKey];
-      if (self.autoCommit) return computed.diceSidesList.length;
-      const n = toInt($(sideKey + "Commit").value);
-      if (n === null) return computed.diceSidesList.length;
-      return clamp(n, 0, computed.diceSidesList.length);
-    }
-
-    function renderResult(result, attRoll, defRoll) {
-      $("resultArea").style.display = "block";
-      $("resultHeadline").textContent = (result.winner === "attacker") ? "Attacker wins" : "Defender holds";
-      $("resultSummary").innerHTML =
-        `${result.summary}<br/>
-         <b>Updated Size</b> — Attacker: <span class="mono">${result.newAtt}</span> (−${result.attLoss}), Defender: <span class="mono">${result.newDef}</span> (−${result.defLoss}).`;
-
-      $("attackerRolls").innerHTML = "";
-      $("defenderRolls").innerHTML = "";
-      for (const r of attRoll.rolls) {
-        const span = document.createElement("span");
-        span.className = "die att";
-        span.textContent = `${r.roll} (d${r.sides})`;
-        $("attackerRolls").appendChild(span);
-      }
-      for (const r of defRoll.rolls) {
-        const span = document.createElement("span");
-        span.className = "die def";
-        span.textContent = `${r.roll} (d${r.sides})`;
-        $("defenderRolls").appendChild(span);
-      }
-      $("attackerTotal").textContent = String(attRoll.total);
-      $("defenderTotal").textContent = String(defRoll.total);
-
-      if (result.mode === "risk" && result.comparisons) {
-        $("riskCompareWrap").style.display = "block";
-        const tb = $("riskCompareBody");
-        tb.innerHTML = "";
-        for (const row of result.comparisons) {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="mono">${row.i}</td>
-            <td class="mono">${row.a}</td>
-            <td class="mono">${row.d}</td>
-            <td>${row.loss}</td>
-          `;
-          tb.appendChild(tr);
-        }
-      } else {
-        $("riskCompareWrap").style.display = "none";
-      }
-    }
-
-    function render() {
-      $("rulesetVersion").textContent = RULES.rulesetVersion;
-      $("rulesFooter").textContent = RULES.rulesetVersion;
-
-      const att = computeDicePool("attacker", state);
-      const def = computeDicePool("defender", state);
-
-      $("attackerPoolBadge").textContent = att.diceSidesDisplay;
-      $("defenderPoolBadge").textContent = def.diceSidesDisplay;
-
-      $("attackerPoolFinal").textContent = att.diceSidesDisplay;
-      $("defenderPoolFinal").textContent = def.diceSidesDisplay;
-
-      $("attackerDiceType").textContent = `d${att.dieSidesPrimary}` + (state.attacker.diceOverride !== "auto" ? " (override)" : " (auto)");
-      $("defenderDiceType").textContent = `d${def.dieSidesPrimary}` + (state.defender.diceOverride !== "auto" ? " (override)" : " (auto)");
-
-      $("attackerManualDelta").textContent = String(state.attacker.manualDiceDelta || 0);
-      $("defenderManualDelta").textContent = String(state.defender.manualDiceDelta || 0);
-
-      $("attackerBreakdown").innerHTML = att.breakdownHtml;
-      $("defenderBreakdown").innerHTML = def.breakdownHtml;
-
-      $("attackerCommitSummary").textContent = state.attacker.autoCommit ? `auto: ${getCommitCount("attacker", att)}` : `manual: ${getCommitCount("attacker", att)}`;
-      $("defenderCommitSummary").textContent = state.defender.autoCommit ? `auto: ${getCommitCount("defender", def)}` : `manual: ${getCommitCount("defender", def)}`;
-
-      $("conditionsSummary").textContent = state.conditions.defenderHasStructures ? "structures: yes" : "structures: no";
-
-      const issues = validateReady(att);
-      const msg = $("validationMsg");
-      const btn = $("battleBtn");
-
-      if (issues.length) {
-        msg.style.display = "block";
-        msg.innerHTML = "<b>Not ready:</b><br/>" + issues.map(i => `• ${i}`).join("<br/>");
-        btn.disabled = true;
-      } else {
-        msg.style.display = "none";
-        btn.disabled = false;
-      }
-
-      state._computed = { att, def };
-    }
-
-    function resetAll() {
-      state.attacker.size = null;
-      state.attacker.str = null;
-      state.attacker.manualDiceDelta = 0;
-      state.attacker.diceOverride = "auto";
-      state.attacker.autoCommit = true;
-
-      state.defender.size = null;
-      state.defender.str = null;
-      state.defender.manualDiceDelta = 0;
-      state.defender.diceOverride = "auto";
-      state.defender.autoCommit = true;
-
-      state.settings.resolutionMode = "risk";
-      state.settings.quickLossPreset = "standard";
-      state.settings.allowOverCap = false;
-
-      state.conditions.defenderHasStructures = false;
-
-      $("attackerSize").value = "";
-      $("attackerStr").value = "";
-      $("defenderSize").value = "";
-      $("defenderStr").value = "";
-      $("attackerDiceOverride").value = "auto";
-      $("defenderDiceOverride").value = "auto";
-      $("attackerAutoCommit").value = "yes";
-      $("defenderAutoCommit").value = "yes";
-      $("attackerCommit").value = "";
-      $("defenderCommit").value = "";
-      $("resolutionMode").value = "risk";
-      $("quickLossPreset").value = "standard";
-      $("allowOverCap").value = "no";
-      $("defenderStructures").value = "no";
-
-      $("resultArea").style.display = "none";
-      state.lastResult = null;
-      render();
-    }
-
-    function prefillExample() {
-      $("attackerClass").value = INDEX.byName.get("Cavalry")?.id || $("attackerClass").value;
-      $("defenderClass").value = INDEX.byName.get("Pikes")?.id || $("defenderClass").value;
-
-      state.attacker.classId = $("attackerClass").value;
-      state.defender.classId = $("defenderClass").value;
-
-      // Phase 2 (Slice 2.2): initialize modal class options + faction suggestions
-      groupOptions($("armyClass"), $("attackerClass").value);
-      renderFactionDatalist();
-
-      // Phase 2 (Slice 2.2): Save Army modal wiring (temporary trigger)
-      $("openSaveArmyModal").addEventListener("click", () => openArmyModalPrefillFromAttacker());
-      $("armyModalClose").addEventListener("click", () => closeArmyModal());
-      $("armyModalCancel").addEventListener("click", () => closeArmyModal());
-      $("armyModalSave").addEventListener("click", () => commitArmyModal());
-
-
-      $("attackerSize").value = 150;
-      $("attackerStr").value = 120;
-      $("defenderSize").value = 100;
-      $("defenderStr").value = 80;
-
-      state.attacker.size = 150;
-      state.attacker.str = 120;
-      state.defender.size = 100;
-      state.defender.str = 80;
-
-      $("defenderStructures").value = "no";
-      state.conditions.defenderHasStructures = false;
-
-      state.attacker.manualDiceDelta = 0;
-      state.defender.manualDiceDelta = 0;
-      $("attackerDiceOverride").value = "auto";
-      $("defenderDiceOverride").value = "auto";
-      state.attacker.diceOverride = "auto";
-      state.defender.diceOverride = "auto";
-
-      $("resultArea").style.display = "none";
-      state.lastResult = null;
-
-      render();
-    }
-
-    function swapSides() {
-      const a = JSON.parse(JSON.stringify(state.attacker));
-      const d = JSON.parse(JSON.stringify(state.defender));
-      state.attacker = d;
-      state.defender = a;
-
-      const aClass = $("attackerClass").value;
-      $("attackerClass").value = $("defenderClass").value;
-      $("defenderClass").value = aClass;
-
-      const aSize = $("attackerSize").value;
-      $("attackerSize").value = $("defenderSize").value;
-      $("defenderSize").value = aSize;
-
-      const aStr = $("attackerStr").value;
-      $("attackerStr").value = $("defenderStr").value;
-      $("defenderStr").value = aStr;
-
-      const aDO = $("attackerDiceOverride").value;
-      $("attackerDiceOverride").value = $("defenderDiceOverride").value;
-      $("defenderDiceOverride").value = aDO;
-
-      const aAC = $("attackerAutoCommit").value;
-      $("attackerAutoCommit").value = $("defenderAutoCommit").value;
-      $("defenderAutoCommit").value = aAC;
-
-      const aC = $("attackerCommit").value;
-      $("attackerCommit").value = $("defenderCommit").value;
-      $("defenderCommit").value = aC;
-
-      $("resultArea").style.display = "none";
-      state.lastResult = null;
-
-      render();
-    }
-
-    function bind() {
-      groupOptions($("attackerClass"));
-      groupOptions($("defenderClass"));
-
-      state.attacker.classId = $("attackerClass").value;
-      state.defender.classId = $("defenderClass").value;
-
-      $("resolutionMode").value = state.settings.resolutionMode;
-      $("quickLossPreset").value = state.settings.quickLossPreset;
-      $("allowOverCap").value = state.settings.allowOverCap ? "yes" : "no";
-      $("defenderStructures").value = state.conditions.defenderHasStructures ? "yes" : "no";
-
-      $("attackerClass").addEventListener("change", () => { state.attacker.classId = $("attackerClass").value; render(); });
-      $("defenderClass").addEventListener("change", () => { state.defender.classId = $("defenderClass").value; render(); });
-
-      for (const side of ["attacker","defender"]) {
-        $(side + "Size").addEventListener("input", () => { state[side].size = toInt($(side + "Size").value); render(); });
-        $(side + "Str").addEventListener("input", () => { state[side].str = toInt($(side + "Str").value); render(); });
-
-        $(side + "DiceOverride").addEventListener("change", () => { state[side].diceOverride = $(side + "DiceOverride").value; render(); });
-
-        $(side + "Plus").addEventListener("click", () => { state[side].manualDiceDelta = (state[side].manualDiceDelta || 0) + 1; render(); });
-        $(side + "Minus").addEventListener("click", () => { state[side].manualDiceDelta = (state[side].manualDiceDelta || 0) - 1; render(); });
-        $(side + "ManualReset").addEventListener("click", () => { state[side].manualDiceDelta = 0; render(); });
-
-        $(side + "AutoCommit").addEventListener("change", () => { state[side].autoCommit = ($(side + "AutoCommit").value === "yes"); render(); });
-        $(side + "Commit").addEventListener("input", () => { render(); });
-      }
-
-      $("defenderStructures").addEventListener("change", () => { state.conditions.defenderHasStructures = ($("defenderStructures").value === "yes"); render(); });
-
-      $("resolutionMode").addEventListener("change", () => { state.settings.resolutionMode = $("resolutionMode").value; render(); });
-      $("quickLossPreset").addEventListener("change", () => { state.settings.quickLossPreset = $("quickLossPreset").value; render(); });
-      $("allowOverCap").addEventListener("change", () => { state.settings.allowOverCap = ($("allowOverCap").value === "yes"); render(); });
-
-      $("resetBtn").addEventListener("click", resetAll);
-      $("prefillExample").addEventListener("click", prefillExample);
-      $("swapSides").addEventListener("click", swapSides);
-
-      $("battleBtn").addEventListener("click", () => {
-        const att = state._computed.att;
-        const def = state._computed.def;
-
-        const issues = validateReady(att);
-        if (issues.length) { render(); return; }
-
-        const attCommit = getCommitCount("attacker", att);
-        const defCommit = getCommitCount("defender", def);
-
-        if (state.settings.resolutionMode === "risk" && attCommit < 5) {
-          $("validationMsg").style.display = "block";
-          $("validationMsg").innerHTML = "Attacker must commit <b>≥ 5</b> dice to initiate an attack (per rules).";
-          return;
-        }
-
-        const attRoll = rollPool(att.diceSidesList, attCommit);
-        const defRoll = rollPool(def.diceSidesList, defCommit);
-
-        let result;
-        if (state.settings.resolutionMode === "risk") {
-          if (def.diceSidesList.length <= 0 || defCommit <= 0) {
-            result = {
-              mode: "risk",
-              winner: "attacker",
-              attLoss: 0,
-              defLoss: 10,
-              newAtt: Math.max(0, att.size),
-              newDef: Math.max(0, def.size - 10),
-              summary: "Defender had 0 dice committed; they auto-lose and suffer −10 Army Size (standard loss).",
-              comparisons: []
-            };
-          } else {
-            result = resolveRisk(att, def, attRoll, defRoll);
-          }
-        } else {
-          result = resolveQuick(att, def, attRoll, defRoll);
-        }
-
-        $("attackerSize").value = result.newAtt;
-        $("defenderSize").value = result.newDef;
-        state.attacker.size = result.newAtt;
-        state.defender.size = result.newDef;
-
-        render();
-
-        state.lastResult = { result, attRoll, defRoll };
-        renderResult(result, attRoll, defRoll);
-      });
-
-      $("copyResult").addEventListener("click", async () => {
-        if (!state.lastResult) return;
-        const { result, attRoll, defRoll } = state.lastResult;
-
-        const aClass = INDEX.byId.get(state.attacker.classId)?.name || "Attacker";
-        const dClass = INDEX.byId.get(state.defender.classId)?.name || "Defender";
-
-        const text =
-`War Table — Battle Result (ruleset ${RULES.rulesetVersion})
-Attacker: ${aClass} | Size: ${state.attacker.size} | STR: ${state.attacker.str} | Pool: ${state._computed.att.diceSidesDisplay}
-Defender: ${dClass} | Size: ${state.defender.size} | STR: ${state.defender.str} | Pool: ${state._computed.def.diceSidesDisplay}
+    const attRoll=rollPool(att.diceSidesList,attC), defRoll=rollPool(def.diceSidesList,defC);
+    let result;
+    if (state.settings.resolutionMode==="risk") {
+      if (def.diceSidesList.length<=0||defC<=0) {
+        result={mode:"risk",winner:"attacker",attLoss:0,defLoss:10,
+          newAtt:Math.max(0,att.size),newDef:Math.max(0,def.size-10),
+          summary:"Defender had 0 dice; auto-loss, −10 Army Size.",comparisons:[]};
+      } else { result=resolveRisk(att,def,attRoll,defRoll); }
+    } else { result=resolveQuick(att,def,attRoll,defRoll); }
+    $("attackerSize").value=result.newAtt; $("defenderSize").value=result.newDef;
+    state.attacker.size=result.newAtt; state.defender.size=result.newDef;
+    render();
+    state.lastResult={result,attRoll,defRoll};
+    renderResult(result,attRoll,defRoll);
+  });
+
+  // Copy result
+  $("copyResult").addEventListener("click",async()=>{
+    if (!state.lastResult) return;
+    const {result,attRoll,defRoll}=state.lastResult;
+    const aClass=INDEX.byId.get(state.attacker.classId)?.name||"Attacker";
+    const dClass=INDEX.byId.get(state.defender.classId)?.name||"Defender";
+    const text=`War Table — Battle Result (ruleset ${RULES.rulesetVersion})
+Attacker: ${aClass} | Size: ${state.attacker.size} | STR: ${state.attacker.str} | Pool: ${state._computed.att?.diceSidesDisplay}
+Defender: ${dClass} | Size: ${state.defender.size} | STR: ${state.defender.str} | Pool: ${state._computed.def?.diceSidesDisplay}
 
 Mode: ${result.mode}
 Summary: ${result.summary}
@@ -2728,20 +2915,80 @@ New Size: Attacker ${result.newAtt}, Defender ${result.newDef}
 Attacker rolls: ${attRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | Total ${attRoll.total}
 Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | Total ${defRoll.total}
 `;
+    try { await navigator.clipboard.writeText(text); $("copyResult").textContent="Copied!"; setTimeout(()=>{ $("copyResult").textContent="Copy summary"; },1200); }
+    catch { alert("Clipboard failed. Select and copy manually."); }
+  });
 
-        try {
-          await navigator.clipboard.writeText(text);
-          $("copyResult").textContent = "Copied!";
-          setTimeout(()=>{ $("copyResult").textContent = "Copy summary"; }, 1000);
-        } catch (e) {
-          alert("Clipboard copy failed. You can manually select and copy from the Results panel.");
-        }
-      });
+  // Save to history
+  $("saveBattleToHistory").addEventListener("click",()=>{
+    if (!state.lastResult) return;
+    appendHistory(state.lastResult.result, state.lastResult.attRoll, state.lastResult.defRoll);
+    showToast("Battle saved to History.", "good");
+  });
 
-      render();
-    }
+  // Tab nav
+  document.querySelectorAll(".tab[data-tab]").forEach(btn=>{
+    btn.addEventListener("click",()=>switchTab(btn.dataset.tab));
+  });
 
-    document.addEventListener("DOMContentLoaded", bind);
-  </script>
+  // Armies tab
+  $("newArmyBtn").addEventListener("click",()=>openSaveArmyModal(null));
+  $("armySearch").addEventListener("input",()=>renderArmyList($("armySearch").value));
+  $("exportArmiesBtn").addEventListener("click",()=>exportJson({ armies:state.saved.armies, exportedAt:nowIso() },"war_table_armies.json"));
+  $("importArmiesBtn").addEventListener("click",()=>$("importFileInput").click());
+  $("importFileInput").addEventListener("change",(e)=>{
+    importJsonFromFile(e.target.files[0],(data)=>{
+      if (Array.isArray(data.armies)) {
+        for (const a of data.armies) { if (!findArmyById(a.id)) state.saved.armies.push(a); }
+        recomputeFactions(state.saved); persist(state.saved);
+        renderArmyList(); renderFactionList(); renderArmyLoaders();
+        showToast("Armies imported (no duplicates added).","good");
+      } else { alert("No armies array found in file."); }
+    });
+    e.target.value="";
+  });
+
+  // History tab
+  $("exportHistoryBtn").addEventListener("click",()=>exportJson({ battleHistory:state.saved.battleHistory, exportedAt:nowIso() },"war_table_history.json"));
+  $("clearHistoryBtn").addEventListener("click",()=>{
+    openConfirm("Clear Battle History","This will permanently delete all saved battle records.",()=>{
+      state.saved.battleHistory=[]; persist(state.saved); renderHistoryList();
+    });
+  });
+
+  // Settings tab
+  $("exportAllBtn").addEventListener("click", doExportAll);
+  $("importAllBtn").addEventListener("click",()=>$("importAllInput").click());
+  $("importAllInput").addEventListener("change",(e)=>{
+    importJsonFromFile(e.target.files[0], doImportAll);
+    e.target.value="";
+  });
+  $("nukeBtn").addEventListener("click",()=>{
+    openConfirm("Wipe All Data","This permanently erases ALL armies, factions, and battle history from this browser.",()=>{
+      state.saved=emptyState(); persist(state.saved);
+      renderArmyList(); renderFactionList(); renderHistoryList(); renderArmyLoaders(); renderFactionDatalist();
+      showToast("All local data wiped.","warn");
+    });
+  });
+
+  // Rename faction modal
+  $("renameFactionClose").addEventListener("click", closeRenameFaction);
+  $("renameFactionCancel").addEventListener("click", closeRenameFaction);
+  $("renameFactionSave").addEventListener("click", commitRenameFaction);
+  $("renameFactionInput").addEventListener("keydown",(e)=>{ if(e.key==="Enter") commitRenameFaction(); });
+
+  // Confirm modal
+  $("confirmClose").addEventListener("click", closeConfirm);
+  $("confirmCancel").addEventListener("click", closeConfirm);
+  $("confirmOk").addEventListener("click",()=>{ _confirmCb?.(); closeConfirm(); });
+
+  // Initial render
+  renderArmyLoaders();
+  renderFactionDatalist();
+  render();
+}
+
+document.addEventListener("DOMContentLoaded", bind);
+</script>
 </body>
 </html>
