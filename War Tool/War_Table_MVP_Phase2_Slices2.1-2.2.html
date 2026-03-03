@@ -1,0 +1,2747 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>War Table — Battle Sandbox (MVP)</title>
+  <style>
+    :root {
+      --bg0: #0b0b0c;
+      --bg1: #111114;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.08);
+      --stroke: rgba(255,255,255,0.12);
+      --stroke2: rgba(255,255,255,0.18);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.68);
+      --faint: rgba(255,255,255,0.50);
+      --good: #5dd39e;
+      --bad: #ff6b6b;
+      --warn: #ffd166;
+      --att: #ff3d71;
+      --def: #4dabf7;
+      --focus: rgba(255,255,255,0.25);
+      --shadow: 0 10px 40px rgba(0,0,0,0.45);
+      --radius: 16px;
+      --radius2: 24px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --ui: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--ui);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(255,61,113,0.08), transparent 60%),
+        radial-gradient(1200px 600px at 80% 0%, rgba(77,171,247,0.08), transparent 60%),
+        radial-gradient(900px 500px at 50% 120%, rgba(255,209,102,0.06), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%),
+        repeating-linear-gradient(0deg,
+          rgba(255,255,255,0.015) 0px,
+          rgba(255,255,255,0.015) 1px,
+          transparent 2px,
+          transparent 4px
+        );
+      mix-blend-mode: overlay;
+      opacity: 0.85;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 16px 30px;
+    }
+
+    header {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 12px 16px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 240px;
+    }
+    .brand h1 {
+      font-size: 18px;
+      margin: 0;
+      letter-spacing: 0.4px;
+    }
+    .brand .sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .brand .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--stroke);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .brand .pill code {
+      font-family: var(--mono);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--stroke);
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .tab {
+      appearance: none;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: default;
+      user-select: none;
+    }
+    .tab.active {
+      color: var(--text);
+      border-color: var(--stroke2);
+      background: rgba(255,255,255,0.07);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .tab[aria-disabled="true"] { opacity: 0.55; }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 980px) {
+      .grid { grid-template-columns: 1fr 320px 1fr; align-items: start; }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow: clip;
+    }
+    .card .cardHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
+    }
+    .sideTitle { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .sideTitle h2 { margin: 0; font-size: 15px; letter-spacing: 0.3px; }
+    .badge {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+    .badge.att {
+      border-color: rgba(255,61,113,0.35);
+      color: rgba(255,61,113,0.95);
+      background: rgba(255,61,113,0.07);
+    }
+    .badge.def {
+      border-color: rgba(77,171,247,0.35);
+      color: rgba(77,171,247,0.95);
+      background: rgba(77,171,247,0.07);
+    }
+
+    .content { padding: 14px; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row.single { grid-template-columns: 1fr; }
+
+    label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+
+    input, select, button, textarea { font-family: inherit; font-size: 14px; }
+
+    input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,0.28);
+      color: var(--text);
+      outline: none;
+    }
+    input[type="number"]:focus, select:focus, button:focus {
+      box-shadow: 0 0 0 3px var(--focus);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .help { margin-top: 6px; font-size: 12px; color: var(--faint); line-height: 1.35; }
+    .mono { font-family: var(--mono); color: var(--text); }
+
+    .kpi {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+    }
+    .kpiRow {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .kpiRow .label { font-size: 12px; color: var(--muted); }
+    .kpiRow .value { font-family: var(--mono); font-size: 14px; color: var(--text); }
+
+    .breakdown {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px dashed rgba(255,255,255,0.18);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .breakdown b { color: var(--text); font-weight: 650; }
+    .breakdown code {
+      font-family: var(--mono);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .controls { display: grid; gap: 10px; margin-top: 12px; }
+
+    .stepper {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+    }
+    .stepper .left { display: grid; gap: 2px; }
+    .stepper .left .t { font-size: 12px; color: var(--muted); }
+    .stepper .left .n { font-family: var(--mono); font-size: 14px; color: var(--text); }
+    .btnRow { display: flex; gap: 6px; align-items: center; }
+
+    .miniBtn {
+      appearance: none;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,0.20);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .miniBtn:active { transform: translateY(1px); }
+    .miniBtn.subtle { color: var(--muted); }
+
+    details {
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.03);
+      padding: 10px 10px;
+    }
+    summary {
+      cursor: pointer;
+      color: var(--text);
+      font-size: 13px;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    .summaryRight { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+    .center { position: sticky; top: 12px; }
+    @media (max-width: 979px) { .center { position: static; } }
+
+    .vs { display: grid; gap: 12px; padding: 14px; }
+    .vsTop { display: grid; gap: 10px; text-align: center; }
+    .vsTop .big { font-size: 20px; letter-spacing: 1px; color: var(--text); }
+    .vsTop .small { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+    .battleBtn {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.20);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 650;
+      letter-spacing: 0.3px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    }
+    .battleBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .battleBtn:active:not(:disabled) { transform: translateY(1px); }
+
+    .icon { width: 22px; height: 22px; display: inline-block; }
+
+    .alert {
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.25);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .alert.bad { border-color: rgba(255,107,107,0.35); background: rgba(255,107,107,0.08); }
+
+    .result { display: grid; gap: 10px; }
+    .result .title { font-size: 13px; color: var(--muted); }
+    .result .who { font-size: 15px; font-weight: 700; color: var(--text); }
+
+    .diceLine { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .die {
+      font-family: var(--mono);
+      padding: 6px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .die.att { border-color: rgba(255,61,113,0.35); }
+    .die.def { border-color: rgba(77,171,247,0.35); }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+      font-size: 12px;
+    }
+    .table th, .table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      text-align: left;
+      vertical-align: top;
+      color: var(--muted);
+    }
+    .table th {
+      color: rgba(255,255,255,0.75);
+      font-weight: 650;
+      background: rgba(255,255,255,0.04);
+    }
+    .table tr:last-child td { border-bottom: none; }
+
+    .footer {
+      margin-top: 16px;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer code { font-family: var(--mono); color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <h1>War Table</h1>
+        <div class="sub">Battle Sandbox (MVP) — fast setup, transparent math, roll results.</div>
+        <div class="pill">
+          Ruleset <code id="rulesetVersion"></code>
+          <span style="opacity:0.6;">•</span>
+          <span style="opacity:0.7;">Offline-ready</span>
+        </div>
+      </div>
+      <nav aria-label="Primary navigation (future)">
+        <div class="tab active" aria-current="page">Battle</div>
+        <div class="tab" aria-disabled="true" title="Coming soon">Armies</div>
+        <div class="tab" aria-disabled="true" title="Coming soon">Factions</div>
+        <div class="tab" aria-disabled="true" title="Coming soon">Doctrines</div>
+        <div class="tab" aria-disabled="true" title="Coming soon">Terrain & Weather</div>
+        <div class="tab" aria-disabled="true" title="Coming soon">Settings</div>
+        <div class="tab" aria-disabled="true" title="Coming soon">Help</div>
+      </nav>
+    </header>
+
+    <main class="grid" aria-label="Battle Sandbox">
+      <!-- Attacker -->
+      <section class="card" aria-label="Attacker panel">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Attacker</h2>
+            <span class="badge att">10 dice cap</span>
+          </div>
+          <span class="badge" id="attackerPoolBadge">—</span>
+        </div>
+        <div class="content">
+          <div class="row single">
+            <label>
+              Army Class
+              <select id="attackerClass" aria-describedby="attackerClassHelp"></select>
+              <div class="help" id="attackerClassHelp">Pick an army type. Matchup modifiers apply automatically (Immunity/Resistance/Vulnerability/Deadly).</div>
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Army Size
+              <input id="attackerSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 150" />
+              <div class="help">Every <span class="mono">50</span> Size (rounded down) = <span class="mono">+1 die</span>.</div>
+            </label>
+            <label>
+              STR
+              <input id="attackerStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 120" />
+              <div class="help">Every <span class="mono">10</span> STR (rounded down) = <span class="mono">+1 die</span>.</div>
+            </label>
+          </div>
+
+          <div class="kpi" aria-label="Attacker dice pool summary">
+            <div class="kpiRow">
+              <div class="label">Final dice pool</div>
+              <div class="value" id="attackerPoolFinal">—</div>
+            </div>
+            <div class="kpiRow">
+              <div class="label">Dice type</div>
+              <div class="value" id="attackerDiceType">—</div>
+            </div>
+          </div>
+
+          <div class="breakdown" id="attackerBreakdown">Enter values to see breakdown.</div>
+
+          <div class="controls" aria-label="Manual overrides">
+            <div class="stepper">
+              <div class="left">
+                <div class="t">Manual dice adjustment</div>
+                <div class="n"><span id="attackerManualDelta">0</span> dice</div>
+              </div>
+              <div class="btnRow">
+                <button class="miniBtn" id="attackerMinus" type="button" aria-label="Attacker: subtract 1 die">−</button>
+                <button class="miniBtn" id="attackerPlus" type="button" aria-label="Attacker: add 1 die">+</button>
+                <button class="miniBtn subtle" id="attackerManualReset" type="button">Reset</button>
+              </div>
+            </div>
+
+            <label>
+              Dice type override (optional)
+              <select id="attackerDiceOverride">
+                <option value="auto">Auto (by class)</option>
+                <option value="4">d4</option>
+                <option value="6">d6</option>
+                <option value="8">d8</option>
+                <option value="10">d10</option>
+                <option value="12">d12</option>
+              </select>
+              <div class="help">Auto picks a recommended dice type for some classes (e.g., Siege/Warforged/Builders). You can override any time.</div>
+            </label>
+
+            <details>
+              <summary>
+                Commit dice (optional, per rules)
+                <span class="summaryRight" id="attackerCommitSummary">—</span>
+              </summary>
+              <div class="row" style="margin-top:10px;">
+                <label>
+                  Dice to commit
+                  <input id="attackerCommit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto" />
+                  <div class="help">Rule: attacker must commit <span class="mono">≥ 5</span> dice to initiate an attack.</div>
+                </label>
+                <label>
+                  Auto-commit
+                  <select id="attackerAutoCommit">
+                    <option value="yes">Yes (use full pool)</option>
+                    <option value="no">No (use the number above)</option>
+                  </select>
+                  <div class="help">Most battles just roll the full pool.</div>
+                </label>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center -->
+      <section class="card center" aria-label="Battle controls and results">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Engagement</h2>
+            <span class="badge">Sandbox</span>
+          </div>
+          <button class="miniBtn subtle" id="swapSides" type="button" title="Swap attacker/defender">Swap</button>
+        </div>
+
+        <div class="vs">
+          <div class="vsTop">
+            <div class="big">VS</div>
+            <div class="small">Set both armies, review the math, then smash <span class="mono">Battle</span>. Defaults follow the rules: defenders win ties.</div>
+          </div>
+
+          <details>
+            <summary>
+              Conditions (future-proof)
+              <span class="summaryRight" id="conditionsSummary">—</span>
+            </summary>
+
+            <div class="row single" style="margin-top:10px;">
+              <label>
+                Defender has structures (walls/towers)?
+                <select id="defenderStructures">
+                  <option value="no">No (open field)</option>
+                  <option value="yes">Yes (structures/defense score)</option>
+                </select>
+                <div class="help"><b>MVP support:</b> If the attacker is <span class="mono">Siege</span>, this switches their dice to <span class="mono">d8</span> (no structures) or <span class="mono">d10</span> (structures).</div>
+              </label>
+            </div>
+
+            <div class="row single" style="margin-top:10px;">
+              <label>
+                Resolution mode
+                <select id="resolutionMode">
+                  <option value="risk">Risk-style (rules accurate)</option>
+                  <option value="quick">Quick total (simple)</option>
+                </select>
+                <div class="help">Risk-style compares highest dice vs highest dice and applies size losses per comparison.</div>
+              </label>
+            </div>
+
+            <div class="row single" style="margin-top:10px;">
+              <label>
+                Quick mode losses (only used in Quick total)
+                <select id="quickLossPreset">
+                  <option value="standard">Standard: loser −10, tie −5 each</option>
+                  <option value="flat10">Flat: loser −10, tie 0</option>
+                  <option value="flat20">Heavy: loser −20, tie −10 each</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="row single" style="margin-top:10px;">
+              <label>
+                Caps & overrides
+                <select id="allowOverCap">
+                  <option value="no">Enforce caps (recommended)</option>
+                  <option value="yes">Allow manual overrides beyond caps</option>
+                </select>
+                <div class="help">Rules cap dice rolled: attacker 10, defender 8. This toggle is here for GM edge-cases.</div>
+              </label>
+            </div>
+          </details>
+
+          <div class="alert bad" id="validationMsg" style="display:none;"></div>
+
+          <button class="battleBtn" id="battleBtn" type="button">
+            <span class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 20l5-5m0 0L6 6l2-2 9 9-2 2-1.2-1.2M8 15l1.2 1.2M21 20l-5-5m0 0 2-9-2-2-9 9 2 2 1.2-1.2M16 15l-1.2 1.2" stroke="rgba(255,255,255,0.92)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Battle
+          </button>
+
+          <div class="row">
+            <button class="miniBtn" id="prefillExample" type="button" title="Loads the worked example from the rules (Cavalry vs Pikes)">Load Example</button>
+            <button class="miniBtn" id="resetBtn" type="button" title="Clears everything (kill switch)">Reset</button>
+          </div>
+          <div class="row single" style="margin-top:8px;">
+            <button class="miniBtn" id="openSaveArmyModal" type="button" title="Save an army (temporary button for Phase 2)">Save Army</button>
+          </div>
+          <div class="alert" id="saveArmyToast" style="display:none; margin-top:10px;"></div>
+
+          <div class="result" aria-label="Battle result" id="resultArea" style="display:none;">
+            <div class="title">Result</div>
+            <div class="who" id="resultHeadline">—</div>
+
+            <div class="alert" id="resultSummary"></div>
+
+            <div>
+              <div class="title" style="margin-top:8px;">Rolls</div>
+              <div class="alert" style="margin-top:6px;">
+                <div style="display:grid; gap:10px;">
+                  <div>
+                    <div class="title">Attacker</div>
+                    <div class="diceLine" id="attackerRolls"></div>
+                    <div class="help">Total: <span class="mono" id="attackerTotal">—</span></div>
+                  </div>
+                  <div>
+                    <div class="title">Defender</div>
+                    <div class="diceLine" id="defenderRolls"></div>
+                    <div class="help">Total: <span class="mono" id="defenderTotal">—</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="riskCompareWrap" style="display:none;">
+              <div class="title" style="margin-top:10px;">Risk-style comparisons</div>
+              <table class="table" aria-label="Per-die comparisons">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Attacker die</th>
+                    <th>Defender die</th>
+                    <th>Loss</th>
+                  </tr>
+                </thead>
+                <tbody id="riskCompareBody"></tbody>
+              </table>
+            </div>
+
+            <div class="row single" style="margin-top:10px;">
+              <button class="miniBtn" id="copyResult" type="button">Copy summary</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Defender -->
+      <section class="card" aria-label="Defender panel">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Defender</h2>
+            <span class="badge def">8 dice cap</span>
+          </div>
+          <span class="badge" id="defenderPoolBadge">—</span>
+        </div>
+        <div class="content">
+          <div class="row single">
+            <label>
+              Army Class
+              <select id="defenderClass" aria-describedby="defenderClassHelp"></select>
+              <div class="help" id="defenderClassHelp">Pick an army type. Matchup modifiers apply automatically (Immunity/Resistance/Vulnerability/Deadly).</div>
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Army Size
+              <input id="defenderSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 100" />
+              <div class="help">Every <span class="mono">50</span> Size (rounded down) = <span class="mono">+1 die</span>.</div>
+            </label>
+            <label>
+              STR
+              <input id="defenderStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g., 80" />
+              <div class="help">Every <span class="mono">10</span> STR (rounded down) = <span class="mono">+1 die</span>.</div>
+            </label>
+          </div>
+
+          <div class="kpi" aria-label="Defender dice pool summary">
+            <div class="kpiRow">
+              <div class="label">Final dice pool</div>
+              <div class="value" id="defenderPoolFinal">—</div>
+            </div>
+            <div class="kpiRow">
+              <div class="label">Dice type</div>
+              <div class="value" id="defenderDiceType">—</div>
+            </div>
+          </div>
+
+          <div class="breakdown" id="defenderBreakdown">Enter values to see breakdown.</div>
+
+          <div class="controls" aria-label="Manual overrides">
+            <div class="stepper">
+              <div class="left">
+                <div class="t">Manual dice adjustment</div>
+                <div class="n"><span id="defenderManualDelta">0</span> dice</div>
+              </div>
+              <div class="btnRow">
+                <button class="miniBtn" id="defenderMinus" type="button" aria-label="Defender: subtract 1 die">−</button>
+                <button class="miniBtn" id="defenderPlus" type="button" aria-label="Defender: add 1 die">+</button>
+                <button class="miniBtn subtle" id="defenderManualReset" type="button">Reset</button>
+              </div>
+            </div>
+
+            <label>
+              Dice type override (optional)
+              <select id="defenderDiceOverride">
+                <option value="auto">Auto (by class)</option>
+                <option value="4">d4</option>
+                <option value="6">d6</option>
+                <option value="8">d8</option>
+                <option value="10">d10</option>
+                <option value="12">d12</option>
+              </select>
+              <div class="help">Auto picks a recommended dice type for some classes (e.g., Siege/Warforged/Builders). You can override any time.</div>
+            </label>
+
+            <details>
+              <summary>
+                Commit dice (optional, per rules)
+                <span class="summaryRight" id="defenderCommitSummary">—</span>
+              </summary>
+              <div class="row" style="margin-top:10px;">
+                <label>
+                  Dice to commit
+                  <input id="defenderCommit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto" />
+                  <div class="help">Rule: defender has no minimum. If defender pool is <span class="mono">≤ 0</span>, they auto-lose and suffer the standard loss.</div>
+                </label>
+                <label>
+                  Auto-commit
+                  <select id="defenderAutoCommit">
+                    <option value="yes">Yes (use full pool)</option>
+                    <option value="no">No (use the number above)</option>
+                  </select>
+                  <div class="help">Most battles just roll the full pool.</div>
+                </label>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" aria-label="Footer">
+      <div>Ruleset: <code id="rulesFooter"></code> • Dice caps: Att 10 / Def 8 • Matchup shorthand: +3/+1/−1/−3</div>
+      <div>Local MVP build • No accounts • No tracking</div>
+    </footer>
+  </div>
+
+  <!-- Phase 2 (Slice 2.2): Save / Edit Army Modal -->
+  <dialog id="armyModal" style="max-width:720px; width: calc(100% - 28px); border:1px solid var(--stroke); border-radius: 18px; background: rgba(10,10,12,0.92); color: var(--text); box-shadow: var(--shadow);">
+    <form method="dialog" id="armyModalForm" style="margin:0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 14px 10px; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="display:grid; gap:2px;">
+          <div style="font-weight:700;">Save Army</div>
+          <div class="help" id="armyModalSub" style="margin:0;">Create a new army or update an existing one.</div>
+        </div>
+        <button class="miniBtn subtle" id="armyModalClose" type="button">Close</button>
+      </div>
+
+      <div style="padding:14px; display:grid; gap:10px;">
+        <input type="hidden" id="armyModalArmyId" value="" />
+
+        <div class="row">
+          <label>
+            Army name <span class="mono">(required)</span>
+            <input id="armyName" type="text" placeholder="e.g., 3rd Dawn Phalanx" style="padding:10px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(0,0,0,0.28); color: var(--text);" />
+            <div class="help">Names are unique (case-insensitive). Using an existing name updates it.</div>
+          </label>
+          <label>
+            Faction
+            <input id="armyFaction" type="text" list="factionDatalist" placeholder="e.g., Heartland Coalition" style="padding:10px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(0,0,0,0.28); color: var(--text);" />
+            <datalist id="factionDatalist"></datalist>
+            <div class="help">Type a faction or pick a previous one. New factions are remembered.</div>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            Army class
+            <select id="armyClass"></select>
+          </label>
+          <label>
+            Notes (optional)
+            <input id="armyNotes" type="text" placeholder="Anything you need to remember…" style="padding:10px 10px; border-radius:12px; border:1px solid var(--stroke); background: rgba(0,0,0,0.28); color: var(--text);" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            Size
+            <input id="armySize" type="number" min="0" step="1" inputmode="numeric" />
+          </label>
+          <label>
+            STR
+            <input id="armyStr" type="number" min="0" step="1" inputmode="numeric" />
+          </label>
+        </div>
+
+        <div class="alert bad" id="armyModalError" style="display:none;"></div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:4px;">
+          <button class="miniBtn subtle" id="armyModalCancel" type="button">Cancel</button>
+          <button class="miniBtn" id="armyModalSave" type="button">Save</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+
+  <script>
+    // Embedded rules data (Phase 2+: move to rules.json)
+    const RULES = 
+{
+  "productName": "War Table",
+  "rulesetVersion": "2026-02-24",
+  "diceCaps": {
+    "attacker": 10,
+    "defender": 8
+  },
+  "sizePerDie": 50,
+  "strPerDie": 10,
+  "modifierShorthand": {
+    "immunity": 3,
+    "resistance": 1,
+    "vulnerability": -1,
+    "deadly": -3
+  },
+  "armyClasses": [
+    {
+      "id": "archers",
+      "name": "Archers",
+      "category": "Standard",
+      "desc": "A unique class of unit designed to combat at a distance.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Pikes"
+        ],
+        "vulnerabilities": [
+          "Swords",
+          "Cavalry",
+          "Shield-Brethren"
+        ],
+        "deadly": [
+          "Undead",
+          "Gunners"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Pikes",
+        "vulnerabilities": "Swords, Cavalry, Shield-Brethren",
+        "deadly": "Undead, Gunners",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Cloudy, Heavy Clouds/Fog",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "assassins",
+      "name": "Assassins",
+      "category": "Standard",
+      "desc": "Special class of unit designed to weaken or take out the enemy before they even know it.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Assassins"
+        ],
+        "vulnerabilities": [
+          "Spies"
+        ],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Assassins",
+        "vulnerabilities": "Spies",
+        "deadly": "",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "Clear Skies at Daylight",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "bandits",
+      "name": "Bandits",
+      "category": "Standard",
+      "desc": "Bandits cover the landscape of Heartland. And become aggressive in the time of war especially to small size or low STR armies.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [],
+        "vulnerabilities": [
+          "Spies"
+        ],
+        "deadly": [
+          "Undead"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "",
+        "vulnerabilities": "Spies",
+        "deadly": "Undead",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Thunderstorm",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "builders",
+      "name": "Builders",
+      "category": "Standard",
+      "desc": "A support class of units designed to construct siege engines, fortifications, roads, bridges, field barracks, and rapid supply infrastructure—weak in battle, terrifying in what they enable.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Siege",
+          "Pikes"
+        ],
+        "vulnerabilities": [
+          "Bandits",
+          "Thieves",
+          "Spies"
+        ],
+        "deadly": [
+          "Swords",
+          "Cavalry",
+          "Assassins"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Siege, Pikes",
+        "vulnerabilities": "Bandits, Thieves, Spies",
+        "deadly": "Swords, Cavalry, Assassins, (All Special Army classes are deadly to Builders unless they are specifically listed as vulnerable to Builders, or if Builders are specifically stated to be deadly to that class.)",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Thunderstorm, Heavy Rain",
+        "preferredTerrain": "Roads, Plains/Fields",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "cavalry",
+      "name": "Cavalry",
+      "category": "Standard",
+      "desc": "Unique class of unit designed to move faster and combat swords/archers.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Swords",
+          "Archers"
+        ],
+        "vulnerabilities": [
+          "Pikes",
+          "Undead"
+        ],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Swords, Archers",
+        "vulnerabilities": "Pikes, Undead",
+        "deadly": "",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Heavy Rain, Snow",
+        "preferredTerrain": "Roads, Plains/Fields, and Forest",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "gunners",
+      "name": "Gunners",
+      "category": "Standard",
+      "desc": "A crew of unit soldiers that carry muskets or another type of gun.",
+      "matchups": {
+        "immunities": [
+          "Swords"
+        ],
+        "resistances": [],
+        "vulnerabilities": [
+          "Cavalry",
+          "Undead"
+        ],
+        "deadly": [
+          "Vampires"
+        ]
+      },
+      "raw": {
+        "immunities": "Swords",
+        "resistances": "",
+        "vulnerabilities": "Cavalry, Undead",
+        "deadly": "Vampires",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Thunderstorm",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "mages",
+      "name": "Mages",
+      "category": "Standard",
+      "desc": "A rare class of unit designed to weaponize spellcraft, wards, and arcane logistics, devastating in the right conditions, fragile when caught unprepared.",
+      "matchups": {
+        "immunities": [
+          "Rebels"
+        ],
+        "resistances": [
+          "Archers"
+        ],
+        "vulnerabilities": [
+          "Assassins",
+          "Spies"
+        ],
+        "deadly": [
+          "Cavalry",
+          "Swords"
+        ]
+      },
+      "raw": {
+        "immunities": "Rebels",
+        "resistances": "Arches",
+        "vulnerabilities": "Assassins, Spies",
+        "deadly": "Cavalry, Swords",
+        "deadlyDoctrines": "Anti-Magic",
+        "preferredWeather": "Clear Skies at Nighttime (stars) or Clear Skies at Daylight",
+        "undesiredWeather": "Heavy Rain, Heavy Clouds/Fog",
+        "preferredTerrain": "High ground, Ruins, Leyline sites (if applicable)",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "pikes",
+      "name": "Pikes",
+      "category": "Standard",
+      "desc": "Unique class of unit designed to combat cavalry and keep opposing armies at a distance.",
+      "matchups": {
+        "immunities": [
+          "Cavalry"
+        ],
+        "resistances": [],
+        "vulnerabilities": [
+          "Archers",
+          "Undead"
+        ],
+        "deadly": [
+          "Vampires"
+        ]
+      },
+      "raw": {
+        "immunities": "Cavalry",
+        "resistances": "",
+        "vulnerabilities": "Archers, Undead",
+        "deadly": "Vampires",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Thunderstorm",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "rebels",
+      "name": "Rebels",
+      "category": "Standard",
+      "desc": "Farmers and able bodied civilians that join a fight to help the cause.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [],
+        "vulnerabilities": [
+          "__ALL__",
+          "__ALL__"
+        ],
+        "deadly": [
+          "Undead"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "(Home Bonus)",
+        "vulnerabilities": "All",
+        "deadly": "Undead",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Thunderstorm",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "siege",
+      "name": "Siege",
+      "category": "Standard",
+      "desc": "Special class of unit designed to take down walls and buildings.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [],
+        "vulnerabilities": [
+          "Cavalry",
+          "Pikes"
+        ],
+        "deadly": [
+          "Swords",
+          "Assassins"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "",
+        "vulnerabilities": "Cavalry, Pikes",
+        "deadly": "Swords, Assassins",
+        "deadlyDoctrines": "Fire-Artillery",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Heavy Rain, Snow",
+        "preferredTerrain": "Roads, Plains/Fields, and Forest",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "spies",
+      "name": "Spies",
+      "category": "Standard",
+      "desc": "A special class of units designed to gather intel.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Assassins"
+        ],
+        "vulnerabilities": [
+          "Spies"
+        ],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Assassins",
+        "vulnerabilities": "Spies",
+        "deadly": "",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "Clear Skies at Daylight",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "swords",
+      "name": "Swords",
+      "category": "Standard",
+      "desc": "Basic soldier units have nothing special about them.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Archers"
+        ],
+        "vulnerabilities": [
+          "Cavalry"
+        ],
+        "deadly": [
+          "Undead",
+          "Gunners"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Archers",
+        "vulnerabilities": "Cavalry",
+        "deadly": "Undead, Gunners",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Thunderstorm",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "thieves",
+      "name": "Thieves",
+      "category": "Standard",
+      "desc": "Thieves cover the landscape of Heartland.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [],
+        "vulnerabilities": [
+          "Spies"
+        ],
+        "deadly": [
+          "Undead"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "",
+        "vulnerabilities": "Spies",
+        "deadly": "Undead",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "Clear Skies at Daylight",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "hunters",
+      "name": "Hunters",
+      "category": "Standard",
+      "desc": "Hunters are a collection of members of the Hunter's Guild that may be willing to fight in the upcoming war.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Vampires"
+        ],
+        "vulnerabilities": [
+          "Swords"
+        ],
+        "deadly": [
+          "Gunners"
+        ]
+      },
+      "raw": {
+        "immunities": "Beasts",
+        "resistances": "LizardFolk, Vampires, Supernatural (Monsters)",
+        "vulnerabilities": "Swords",
+        "deadly": "Gunners",
+        "deadlyDoctrines": "Fire-Artillery, Anti-Magic, Heavy-Artillery",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "fiends",
+      "name": "Fiends",
+      "category": "Special",
+      "desc": "Fiends are mix demons and devils in the Heartland region that work for Lich King and Medusa/Seth with to reduce Chuu's strength and help the Lich King. Demons when killed in battle can possess a new host.",
+      "matchups": {
+        "immunities": [
+          "Fire Cult"
+        ],
+        "resistances": [],
+        "vulnerabilities": [
+          "Grail",
+          "Drow (Underdark)"
+        ],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "Fire Cult",
+        "resistances": "Fire",
+        "vulnerabilities": "Grail, Drow",
+        "deadly": "The Divine (i.e. Goddess Chuu)",
+        "deadlyDoctrines": "Anti-Magic",
+        "preferredWeather": "Sunny Day, Scorching Heat",
+        "undesiredWeather": "",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "undead",
+      "name": "Undead",
+      "category": "Special",
+      "desc": "Undead includes zombies, skeletons, and vampires. Other undead types could theoretically belong to another army classification in addition to being Undead. For example, a Lord's personal guard might be classified as both Swords and Undead. Therefore, anywhere the Undead classification is mentioned (Immunities, Resistances, Vulnerabilities, Deadly, Special effects), it applies to any army that falls under this broad supernatural umbrella. Undead classification takes priority over other non-special classification types. This does not apply when the other types shared with undead are also a special type like Vampires.",
+      "matchups": {
+        "immunities": [
+          "Swords",
+          "Rebels",
+          "Bandits"
+        ],
+        "resistances": [
+          "Archers",
+          "Pikes"
+        ],
+        "vulnerabilities": [
+          "Forest Fey",
+          "Drow (Underdark)"
+        ],
+        "deadly": [
+          "Grail"
+        ]
+      },
+      "raw": {
+        "immunities": "Swords, Rebels, Bandits",
+        "resistances": "Archers, Pikes",
+        "vulnerabilities": "Fey, Drow",
+        "deadly": "Grail",
+        "deadlyDoctrines": "Anti-Magic, Heavy-Artillery",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "aerial-cavalry",
+      "name": "Aerial Cavalry",
+      "category": "Special",
+      "desc": "For the PC this is an elite formation of Galadryn star-elves mounted on aerial beasts and enchanted sky-steeds, striking from above with impossible speed and surgical timing. But Aerial Cavalry classification can be given to any army that is in the air.",
+      "matchups": {
+        "immunities": [
+          "Swords",
+          "Rebels",
+          "Bandits"
+        ],
+        "resistances": [
+          "Cavalry",
+          "Pikes"
+        ],
+        "vulnerabilities": [
+          "Siege"
+        ],
+        "deadly": [
+          "Archers",
+          "Mages"
+        ]
+      },
+      "raw": {
+        "immunities": "Swords, Rebels, Bandits",
+        "resistances": "Cavalry, Pikes (only if anti-air doctrine is NOT prepared)",
+        "vulnerabilities": "Siege (only if anti-air doctrine is NOT prepared)",
+        "deadly": "Archers, Mages (Archers and Mages will be double Deadly if they have Anti-Air doctrine)",
+        "deadlyDoctrines": "Anti-Magic, Anti-Air",
+        "preferredWeather": "Clear Skies at Daylight, Cold Clear Nights",
+        "undesiredWeather": "Heavy Rain, Snowstorm, Gale Winds",
+        "preferredTerrain": "Open sky above Plains/Fields, Cliffs/Highlands (anywhere they can maintain altitude)",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "vampires",
+      "name": "Vampires",
+      "category": "Special",
+      "desc": "Elite vampires of Umahim's inner circle—ancient-blooded, court-trained, and magically disciplined. All vampires are also considered the army type of undead. These are not \"basic vampires\" (those roll up under only Undead type). This classification represents the higher-tier vampire cadres that function as a coherent war asset: night-raiders, enthrallers, and blood-fed shock troops. Vampires also have the classification of Undead when considering Immunities, Resistances, Vulnerabilities, Deadly that other armies have when Vampires are not explicitly listed separately.",
+      "matchups": {
+        "immunities": [
+          "Swords",
+          "Rebels",
+          "Bandits"
+        ],
+        "resistances": [
+          "Archers",
+          "Pikes",
+          "Cavalry"
+        ],
+        "vulnerabilities": [
+          "Mages",
+          "Hunters",
+          "Fiends"
+        ],
+        "deadly": [
+          "Grail",
+          "Fire Cult",
+          "Artemis"
+        ]
+      },
+      "raw": {
+        "immunities": "Swords, Rebels, Bandits",
+        "resistances": "Archers, Pikes, Cavalry, Darkness (Nighttime)",
+        "vulnerabilities": "Mages, Hunters, Fiends",
+        "deadly": "Grail, Fire Cult, Artemis, Sun (Daytime)",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "Sunny Day, Scorching Heat (especially at Daylight)",
+        "preferredTerrain": "Cities, Fortresses, Forest edges (ambush terrain), River roads (where refugees/supplies move)",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "shield-brethren",
+      "name": "Shield-Brethren",
+      "category": "Special",
+      "desc": "The biggest example of Shield-Brethren army type is the legendary defensive dwarves and hadozee engineers who lock into an unbreakable 360-degree shield phalanx—an advancing fortress of interlocking tower shields, rune-bound plating, and rotating guard discipline.",
+      "matchups": {
+        "immunities": [
+          "Archers"
+        ],
+        "resistances": [
+          "Swords",
+          "Rebels",
+          "Bandits",
+          "Cavalry"
+        ],
+        "vulnerabilities": [
+          "Mages",
+          "Aerial Cavalry"
+        ],
+        "deadly": [
+          "Pikes",
+          "Undead"
+        ]
+      },
+      "raw": {
+        "immunities": "Archers",
+        "resistances": "Swords, Rebels, Bandits, Cavalry",
+        "vulnerabilities": "Mages, Aerial Cavalry",
+        "deadly": "Pikes, Undead,",
+        "deadlyDoctrines": "Heavy-Artillery, Armor-Piercing",
+        "preferredWeather": "",
+        "undesiredWeather": "Swamp, Quicksand, Deep Mud",
+        "preferredTerrain": "Mountain Passes, Gates, Bridge Crossings, Urban Streets",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "warforged",
+      "name": "Warforged (Artificial Constructs)",
+      "category": "Special",
+      "desc": "Artificial war machines: golems, steam-titans, arcane automata, clockwork infantry, cybernetic legions—any army that is fundamentally mechanical or constructed rather than biological.",
+      "matchups": {
+        "immunities": [
+          "Rebels",
+          "Bandits",
+          "Vampires",
+          "Fire Cult"
+        ],
+        "resistances": [
+          "Swords",
+          "Archers"
+        ],
+        "vulnerabilities": [
+          "Mages",
+          "Siege",
+          "Gunners",
+          "Builders",
+          "Cavalry"
+        ],
+        "deadly": [
+          "Undead"
+        ]
+      },
+      "raw": {
+        "immunities": "Rebels, Bandits, Vampires, Fire Cult, (Any Fire)",
+        "resistances": "Swords, Archers",
+        "vulnerabilities": "Mages, Siege, Gunners, Builders, Cavalry",
+        "deadly": "Undead",
+        "deadlyDoctrines": "Heavy-Artillery, Anti-Magic",
+        "preferredWeather": "Clear, Dry Conditions",
+        "undesiredWeather": "Magnetic Storms, EMP-like arcane interference",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "mutants",
+      "name": "Mutants",
+      "category": "Special",
+      "desc": "Unstable bio-enhanced creatures altered by arcane stones, emotional catalysts, elemental infusion, corruption, radiation, or unknown experimentation. No two mutant hosts are fully identical.",
+      "matchups": {
+        "immunities": [
+          "Rebels"
+        ],
+        "resistances": [
+          "Bandits"
+        ],
+        "vulnerabilities": [
+          "Mages",
+          "Grail",
+          "Siege",
+          "Forest Fey",
+          "Artemis"
+        ],
+        "deadly": [
+          "Swords",
+          "Cavalry",
+          "Gunners",
+          "Archers",
+          "Warforged (Artificial Constructs)",
+          "Drow (Underdark)",
+          "Hunters"
+        ]
+      },
+      "raw": {
+        "immunities": "Rebels",
+        "resistances": "Bandits",
+        "vulnerabilities": "Mages, Grail, Siege, Fey, Artemis",
+        "deadly": "Swords, Cavalry, Gunners, Archers, Warforged, Drow, Hunters",
+        "deadlyDoctrines": "Anti-Magic, Heavy-Artillery,",
+        "preferredWeather": "Storms, Elemental Disturbance",
+        "undesiredWeather": "Extreme Cold",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "snow-elves",
+      "name": "Snow Elves",
+      "category": "Faction",
+      "desc": "Snow Elves may be the masterminds behind most of the evils in heartland. They claim heartland was once theirs and have been fighting over Fairgard for generation upon generation although the last several centuries there has been peace. We now know there is some truth to this most action seen as “evil” by the snow elves were in fact plots/manipulation by the winter fey.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Forest Fey",
+          "Drow (Underdark)",
+          "Treants"
+        ],
+        "vulnerabilities": [],
+        "deadly": [
+          "Fire Cult"
+        ]
+      },
+      "raw": {
+        "immunities": "",
+        "resistances": "Fey, Drow, Treeants",
+        "vulnerabilities": "",
+        "deadly": "Fire Cult",
+        "deadlyDoctrines": "Fire-Artillery",
+        "preferredWeather": "Cold, Snow",
+        "undesiredWeather": "Sunny Day, Scorching Heat",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "fire-cult",
+      "name": "Fire Cult",
+      "category": "Faction",
+      "desc": "Fire Cult is a third party whose reason for being in Heartland is unknown. They are no longer in the heartland after being wiped out. The only location they are known to be held up in is Crystalin.",
+      "matchups": {
+        "immunities": [
+          "Treants",
+          "Fiends"
+        ],
+        "resistances": [
+          "Snow Elves"
+        ],
+        "vulnerabilities": [],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "Treeants, Fiends",
+        "resistances": "Snow Elves",
+        "vulnerabilities": "",
+        "deadly": "(Any Ice/Extreme Cold Weather)",
+        "deadlyDoctrines": "Anti-Magic, Heavy-Artillery",
+        "preferredWeather": "Sunny Day, Scorching Heat",
+        "undesiredWeather": "Cold, Snow",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "grail",
+      "name": "Grail",
+      "category": "Faction",
+      "desc": "Grail is a religious capitalist corporation that claims to work for a one true god.",
+      "matchups": {
+        "immunities": [
+          "Undead"
+        ],
+        "resistances": [
+          "Fiends",
+          "Vampires"
+        ],
+        "vulnerabilities": [
+          "Drow (Underdark)",
+          "Artemis"
+        ],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "Undead",
+        "resistances": "Fiends, Vampires",
+        "vulnerabilities": "Drow, Artemis",
+        "deadly": "Cult of War (Cult of Kratos)",
+        "deadlyDoctrines": "Anti-Magic",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "arrio-sisters",
+      "name": "Arrio Sisters",
+      "category": "Faction",
+      "desc": "Arrio Sisters are three highly skilled Bounty Hunters that are sisters. They used to work for the Monarchy in exchange for a very rare drug they are addicted to down to their DNA. Recently they have changed their ways.",
+      "matchups": {
+        "immunities": [
+          "Assassins",
+          "Spies"
+        ],
+        "resistances": [],
+        "vulnerabilities": [],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "Assassins, Spys",
+        "resistances": "Monarchy",
+        "vulnerabilities": "Invaders",
+        "deadly": "Roshna (Drug Addiction)",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Cloudy or Foggy at Daytime",
+        "undesiredWeather": "",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "drow",
+      "name": "Drow (Underdark)",
+      "category": "Faction",
+      "desc": "Drow refers to the people of the Upper/Middledark city of ChauSin. A united group of Drow, Gray Dwarfs, Myconid, and other humanoid/sentient creatures that have formed a peaceful coalition.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Snow Elves",
+          "Fiends"
+        ],
+        "vulnerabilities": [
+          "Grail"
+        ],
+        "deadly": [
+          "Fire Cult"
+        ]
+      },
+      "raw": {
+        "immunities": "Supernatural (Monsters)",
+        "resistances": "Snow Elves, Fiends",
+        "vulnerabilities": "Grail",
+        "deadly": "Sun (Daytime), Fire Cult",
+        "deadlyDoctrines": "Fire-Artillery, Anti-Magic",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "Clear Skies at Daylight",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "forest-fey",
+      "name": "Forest Fey",
+      "category": "Faction",
+      "desc": "Fey in particular the Forest Fey of Heartland Forest. Have a not yet fully understood relationship with the forest of Heartland and Heartland the City. They claim that their king is directly connected to the health of Heartland's Forest. And that Heartland City is the Heart of the Forest. Something I said would be explained in time.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Undead"
+        ],
+        "vulnerabilities": [
+          "Grail",
+          "Swords",
+          "Rebels"
+        ],
+        "deadly": [
+          "Drow (Underdark)"
+        ]
+      },
+      "raw": {
+        "immunities": "Summer Fey",
+        "resistances": "Undead",
+        "vulnerabilities": "Grail, Swords, Rebels (Iron)",
+        "deadly": "Shadow, Drow, Winter Fey, Anti-Magic",
+        "deadlyDoctrines": "Anti-Magic, Fire-Artillery",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Cloudy or Foggy, Nighttime",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "mels-army",
+      "name": "Mel's Army",
+      "category": "Faction",
+      "desc": "This is a group of archers and thieves that work for an information broker named Melameal.",
+      "matchups": {
+        "immunities": [],
+        "resistances": [
+          "Pikes"
+        ],
+        "vulnerabilities": [
+          "Swords"
+        ],
+        "deadly": [
+          "Undead"
+        ]
+      },
+      "raw": {
+        "immunities": "Thieves/Bandits",
+        "resistances": "Pikes",
+        "vulnerabilities": "Swords",
+        "deadly": "Undead",
+        "deadlyDoctrines": "",
+        "preferredWeather": "Cloudy or Foggy, Nighttime",
+        "undesiredWeather": "Clear Skies at Daylight",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "treants",
+      "name": "Treants",
+      "category": "Faction",
+      "desc": "These are a group of living trees that live in the Heartland forest.",
+      "matchups": {
+        "immunities": [
+          "Swords",
+          "Undead"
+        ],
+        "resistances": [
+          "Archers",
+          "Pikes",
+          "Cavalry"
+        ],
+        "vulnerabilities": [
+          "Grail",
+          "Drow (Underdark)",
+          "Siege"
+        ],
+        "deadly": [
+          "Fire Cult",
+          "Snow Elves"
+        ]
+      },
+      "raw": {
+        "immunities": "Swords, Undead",
+        "resistances": "Archers, Pikes, Cavalry",
+        "vulnerabilities": "Grail, Drow, Siege",
+        "deadly": "Fire Cult, Snow Elves, (Any Fire/Explosive)",
+        "deadlyDoctrines": "Fire-Artillery, Anti-Magic, Heavy-Artillery",
+        "preferredWeather": "Clear Skies at Daylight",
+        "undesiredWeather": "Cold, Snow",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "artemis",
+      "name": "Artemis",
+      "category": "Faction",
+      "desc": "An anointed war-host of Artemis—hunters and oath-sworn devotees who manifest when one of Artemis's temples is restored, arriving as a temporary divine reinforcement meant to tip a front, break a siege, or punish blasphemy.",
+      "matchups": {
+        "immunities": [
+          "Swords"
+        ],
+        "resistances": [
+          "Undead",
+          "Fiends"
+        ],
+        "vulnerabilities": [
+          "Grail",
+          "Gunners"
+        ],
+        "deadly": []
+      },
+      "raw": {
+        "immunities": "Swords (while the blessing remains above the minimum baseline; once they hit baseline, remove this immunity)",
+        "resistances": "Undead, Fiends",
+        "vulnerabilities": "Grail, Gunners",
+        "deadly": "Cult of War (Cult of Kratos),",
+        "deadlyDoctrines": "Anti-Magic",
+        "preferredWeather": "Night / Cloudy / Foggy (moonlight, concealment, and hunt-terrain)",
+        "undesiredWeather": "Scorching Heat (dulls the moon's edge)",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    },
+    {
+      "id": "hels-legion",
+      "name": "Hel’s Legion",
+      "category": "Faction",
+      "desc": "Hel’s Legion are Duke Portilo’s execution forces—industrial-scale slaughter units deployed to erase resistance entirely. Where they march, populations vanish, rivers redden, and no one escapes to tell the story.",
+      "matchups": {
+        "immunities": [
+          "Rebels",
+          "Bandits",
+          "Thieves",
+          "Spies"
+        ],
+        "resistances": [
+          "Swords",
+          "Pikes",
+          "Cavalry"
+        ],
+        "vulnerabilities": [
+          "Mages",
+          "Siege",
+          "Undead"
+        ],
+        "deadly": [
+          "Grail",
+          "Artemis",
+          "Mutants",
+          "Warforged (Artificial Constructs)"
+        ]
+      },
+      "raw": {
+        "immunities": "Rebels, Bandits, Thieves, Spies",
+        "resistances": "Swords, Pikes, Cavalry",
+        "vulnerabilities": "Mages, Siege, Undead",
+        "deadly": "Grail, Artemis, Mutants, Warforged",
+        "deadlyDoctrines": "",
+        "preferredWeather": "",
+        "undesiredWeather": "Heavy Rain (mud slows industrial advance)",
+        "preferredTerrain": "",
+        "undesiredTerrain": ""
+      }
+    }
+  ]
+};
+
+    const $ = (id) => document.getElementById(id);
+
+    // =========================
+    // Phase 2 (Slice 2.1): Persistence Core (no UI)
+    // =========================
+    const STORAGE_KEY = "warTableState";
+    const SCHEMA_VERSION = 2;
+
+    function nowIso() { return new Date().toISOString(); }
+
+    function uuid() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return "id-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+    }
+
+    function normalizeName(s) {
+      return String(s || "").trim().toLowerCase();
+    }
+
+    function safeJsonParse(str) {
+      try { return JSON.parse(str); } catch (e) { return null; }
+    }
+
+    function loadPersisted() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [] };
+      }
+      const obj = safeJsonParse(raw);
+      if (!obj || typeof obj !== "object") {
+        return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [] };
+      }
+      const v = Number(obj.schemaVersion || 1);
+      if (v < SCHEMA_VERSION) {
+        return {
+          schemaVersion: SCHEMA_VERSION,
+          updatedAt: nowIso(),
+          armies: Array.isArray(obj.armies) ? obj.armies : [],
+          factions: Array.isArray(obj.factions) ? obj.factions : [],
+          battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : []
+        };
+      }
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        updatedAt: obj.updatedAt || nowIso(),
+        armies: Array.isArray(obj.armies) ? obj.armies : [],
+        factions: Array.isArray(obj.factions) ? obj.factions : [],
+        battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : []
+      };
+    }
+
+    function recomputeFactionsFromArmies(saved) {
+      const set = new Map();
+      const armies = Array.isArray(saved?.armies) ? saved.armies : [];
+      for (const a of armies) {
+        const f = String(a?.faction || "").trim();
+        if (!f) continue;
+        const key = f.toLowerCase();
+        if (!set.has(key)) set.set(key, f);
+      }
+      saved.factions = Array.from(set.values()).sort((a,b)=>a.localeCompare(b));
+    }
+
+    function persist(saved) {
+      const payload = {
+        schemaVersion: SCHEMA_VERSION,
+        updatedAt: nowIso(),
+        armies: Array.isArray(saved?.armies) ? saved.armies : [],
+        factions: Array.isArray(saved?.factions) ? saved.factions : [],
+        battleHistory: Array.isArray(saved?.battleHistory) ? saved.battleHistory : []
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {
+        // Ignore persistence errors in Slices 2.1–2.2.
+      }
+    }
+
+    // =========================
+    // Phase 2 (Slice 2.2): Save Army Modal (minimal UI)
+    // =========================
+    function upsertFaction(saved, name) {
+      const v = String(name || "").trim();
+      if (!v) return;
+      const key = v.toLowerCase();
+      const factions = Array.isArray(saved.factions) ? saved.factions : [];
+      const exists = factions.some(f => String(f).toLowerCase() === key);
+      if (!exists) {
+        factions.push(v);
+        factions.sort((a,b)=>String(a).localeCompare(String(b)));
+        saved.factions = factions;
+      }
+    }
+
+    function findArmyById(id) {
+      const armies = Array.isArray(state.saved?.armies) ? state.saved.armies : [];
+      return armies.find(a => a && a.id === id) || null;
+    }
+
+    function findArmyByName(name) {
+      const key = normalizeName(name);
+      if (!key) return null;
+      const armies = Array.isArray(state.saved?.armies) ? state.saved.armies : [];
+      return armies.find(a => normalizeName(a?.name) === key) || null;
+    }
+
+    function saveArmyRecord(data) {
+      const name = String(data?.name || "").trim();
+      if (!name) return { ok:false, error:"Army name is required." };
+
+      const classId = String(data?.classId || "").trim();
+      if (!INDEX.byId.has(classId)) return { ok:false, error:"Invalid army class." };
+
+      const size = Math.max(0, Number.isFinite(Number(data?.size)) ? Math.trunc(Number(data.size)) : 0);
+      const str  = Math.max(0, Number.isFinite(Number(data?.str)) ? Math.trunc(Number(data.str)) : 0);
+      const faction = String(data?.faction || "").trim();
+      const notes = String(data?.notes || "").trim();
+
+      let target = null;
+      if (data?.id) target = findArmyById(String(data.id));
+      if (!target) target = findArmyByName(name);
+
+      if (target) {
+        target.name = name;
+        target.faction = faction;
+        target.classId = classId;
+        target.size = size;
+        target.str = str;
+        target.notes = notes;
+        target.updatedAt = nowIso();
+        upsertFaction(state.saved, faction);
+        recomputeFactionsFromArmies(state.saved);
+        persist(state.saved);
+        return { ok:true, mode:"update", army: target };
+      }
+
+      const army = {
+        id: uuid(),
+        name,
+        faction,
+        classId,
+        size,
+        str,
+        notes,
+        createdAt: nowIso(),
+        updatedAt: nowIso()
+      };
+      state.saved.armies = Array.isArray(state.saved.armies) ? state.saved.armies : [];
+      state.saved.armies.unshift(army);
+      upsertFaction(state.saved, faction);
+      recomputeFactionsFromArmies(state.saved);
+      persist(state.saved);
+      return { ok:true, mode:"create", army };
+    }
+
+    function renderFactionDatalist() {
+      const dl = $("factionDatalist");
+      if (!dl) return;
+      dl.innerHTML = "";
+      const factions = Array.isArray(state.saved?.factions) ? state.saved.factions : [];
+      for (const f of factions) {
+        const opt = document.createElement("option");
+        opt.value = String(f);
+        dl.appendChild(opt);
+      }
+    }
+
+    function showSaveArmyToast(html, kind) {
+      const el = $("saveArmyToast");
+      if (!el) return;
+      el.style.display = "block";
+      el.className = "alert" + (kind ? " " + kind : "");
+      el.innerHTML = html;
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.display = "none"; }, 2200);
+    }
+
+    function openArmyModalPrefillFromAttacker() {
+      const dlg = $("armyModal");
+      if (!dlg) return;
+
+      const classId = $("attackerClass")?.value || "";
+      const size = toInt($("attackerSize")?.value) ?? 0;
+      const str  = toInt($("attackerStr")?.value) ?? 0;
+
+      $("armyModalSub").textContent = "Saves a named army to this browser (local).";
+      $("armyModalArmyId").value = "";
+      $("armyName").value = "";
+      $("armyFaction").value = "";
+      $("armyNotes").value = "";
+      $("armySize").value = size;
+      $("armyStr").value = str;
+
+      groupOptions($("armyClass"), classId);
+      $("armyModalError").style.display = "none";
+      renderFactionDatalist();
+
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+
+      $("armyName").focus();
+    }
+
+    function closeArmyModal() {
+      const dlg = $("armyModal");
+      if (!dlg) return;
+      if (dlg.open && typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+
+    function commitArmyModal() {
+      const err = $("armyModalError");
+      const id = String($("armyModalArmyId")?.value || "").trim() || null;
+      const name = $("armyName")?.value;
+      const faction = $("armyFaction")?.value;
+      const classId = $("armyClass")?.value;
+      const size = toInt($("armySize")?.value);
+      const str = toInt($("armyStr")?.value);
+      const notes = $("armyNotes")?.value;
+
+      const res = saveArmyRecord({ id, name, faction, classId, size, str, notes });
+      if (!res.ok) {
+        if (err) {
+          err.style.display = "block";
+          err.textContent = res.error;
+        }
+        return;
+      }
+
+      if (err) err.style.display = "none";
+      closeArmyModal();
+      renderFactionDatalist();
+      showSaveArmyToast(res.mode === "update" ? "<b>Army updated.</b>" : "<b>Army saved.</b>");
+    }
+
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function toInt(val) {
+      if (val === null || val === undefined) return null;
+      const s = String(val).trim();
+      if (!s) return null;
+      const n = Number(s);
+      if (!Number.isFinite(n)) return null;
+      return Math.trunc(n);
+    }
+
+    function formatDiceList(diceSidesList) {
+      if (!diceSidesList || diceSidesList.length === 0) return "0 dice";
+      const uniform = diceSidesList.every(d => d === diceSidesList[0]);
+      if (uniform) return `${diceSidesList.length}d${diceSidesList[0]}`;
+      const counts = new Map();
+      for (const d of diceSidesList) counts.set(d, (counts.get(d) || 0) + 1);
+      const parts = Array.from(counts.entries())
+        .sort((a,b)=>a[0]-b[0])
+        .map(([sides,c]) => `${c}d${sides}`);
+      return parts.join(" + ");
+    }
+
+    function getCryptoInt(maxExclusive) {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const arr = new Uint32Array(1);
+        const maxUint = 0xFFFFFFFF;
+        const limit = maxUint - (maxUint % maxExclusive);
+        while (true) {
+          window.crypto.getRandomValues(arr);
+          const x = arr[0];
+          if (x < limit) return x % maxExclusive;
+        }
+      }
+      return Math.floor(Math.random() * maxExclusive);
+    }
+
+    function rollDie(sides) { return 1 + getCryptoInt(sides); }
+
+    function buildClassIndex() {
+      const byId = new Map();
+      const byName = new Map();
+      for (const c of RULES.armyClasses) {
+        byId.set(c.id, c);
+        byName.set(c.name, c);
+      }
+      return { byId, byName };
+    }
+
+    const INDEX = buildClassIndex();
+
+    function groupOptions(selectEl, selectedId) {
+      selectEl.innerHTML = "";
+      const groups = new Map([["Standard", []], ["Special", []], ["Faction", []]]);
+      for (const c of RULES.armyClasses) {
+        if (!groups.has(c.category)) groups.set(c.category, []);
+        groups.get(c.category).push(c);
+      }
+      for (const [cat, arr] of groups.entries()) {
+        if (!arr.length) continue;
+        const og = document.createElement("optgroup");
+        og.label = cat;
+        for (const c of arr) {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          if (c.desc) opt.title = c.desc;
+          og.appendChild(opt);
+        }
+        selectEl.appendChild(og);
+      }
+      if (selectedId && INDEX.byId.has(selectedId)) selectEl.value = selectedId;
+      else selectEl.selectedIndex = 0;
+    }
+
+    // Dice type “auto” rules (MVP subset)
+    function autoDiceTypeForClass(className, selfMatchups, opponentClassName, battleCtx) {
+      let sides = 6;
+
+      if (className === "Warforged (Artificial Constructs)") {
+        sides = 8;
+        const opp = opponentClassName;
+        const isImmune = selfMatchups.immunities.includes(opp);
+        const isResist = selfMatchups.resistances.includes(opp);
+        const isVuln = selfMatchups.vulnerabilities.includes(opp) || selfMatchups.vulnerabilities.includes("__ALL__");
+        const isDeadly = selfMatchups.deadly.includes(opp);
+        if (isImmune || isResist) sides = 10;
+        if (isVuln) sides = 6;
+        if (isDeadly) sides = 4;
+      }
+
+      if (className === "Siege") {
+        sides = battleCtx.defenderHasStructures ? 10 : 8;
+      }
+
+      if (className === "Builders") {
+        const opp = opponentClassName;
+        const hasEdge = selfMatchups.immunities.includes(opp) || selfMatchups.resistances.includes(opp);
+        const oppClass = INDEX.byName.get(opp);
+        const oppIsVulnToBuilders = oppClass && (oppClass.matchups.vulnerabilities || []).includes("Builders");
+        const oppIsDeadlyToBuilders = oppClass && (oppClass.matchups.deadly || []).includes("Builders");
+        sides = (hasEdge || oppIsVulnToBuilders || oppIsDeadlyToBuilders) ? 6 : 4;
+      }
+
+      if (className === "Mutants") {
+        sides = 6;
+      }
+
+      return sides;
+    }
+
+    function applyMutantDieMix(className, diceSidesList) {
+      if (className !== "Mutants") return diceSidesList;
+      if (!diceSidesList || diceSidesList.length === 0) return [10];
+      const copy = diceSidesList.slice();
+      copy[0] = 10;
+      return copy;
+    }
+
+    function matchupModifierFor(sideClass, opponentClass) {
+      const name = opponentClass?.name || null;
+      if (!sideClass || !name) return { total: 0, lines: [] };
+
+      const imm = sideClass.matchups.immunities || [];
+      const res = sideClass.matchups.resistances || [];
+      const vul = sideClass.matchups.vulnerabilities || [];
+      const dea = sideClass.matchups.deadly || [];
+
+      let total = 0;
+      const lines = [];
+
+      if (vul.includes("__ALL__")) {
+        total += RULES.modifierShorthand.vulnerability;
+        lines.push(`Vulnerability (All): <b>${RULES.modifierShorthand.vulnerability}</b> die`);
+      }
+      if (imm.includes(name)) {
+        total += RULES.modifierShorthand.immunity;
+        lines.push(`Immunity vs <b>${name}</b>: <b>+${RULES.modifierShorthand.immunity}</b> dice`);
+      }
+      if (res.includes(name)) {
+        total += RULES.modifierShorthand.resistance;
+        lines.push(`Resistance vs <b>${name}</b>: <b>+${RULES.modifierShorthand.resistance}</b> die`);
+      }
+      if (vul.includes(name)) {
+        total += RULES.modifierShorthand.vulnerability;
+        lines.push(`Vulnerability vs <b>${name}</b>: <b>${RULES.modifierShorthand.vulnerability}</b> die`);
+      }
+      if (dea.includes(name)) {
+        total += RULES.modifierShorthand.deadly;
+        lines.push(`Deadly matchup vs <b>${name}</b>: <b>${RULES.modifierShorthand.deadly}</b> dice`);
+      }
+
+      return { total, lines };
+    }
+
+    function computeDicePool(sideKey, state) {
+      const self = state[sideKey];
+      const otherKey = sideKey === "attacker" ? "defender" : "attacker";
+      const opp = state[otherKey];
+
+      const roleCap = sideKey === "attacker" ? RULES.diceCaps.attacker : RULES.diceCaps.defender;
+
+      const cls = INDEX.byId.get(self.classId);
+      const oppCls = INDEX.byId.get(opp.classId);
+
+      const size = Math.max(0, self.size ?? 0);
+      const str  = Math.max(0, self.str ?? 0);
+
+      const sizeDice = Math.floor(size / RULES.sizePerDie);
+      const strDice  = Math.floor(str / RULES.strPerDie);
+
+      const base = sizeDice + strDice;
+
+      const matchup = matchupModifierFor(cls, oppCls);
+      const preCap = base + matchup.total;
+      const capped = clamp(preCap, 0, roleCap);
+
+      const allowOverCap = state.settings.allowOverCap;
+      let afterManual = capped + (self.manualDiceDelta || 0);
+      afterManual = Math.max(0, afterManual);
+      const finalCount = allowOverCap ? afterManual : clamp(afterManual, 0, roleCap);
+
+      const autoSides = autoDiceTypeForClass(
+        cls?.name,
+        cls?.matchups || {immunities:[],resistances:[],vulnerabilities:[],deadly:[]},
+        oppCls?.name,
+        state.conditions
+      );
+
+      const sides = (self.diceOverride && self.diceOverride !== "auto")
+        ? Number(self.diceOverride)
+        : autoSides;
+
+      let diceSidesList = Array.from({length: finalCount}, () => sides);
+      diceSidesList = applyMutantDieMix(cls?.name, diceSidesList);
+
+      const lines = [];
+      lines.push(`<div><b>Base</b>: Size dice <code>${sizeDice}</code> (⌊${size}/50⌋) + STR dice <code>${strDice}</code> (⌊${str}/10⌋) = <code>${base}</code></div>`);
+      if (matchup.lines.length) {
+        lines.push(`<div><b>Matchup</b>:</div><div style="margin-left:10px;">${matchup.lines.map(l=>`• ${l}`).join("<br/>")}</div>`);
+      } else {
+        lines.push(`<div><b>Matchup</b>: <span style="color: rgba(255,255,255,0.55);">No listed modifiers in MVP.</span></div>`);
+      }
+      lines.push(`<div style="margin-top:6px;"><b>Pre-cap</b>: <code>${preCap}</code> → <b>Cap</b> (${sideKey==="attacker" ? "10" : "8"}): <code>${capped}</code></div>`);
+      if (self.manualDiceDelta) {
+        const sign = self.manualDiceDelta > 0 ? "+" : "";
+        lines.push(`<div><b>Manual</b>: <code>${capped}</code> ${sign} <code>${self.manualDiceDelta}</code> = <code>${afterManual}</code></div>`);
+        if (!state.settings.allowOverCap) lines.push(`<div><b>After cap enforcement</b>: <code>${finalCount}</code></div>`);
+      }
+
+      const notes = [];
+      if (cls?.raw?.deadlyDoctrines) notes.push(`Deadly doctrines: ${cls.raw.deadlyDoctrines}`);
+      if (cls?.raw?.preferredWeather) notes.push(`Preferred weather: ${cls.raw.preferredWeather}`);
+      if (cls?.raw?.undesiredWeather) notes.push(`Undesired weather: ${cls.raw.undesiredWeather}`);
+      if (cls?.raw?.preferredTerrain) notes.push(`Preferred terrain: ${cls.raw.preferredTerrain}`);
+      if (cls?.raw?.undesiredTerrain) notes.push(`Undesired terrain: ${cls.raw.undesiredTerrain}`);
+
+      const notesHtml = notes.length
+        ? `<div style="margin-top:8px; color: rgba(255,255,255,0.55);"><b>Class notes (not auto-modeled yet)</b>:<br/>${notes.map(n=>`• ${n}`).join("<br/>")}</div>`
+        : "";
+
+      return {
+        classObj: cls,
+        opponentObj: oppCls,
+        size, str,
+        base,
+        preCap,
+        capped,
+        finalCount,
+        diceSidesList,
+        diceSidesDisplay: formatDiceList(diceSidesList),
+        dieSidesPrimary: sides,
+        breakdownHtml: lines.join("") + notesHtml
+      };
+    }
+
+    const state = {
+      attacker: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
+      defender: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
+      conditions: { defenderHasStructures: false },
+      settings: { resolutionMode: "risk", quickLossPreset: "standard", allowOverCap: false },
+      lastResult: null,
+      saved: loadPersisted()
+    };
+
+    // Phase 2 (Slices 2.1–2.2): normalize + persist once so storage exists
+    state.saved.armies = Array.isArray(state.saved.armies) ? state.saved.armies : [];
+    state.saved.battleHistory = Array.isArray(state.saved.battleHistory) ? state.saved.battleHistory : [];
+    recomputeFactionsFromArmies(state.saved);
+    persist(state.saved);
+
+
+    function validateReady(attComputed) {
+      const issues = [];
+      const attSize = toInt($("attackerSize").value);
+      const attStr  = toInt($("attackerStr").value);
+      const defSize = toInt($("defenderSize").value);
+      const defStr  = toInt($("defenderStr").value);
+
+      if (attSize === null) issues.push("Attacker Army Size is required.");
+      if (attStr === null) issues.push("Attacker STR is required.");
+      if (defSize === null) issues.push("Defender Army Size is required.");
+      if (defStr === null) issues.push("Defender STR is required.");
+
+      if (!state.attacker.classId) issues.push("Attacker Army Class is required.");
+      if (!state.defender.classId) issues.push("Defender Army Class is required.");
+
+      if (state.settings.resolutionMode === "risk" && attComputed.finalCount > 0 && attComputed.finalCount < 5) {
+        issues.push("Attacker dice pool is below 5 after modifiers. Per rules, the attacker cannot initiate this battle phase.");
+      }
+      return issues;
+    }
+
+    function rollPool(diceSidesList, commitCount) {
+      const committed = clamp(commitCount, 0, diceSidesList.length);
+      const used = diceSidesList.slice(0, committed);
+      const rolls = used.map(sides => ({ sides, roll: rollDie(sides) }));
+      const total = rolls.reduce((a,b)=>a + b.roll, 0);
+      return { committed, usedSides: used, rolls, total };
+    }
+
+    function resolveQuick(att, def, attRoll, defRoll) {
+      let winner = "defender";
+      if (attRoll.total > defRoll.total) winner = "attacker";
+      else if (defRoll.total > attRoll.total) winner = "defender";
+      else winner = "defender"; // tie favors defender
+
+      let lossLoser = 10, lossTie = 5;
+      if (state.settings.quickLossPreset === "flat10") { lossLoser = 10; lossTie = 0; }
+      if (state.settings.quickLossPreset === "flat20") { lossLoser = 20; lossTie = 10; }
+
+      let attLoss = 0, defLoss = 0;
+      if (winner === "attacker") defLoss = lossLoser;
+      else if (winner === "defender") attLoss = lossLoser;
+      else { attLoss = lossTie; defLoss = lossTie; }
+
+      return {
+        mode: "quick",
+        winner,
+        attLoss, defLoss,
+        newAtt: Math.max(0, att.size - attLoss),
+        newDef: Math.max(0, def.size - defLoss),
+        summary: `Quick total: Attacker ${attRoll.total} vs Defender ${defRoll.total}.`,
+        comparisons: null
+      };
+    }
+
+    function resolveRisk(att, def, attRoll, defRoll) {
+      const aSorted = attRoll.rolls.map(r=>r.roll).sort((a,b)=>b-a);
+      const dSorted = defRoll.rolls.map(r=>r.roll).sort((a,b)=>b-a);
+
+      const n = Math.min(aSorted.length, dSorted.length);
+      let attLoss = 0, defLoss = 0;
+      const rows = [];
+
+      let attSizeNow = att.size;
+      let defSizeNow = def.size;
+
+      for (let i=0; i<n; i++) {
+        const a = aSorted[i];
+        const d = dSorted[i];
+        const diff = a - d;
+
+        if (diff > 0) {
+          const amt = (diff >= 3) ? 20 : 10;
+          const actual = Math.min(amt, defSizeNow);
+          defSizeNow = Math.max(0, defSizeNow - actual);
+          defLoss += actual;
+          rows.push({ i:i+1, a, d, loss: `Defender −${actual}` });
+        } else if (diff < 0) {
+          const amt = (Math.abs(diff) >= 3) ? 20 : 10;
+          const actual = Math.min(amt, attSizeNow);
+          attSizeNow = Math.max(0, attSizeNow - actual);
+          attLoss += actual;
+          rows.push({ i:i+1, a, d, loss: `Attacker −${actual}` });
+        } else {
+          const attAmt = Math.min(5, attSizeNow);
+          const defAmtMax = Math.max(0, defSizeNow - 1);
+          const defAmt = Math.min(5, defAmtMax);
+
+          attSizeNow = Math.max(0, attSizeNow - attAmt);
+          defSizeNow = Math.max(0, defSizeNow - defAmt);
+
+          attLoss += attAmt;
+          defLoss += defAmt;
+
+          rows.push({ i:i+1, a, d, loss: `Tie: Att −${attAmt}, Def −${defAmt}` });
+        }
+
+        if (attSizeNow <= 0 || defSizeNow <= 0) break;
+      }
+
+      let winner = "defender";
+      if (defLoss > attLoss) winner = "attacker";
+      else if (attLoss > defLoss) winner = "defender";
+      else winner = "defender";
+
+      return {
+        mode: "risk",
+        winner,
+        attLoss, defLoss,
+        newAtt: attSizeNow,
+        newDef: defSizeNow,
+        summary: `Risk-style: ${rows.length} comparisons. Losses — Attacker −${attLoss}, Defender −${defLoss}.`,
+        comparisons: rows
+      };
+    }
+
+    function getCommitCount(sideKey, computed) {
+      const self = state[sideKey];
+      if (self.autoCommit) return computed.diceSidesList.length;
+      const n = toInt($(sideKey + "Commit").value);
+      if (n === null) return computed.diceSidesList.length;
+      return clamp(n, 0, computed.diceSidesList.length);
+    }
+
+    function renderResult(result, attRoll, defRoll) {
+      $("resultArea").style.display = "block";
+      $("resultHeadline").textContent = (result.winner === "attacker") ? "Attacker wins" : "Defender holds";
+      $("resultSummary").innerHTML =
+        `${result.summary}<br/>
+         <b>Updated Size</b> — Attacker: <span class="mono">${result.newAtt}</span> (−${result.attLoss}), Defender: <span class="mono">${result.newDef}</span> (−${result.defLoss}).`;
+
+      $("attackerRolls").innerHTML = "";
+      $("defenderRolls").innerHTML = "";
+      for (const r of attRoll.rolls) {
+        const span = document.createElement("span");
+        span.className = "die att";
+        span.textContent = `${r.roll} (d${r.sides})`;
+        $("attackerRolls").appendChild(span);
+      }
+      for (const r of defRoll.rolls) {
+        const span = document.createElement("span");
+        span.className = "die def";
+        span.textContent = `${r.roll} (d${r.sides})`;
+        $("defenderRolls").appendChild(span);
+      }
+      $("attackerTotal").textContent = String(attRoll.total);
+      $("defenderTotal").textContent = String(defRoll.total);
+
+      if (result.mode === "risk" && result.comparisons) {
+        $("riskCompareWrap").style.display = "block";
+        const tb = $("riskCompareBody");
+        tb.innerHTML = "";
+        for (const row of result.comparisons) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="mono">${row.i}</td>
+            <td class="mono">${row.a}</td>
+            <td class="mono">${row.d}</td>
+            <td>${row.loss}</td>
+          `;
+          tb.appendChild(tr);
+        }
+      } else {
+        $("riskCompareWrap").style.display = "none";
+      }
+    }
+
+    function render() {
+      $("rulesetVersion").textContent = RULES.rulesetVersion;
+      $("rulesFooter").textContent = RULES.rulesetVersion;
+
+      const att = computeDicePool("attacker", state);
+      const def = computeDicePool("defender", state);
+
+      $("attackerPoolBadge").textContent = att.diceSidesDisplay;
+      $("defenderPoolBadge").textContent = def.diceSidesDisplay;
+
+      $("attackerPoolFinal").textContent = att.diceSidesDisplay;
+      $("defenderPoolFinal").textContent = def.diceSidesDisplay;
+
+      $("attackerDiceType").textContent = `d${att.dieSidesPrimary}` + (state.attacker.diceOverride !== "auto" ? " (override)" : " (auto)");
+      $("defenderDiceType").textContent = `d${def.dieSidesPrimary}` + (state.defender.diceOverride !== "auto" ? " (override)" : " (auto)");
+
+      $("attackerManualDelta").textContent = String(state.attacker.manualDiceDelta || 0);
+      $("defenderManualDelta").textContent = String(state.defender.manualDiceDelta || 0);
+
+      $("attackerBreakdown").innerHTML = att.breakdownHtml;
+      $("defenderBreakdown").innerHTML = def.breakdownHtml;
+
+      $("attackerCommitSummary").textContent = state.attacker.autoCommit ? `auto: ${getCommitCount("attacker", att)}` : `manual: ${getCommitCount("attacker", att)}`;
+      $("defenderCommitSummary").textContent = state.defender.autoCommit ? `auto: ${getCommitCount("defender", def)}` : `manual: ${getCommitCount("defender", def)}`;
+
+      $("conditionsSummary").textContent = state.conditions.defenderHasStructures ? "structures: yes" : "structures: no";
+
+      const issues = validateReady(att);
+      const msg = $("validationMsg");
+      const btn = $("battleBtn");
+
+      if (issues.length) {
+        msg.style.display = "block";
+        msg.innerHTML = "<b>Not ready:</b><br/>" + issues.map(i => `• ${i}`).join("<br/>");
+        btn.disabled = true;
+      } else {
+        msg.style.display = "none";
+        btn.disabled = false;
+      }
+
+      state._computed = { att, def };
+    }
+
+    function resetAll() {
+      state.attacker.size = null;
+      state.attacker.str = null;
+      state.attacker.manualDiceDelta = 0;
+      state.attacker.diceOverride = "auto";
+      state.attacker.autoCommit = true;
+
+      state.defender.size = null;
+      state.defender.str = null;
+      state.defender.manualDiceDelta = 0;
+      state.defender.diceOverride = "auto";
+      state.defender.autoCommit = true;
+
+      state.settings.resolutionMode = "risk";
+      state.settings.quickLossPreset = "standard";
+      state.settings.allowOverCap = false;
+
+      state.conditions.defenderHasStructures = false;
+
+      $("attackerSize").value = "";
+      $("attackerStr").value = "";
+      $("defenderSize").value = "";
+      $("defenderStr").value = "";
+      $("attackerDiceOverride").value = "auto";
+      $("defenderDiceOverride").value = "auto";
+      $("attackerAutoCommit").value = "yes";
+      $("defenderAutoCommit").value = "yes";
+      $("attackerCommit").value = "";
+      $("defenderCommit").value = "";
+      $("resolutionMode").value = "risk";
+      $("quickLossPreset").value = "standard";
+      $("allowOverCap").value = "no";
+      $("defenderStructures").value = "no";
+
+      $("resultArea").style.display = "none";
+      state.lastResult = null;
+      render();
+    }
+
+    function prefillExample() {
+      $("attackerClass").value = INDEX.byName.get("Cavalry")?.id || $("attackerClass").value;
+      $("defenderClass").value = INDEX.byName.get("Pikes")?.id || $("defenderClass").value;
+
+      state.attacker.classId = $("attackerClass").value;
+      state.defender.classId = $("defenderClass").value;
+
+      // Phase 2 (Slice 2.2): initialize modal class options + faction suggestions
+      groupOptions($("armyClass"), $("attackerClass").value);
+      renderFactionDatalist();
+
+      // Phase 2 (Slice 2.2): Save Army modal wiring (temporary trigger)
+      $("openSaveArmyModal").addEventListener("click", () => openArmyModalPrefillFromAttacker());
+      $("armyModalClose").addEventListener("click", () => closeArmyModal());
+      $("armyModalCancel").addEventListener("click", () => closeArmyModal());
+      $("armyModalSave").addEventListener("click", () => commitArmyModal());
+
+
+      $("attackerSize").value = 150;
+      $("attackerStr").value = 120;
+      $("defenderSize").value = 100;
+      $("defenderStr").value = 80;
+
+      state.attacker.size = 150;
+      state.attacker.str = 120;
+      state.defender.size = 100;
+      state.defender.str = 80;
+
+      $("defenderStructures").value = "no";
+      state.conditions.defenderHasStructures = false;
+
+      state.attacker.manualDiceDelta = 0;
+      state.defender.manualDiceDelta = 0;
+      $("attackerDiceOverride").value = "auto";
+      $("defenderDiceOverride").value = "auto";
+      state.attacker.diceOverride = "auto";
+      state.defender.diceOverride = "auto";
+
+      $("resultArea").style.display = "none";
+      state.lastResult = null;
+
+      render();
+    }
+
+    function swapSides() {
+      const a = JSON.parse(JSON.stringify(state.attacker));
+      const d = JSON.parse(JSON.stringify(state.defender));
+      state.attacker = d;
+      state.defender = a;
+
+      const aClass = $("attackerClass").value;
+      $("attackerClass").value = $("defenderClass").value;
+      $("defenderClass").value = aClass;
+
+      const aSize = $("attackerSize").value;
+      $("attackerSize").value = $("defenderSize").value;
+      $("defenderSize").value = aSize;
+
+      const aStr = $("attackerStr").value;
+      $("attackerStr").value = $("defenderStr").value;
+      $("defenderStr").value = aStr;
+
+      const aDO = $("attackerDiceOverride").value;
+      $("attackerDiceOverride").value = $("defenderDiceOverride").value;
+      $("defenderDiceOverride").value = aDO;
+
+      const aAC = $("attackerAutoCommit").value;
+      $("attackerAutoCommit").value = $("defenderAutoCommit").value;
+      $("defenderAutoCommit").value = aAC;
+
+      const aC = $("attackerCommit").value;
+      $("attackerCommit").value = $("defenderCommit").value;
+      $("defenderCommit").value = aC;
+
+      $("resultArea").style.display = "none";
+      state.lastResult = null;
+
+      render();
+    }
+
+    function bind() {
+      groupOptions($("attackerClass"));
+      groupOptions($("defenderClass"));
+
+      state.attacker.classId = $("attackerClass").value;
+      state.defender.classId = $("defenderClass").value;
+
+      $("resolutionMode").value = state.settings.resolutionMode;
+      $("quickLossPreset").value = state.settings.quickLossPreset;
+      $("allowOverCap").value = state.settings.allowOverCap ? "yes" : "no";
+      $("defenderStructures").value = state.conditions.defenderHasStructures ? "yes" : "no";
+
+      $("attackerClass").addEventListener("change", () => { state.attacker.classId = $("attackerClass").value; render(); });
+      $("defenderClass").addEventListener("change", () => { state.defender.classId = $("defenderClass").value; render(); });
+
+      for (const side of ["attacker","defender"]) {
+        $(side + "Size").addEventListener("input", () => { state[side].size = toInt($(side + "Size").value); render(); });
+        $(side + "Str").addEventListener("input", () => { state[side].str = toInt($(side + "Str").value); render(); });
+
+        $(side + "DiceOverride").addEventListener("change", () => { state[side].diceOverride = $(side + "DiceOverride").value; render(); });
+
+        $(side + "Plus").addEventListener("click", () => { state[side].manualDiceDelta = (state[side].manualDiceDelta || 0) + 1; render(); });
+        $(side + "Minus").addEventListener("click", () => { state[side].manualDiceDelta = (state[side].manualDiceDelta || 0) - 1; render(); });
+        $(side + "ManualReset").addEventListener("click", () => { state[side].manualDiceDelta = 0; render(); });
+
+        $(side + "AutoCommit").addEventListener("change", () => { state[side].autoCommit = ($(side + "AutoCommit").value === "yes"); render(); });
+        $(side + "Commit").addEventListener("input", () => { render(); });
+      }
+
+      $("defenderStructures").addEventListener("change", () => { state.conditions.defenderHasStructures = ($("defenderStructures").value === "yes"); render(); });
+
+      $("resolutionMode").addEventListener("change", () => { state.settings.resolutionMode = $("resolutionMode").value; render(); });
+      $("quickLossPreset").addEventListener("change", () => { state.settings.quickLossPreset = $("quickLossPreset").value; render(); });
+      $("allowOverCap").addEventListener("change", () => { state.settings.allowOverCap = ($("allowOverCap").value === "yes"); render(); });
+
+      $("resetBtn").addEventListener("click", resetAll);
+      $("prefillExample").addEventListener("click", prefillExample);
+      $("swapSides").addEventListener("click", swapSides);
+
+      $("battleBtn").addEventListener("click", () => {
+        const att = state._computed.att;
+        const def = state._computed.def;
+
+        const issues = validateReady(att);
+        if (issues.length) { render(); return; }
+
+        const attCommit = getCommitCount("attacker", att);
+        const defCommit = getCommitCount("defender", def);
+
+        if (state.settings.resolutionMode === "risk" && attCommit < 5) {
+          $("validationMsg").style.display = "block";
+          $("validationMsg").innerHTML = "Attacker must commit <b>≥ 5</b> dice to initiate an attack (per rules).";
+          return;
+        }
+
+        const attRoll = rollPool(att.diceSidesList, attCommit);
+        const defRoll = rollPool(def.diceSidesList, defCommit);
+
+        let result;
+        if (state.settings.resolutionMode === "risk") {
+          if (def.diceSidesList.length <= 0 || defCommit <= 0) {
+            result = {
+              mode: "risk",
+              winner: "attacker",
+              attLoss: 0,
+              defLoss: 10,
+              newAtt: Math.max(0, att.size),
+              newDef: Math.max(0, def.size - 10),
+              summary: "Defender had 0 dice committed; they auto-lose and suffer −10 Army Size (standard loss).",
+              comparisons: []
+            };
+          } else {
+            result = resolveRisk(att, def, attRoll, defRoll);
+          }
+        } else {
+          result = resolveQuick(att, def, attRoll, defRoll);
+        }
+
+        $("attackerSize").value = result.newAtt;
+        $("defenderSize").value = result.newDef;
+        state.attacker.size = result.newAtt;
+        state.defender.size = result.newDef;
+
+        render();
+
+        state.lastResult = { result, attRoll, defRoll };
+        renderResult(result, attRoll, defRoll);
+      });
+
+      $("copyResult").addEventListener("click", async () => {
+        if (!state.lastResult) return;
+        const { result, attRoll, defRoll } = state.lastResult;
+
+        const aClass = INDEX.byId.get(state.attacker.classId)?.name || "Attacker";
+        const dClass = INDEX.byId.get(state.defender.classId)?.name || "Defender";
+
+        const text =
+`War Table — Battle Result (ruleset ${RULES.rulesetVersion})
+Attacker: ${aClass} | Size: ${state.attacker.size} | STR: ${state.attacker.str} | Pool: ${state._computed.att.diceSidesDisplay}
+Defender: ${dClass} | Size: ${state.defender.size} | STR: ${state.defender.str} | Pool: ${state._computed.def.diceSidesDisplay}
+
+Mode: ${result.mode}
+Summary: ${result.summary}
+Losses: Attacker −${result.attLoss}, Defender −${result.defLoss}
+New Size: Attacker ${result.newAtt}, Defender ${result.newDef}
+
+Attacker rolls: ${attRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | Total ${attRoll.total}
+Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | Total ${defRoll.total}
+`;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          $("copyResult").textContent = "Copied!";
+          setTimeout(()=>{ $("copyResult").textContent = "Copy summary"; }, 1000);
+        } catch (e) {
+          alert("Clipboard copy failed. You can manually select and copy from the Results panel.");
+        }
+      });
+
+      render();
+    }
+
+    document.addEventListener("DOMContentLoaded", bind);
+  </script>
+</body>
+</html>
