@@ -5,40 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>War Table — Fairgard Battle Engine</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
     /* ── Fairgard Palette ─────────────────────────────────────────── */
     :root {
       --crimson:    #B00020;
-      --crimson2:   #C41E3A;
-      --parchment:  #E6D3A3;
-      --parchment2: #D8C59A;
+      --crimson2:   #8B2020;
+      --parchment:  #F3E9D2;
+      --parchment2: #EDE0C4;
       --leather:    #5A3A1E;
-      --ink:        #1C1C1C;
-      --cream:      #F4F1E8;
-      --tan:        #8C6239;
-      --gold:       #C9A227;
+      --ink:        #2B1F16;
+      --cream:      #F7F3E9;
+      --tan:        #DCC7A1;
+      --gold:       #C49A3A;
 
-      /* Semantic tokens */
-      --bg0:     #0f0d0b;
-      --bg1:     #1a1410;
-      --panel:   rgba(90,58,30,0.18);
-      --panel2:  rgba(90,58,30,0.28);
-      --stroke:  rgba(201,162,39,0.22);
-      --stroke2: rgba(201,162,39,0.40);
-      --text:    #F4F1E8;
-      --muted:   #D8C59A;
-      --faint:   rgba(230,211,163,0.55);
-      --good:    #7ec98a;
-      --bad:     #e05555;
-      --warn:    var(--gold);
-      --att:     var(--crimson2);
-      --def:     #4a90c4;
-      --focus:   rgba(201,162,39,0.35);
-      --shadow:  0 10px 40px rgba(0,0,0,0.6);
+      /* Semantic tokens — Light Parchment Theme */
+      --bg0:     #F3E9D2;
+      --bg1:     #EDE0C4;
+      --panel:   rgba(220,199,161,0.55);
+      --panel2:  rgba(212,189,147,0.72);
+      --stroke:  rgba(74,55,37,0.18);
+      --stroke2: rgba(74,55,37,0.38);
+      --text:    #2B1F16;
+      --muted:   #5A3A1E;
+      --faint:   rgba(43,31,22,0.48);
+      --good:    #3E5F47;
+      --bad:     #7A3B3B;
+      --warn:    #C49A3A;
+      --att:     #7A3B3B;
+      --def:     #2B4A6F;
+      --focus:   rgba(196,154,58,0.45);
+      --shadow:  0 4px 16px rgba(43,31,22,0.14);
       --radius:  14px;
       --radius2: 20px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
-      --ui:  'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      --ui:  'Cinzel', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+      --sans: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -46,12 +48,12 @@
     body {
       margin: 0;
       font-family: var(--sans);
+      font-size: 14px;
       color: var(--text);
       background:
-        radial-gradient(900px 500px at 15% 0%,  rgba(176,0,32,0.12),  transparent 65%),
-        radial-gradient(900px 500px at 85% 10%,  rgba(74,144,196,0.08), transparent 65%),
-        radial-gradient(700px 400px at 50% 110%, rgba(201,162,39,0.10), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
+        radial-gradient(900px 600px at 20% -5%, rgba(196,154,58,0.09), transparent 60%),
+        radial-gradient(700px 500px at 80% 5%,  rgba(122,59,59,0.06),  transparent 55%),
+        linear-gradient(175deg, #F7F3E9, #EDE0C4);
       min-height: 100vh;
     }
 
@@ -61,13 +63,12 @@
       position: fixed; inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,0.4) 100%),
         repeating-linear-gradient(0deg,
-          rgba(201,162,39,0.025) 0px, rgba(201,162,39,0.025) 1px,
+          rgba(90,60,10,0.025) 0px, rgba(90,60,10,0.025) 1px,
           transparent 2px, transparent 5px
         );
-      mix-blend-mode: overlay;
-      opacity: 0.8;
+      mix-blend-mode: multiply;
+      opacity: 0.6;
     }
 
     .app {
@@ -85,38 +86,39 @@
 
     .brand { display: flex; flex-direction: column; gap: 5px; min-width: 220px; }
     .brand h1 {
-      margin: 0; font-size: 22px; font-family: var(--ui);
-      color: var(--gold); letter-spacing: 1px;
-      text-shadow: 0 0 20px rgba(201,162,39,0.4);
+      margin: 0; font-size: 24px; font-family: var(--ui);
+      color: #7A4F10; letter-spacing: 2px; font-weight: 700;
     }
     .brand .sub { font-size: 12px; color: var(--muted); letter-spacing: 0.3px; }
     .brand .pill {
       display: inline-flex; align-items: center; gap: 8px;
       width: fit-content; padding: 5px 10px; border-radius: 999px;
-      background: rgba(201,162,39,0.08); border: 1px solid var(--stroke);
+      background: rgba(196,154,58,0.12); border: 1px solid rgba(74,55,37,0.18);
       font-size: 11px; color: var(--muted);
     }
     .brand .pill code {
-      font-family: var(--mono); color: var(--gold); font-size: 11px;
-      background: rgba(201,162,39,0.08); padding: 1px 5px;
-      border-radius: 6px; border: 1px solid var(--stroke);
+      font-family: var(--mono); color: #7A4F10; font-size: 11px;
+      background: rgba(196,154,58,0.12); padding: 1px 5px;
+      border-radius: 6px; border: 1px solid rgba(74,55,37,0.18);
     }
 
     /* ── Nav tabs ─────────────────────────────────────────────────── */
     nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .tab {
       appearance: none; cursor: pointer; user-select: none;
-      border: 1px solid var(--stroke); background: rgba(90,58,30,0.12);
+      border: 1px solid rgba(74,55,37,0.18); background: rgba(255,255,255,0.5);
       color: var(--muted); padding: 7px 14px; border-radius: 999px;
       font-size: 12px; font-family: var(--sans); letter-spacing: 0.3px;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
     }
-    .tab:hover { background: rgba(201,162,39,0.12); color: var(--text); }
+    .tab:hover { background: rgba(255,255,255,0.82); color: var(--text); border-color: rgba(74,55,37,0.35); }
     .tab.active {
-      color: var(--gold); border-color: var(--stroke2);
-      background: rgba(201,162,39,0.14);
-      box-shadow: 0 0 12px rgba(201,162,39,0.15);
+      color: #7A4F10; border-color: rgba(196,154,58,0.55);
+      background: rgba(255,245,220,0.85);
+      box-shadow: 0 2px 8px rgba(196,154,58,0.2);
+      font-weight: 600;
     }
+    .tab:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
     .tab[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
 
     /* ── Tab pages ────────────────────────────────────────────────── */
@@ -140,13 +142,13 @@
     .card .cardHead {
       display: flex; align-items: center; justify-content: space-between;
       padding: 13px 14px 10px;
-      border-bottom: 1px solid rgba(201,162,39,0.15);
-      background: linear-gradient(180deg, rgba(201,162,39,0.06), transparent);
+      border-bottom: 1px solid rgba(74,55,37,0.14);
+      background: linear-gradient(180deg, rgba(196,154,58,0.10), transparent);
     }
     .sideTitle { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
     .sideTitle h2 {
-      margin: 0; font-size: 15px; font-family: var(--ui);
-      color: var(--parchment); letter-spacing: 0.5px;
+      margin: 0; font-size: 16px; font-family: var(--ui);
+      color: var(--ink); letter-spacing: 0.5px; font-weight: 600;
     }
 
     .badge {
@@ -182,23 +184,23 @@
     input[type="number"], input[type="text"], select, textarea {
       width: 100%; padding: 9px 10px; border-radius: 10px;
       border: 1px solid var(--stroke);
-      background: rgba(15,13,11,0.55); color: var(--text); outline: none;
+      background: rgba(255,255,255,0.72); color: var(--text); outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     input:focus, select:focus, textarea:focus {
       box-shadow: 0 0 0 3px var(--focus);
-      border-color: rgba(201,162,39,0.5);
+      border-color: rgba(196,154,58,0.6);
     }
     input::placeholder { color: var(--faint); }
-    select option { background: #1a1410; color: var(--text); }
+    select option { background: #F7F3E9; color: var(--text); }
 
     .help { margin-top: 4px; font-size: 11px; color: var(--faint); line-height: 1.4; }
-    .mono { font-family: var(--mono); color: var(--parchment); }
+    .mono { font-family: var(--mono); color: var(--ink); }
 
     /* ── KPI boxes ────────────────────────────────────────────────── */
     .kpi {
       display: grid; gap: 6px; padding: 10px; border-radius: var(--radius);
-      border: 1px solid var(--stroke); background: rgba(0,0,0,0.25);
+      border: 1px solid var(--stroke); background: rgba(255,255,255,0.45);
       margin-top: 10px;
     }
     .kpiRow {
@@ -206,18 +208,18 @@
       gap: 10px; flex-wrap: wrap;
     }
     .kpiRow .label { font-size: 11px; color: var(--muted); }
-    .kpiRow .value { font-family: var(--mono); font-size: 13px; color: var(--parchment); }
+    .kpiRow .value { font-family: var(--mono); font-size: 13px; color: var(--ink); font-weight: 600; }
 
     .breakdown {
-      margin-top: 10px; padding: 10px;
-      border: 1px dashed rgba(201,162,39,0.25); border-radius: 12px;
-      background: rgba(0,0,0,0.20); font-size: 11px;
+      padding: 10px;
+      border: 1px dashed rgba(74,55,37,0.22); border-radius: 12px;
+      background: rgba(255,255,255,0.45); font-size: 11px;
       color: var(--muted); line-height: 1.5;
     }
-    .breakdown b { color: var(--parchment); }
+    .breakdown b { color: var(--ink); }
     .breakdown code {
-      font-family: var(--mono); color: var(--gold); font-size: 11px;
-      background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.2);
+      font-family: var(--mono); color: #7A4F10; font-size: 11px;
+      background: rgba(196,154,58,0.12); border: 1px solid rgba(196,154,58,0.3);
       padding: 1px 5px; border-radius: 6px;
     }
 
@@ -227,61 +229,73 @@
     .stepper {
       display: flex; gap: 8px; align-items: center; justify-content: space-between;
       padding: 10px; border: 1px solid var(--stroke); border-radius: 12px;
-      background: rgba(0,0,0,0.20);
+      background: rgba(255,255,255,0.45);
     }
     .stepper .left { display: grid; gap: 2px; }
     .stepper .left .t { font-size: 11px; color: var(--muted); }
-    .stepper .left .n { font-family: var(--mono); font-size: 13px; color: var(--parchment); }
+    .stepper .left .n { font-family: var(--mono); font-size: 13px; color: var(--ink); font-weight: 600; }
     .btnRow { display: flex; gap: 6px; align-items: center; }
 
     /* ── Buttons ──────────────────────────────────────────────────── */
     .btn {
       appearance: none; cursor: pointer; user-select: none; font-family: var(--sans);
       border-radius: 10px; font-size: 12px; padding: 8px 12px;
-      border: 1px solid var(--stroke); background: rgba(90,58,30,0.25);
+      border: 1px solid var(--stroke); background: rgba(255,255,255,0.55);
       color: var(--muted); transition: all 0.15s;
     }
-    .btn:hover { background: rgba(201,162,39,0.15); border-color: var(--stroke2); color: var(--text); }
+    .btn:hover { background: rgba(255,255,255,0.82); border-color: var(--stroke2); color: var(--text); }
     .btn:active { transform: translateY(1px); }
+    .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
     .btn.primary {
-      background: linear-gradient(180deg, rgba(176,0,32,0.7), rgba(140,0,25,0.8));
-      border-color: rgba(196,30,58,0.6); color: var(--cream);
+      background: linear-gradient(160deg, #8B2020, #5C1212);
+      border-color: rgba(196,154,58,0.55); color: #F7F3E9;
       font-weight: 600;
     }
-    .btn.primary:hover { background: linear-gradient(180deg, var(--crimson2), var(--crimson)); }
-    .btn.ghost { background: transparent; color: var(--faint); }
-    .btn.ghost:hover { color: var(--muted); background: rgba(255,255,255,0.05); }
-    .btn.danger { border-color: rgba(176,0,32,0.5); color: #e06070; }
-    .btn.danger:hover { background: rgba(176,0,32,0.2); }
+    .btn.primary:hover { background: linear-gradient(160deg, #A32525, #6E1515); }
+    .btn.ghost { background: transparent; border-color: transparent; color: var(--faint); }
+    .btn.ghost:hover { color: var(--muted); background: rgba(90,58,30,0.08); border-color: var(--stroke); }
+    .btn.danger { border-color: rgba(122,59,59,0.4); color: #7A3B3B; background: rgba(122,59,59,0.08); }
+    .btn.danger:hover { background: rgba(122,59,59,0.15); border-color: rgba(122,59,59,0.6); }
     .btn.small { padding: 5px 9px; font-size: 11px; border-radius: 8px; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
     .battleBtn {
       width: 100%; display: inline-flex; align-items: center;
-      justify-content: center; gap: 10px; padding: 14px;
+      justify-content: center; gap: 10px; padding: 16px 20px;
       border-radius: 14px; cursor: pointer;
-      border: 1px solid rgba(201,162,39,0.45);
-      background: linear-gradient(180deg, rgba(176,0,32,0.65), rgba(90,20,10,0.8));
-      color: var(--cream); font-weight: 700; letter-spacing: 0.8px;
-      font-size: 14px; font-family: var(--ui);
-      box-shadow: 0 6px 28px rgba(176,0,32,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+      border: 2px solid rgba(196,154,58,0.65);
+      background: linear-gradient(160deg, #8B2020, #5C1212);
+      color: #F7F3E9; font-weight: 700; letter-spacing: 1.5px;
+      font-size: 16px; font-family: var(--ui); text-transform: uppercase;
+      box-shadow: 0 6px 24px rgba(90,20,20,0.35),
+                  inset 0 1px 0 rgba(255,255,255,0.12),
+                  0 0 0 1px rgba(196,154,58,0.15);
       transition: all 0.15s;
     }
-    .battleBtn:hover { background: linear-gradient(180deg, var(--crimson2), var(--crimson)); }
-    .battleBtn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .battleBtn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 12px rgba(176,0,32,0.4); }
+    .battleBtn:hover {
+      background: linear-gradient(160deg, #A32525, #6E1515);
+      box-shadow: 0 8px 32px rgba(90,20,20,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .battleBtn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus); }
+    .battleBtn:disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.3); }
+    .battleBtn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 12px rgba(90,20,20,0.4); }
 
     /* ── Details/summary ──────────────────────────────────────────── */
     details {
-      border: 1px solid rgba(201,162,39,0.15); border-radius: var(--radius);
-      background: rgba(0,0,0,0.18); padding: 10px;
+      border: 1px solid rgba(74,55,37,0.15); border-radius: var(--radius);
+      background: rgba(255,255,255,0.38); padding: 10px;
     }
     summary {
       cursor: pointer; color: var(--muted); font-size: 12px;
       list-style: none; display: flex; align-items: center;
-      justify-content: space-between; gap: 10px;
+      justify-content: space-between; gap: 10px; user-select: none;
     }
     summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: "▾"; font-size: 12px; color: var(--muted); flex-shrink: 0;
+      transition: transform 0.2s ease; display: inline-block;
+    }
+    details[open] > summary::after { transform: rotate(180deg); }
     .summaryRight { font-size: 11px; color: var(--faint); font-family: var(--mono); }
 
     /* ── Center / VS panel ────────────────────────────────────────── */
@@ -291,65 +305,66 @@
     .vs { display: grid; gap: 12px; padding: 13px; }
     .vsTop { display: grid; gap: 8px; text-align: center; padding: 6px 0; }
     .vsTop .big {
-      font-size: 26px; letter-spacing: 3px;
-      font-family: var(--ui); color: var(--gold);
-      text-shadow: 0 0 20px rgba(201,162,39,0.5);
+      font-size: 32px; letter-spacing: 4px;
+      font-family: var(--ui); color: #7A4F10; font-weight: 700;
     }
-    .vsTop .small { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .vsTop .small { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
     /* ── Alerts ───────────────────────────────────────────────────── */
     .alert {
       padding: 9px 11px; border-radius: 12px;
-      border: 1px solid rgba(201,162,39,0.2);
-      background: rgba(0,0,0,0.30); color: var(--muted);
+      border: 1px solid rgba(74,55,37,0.18);
+      background: rgba(255,255,255,0.55); color: var(--muted);
       font-size: 12px; line-height: 1.4;
     }
-    .alert.bad  { border-color: rgba(224,85,85,0.4); background: rgba(176,0,32,0.12); color: #e08080; }
-    .alert.good { border-color: rgba(126,201,138,0.4); background: rgba(50,140,70,0.12); color: var(--good); }
-    .alert.warn { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.08); color: var(--gold); }
+    .alert.bad  { border-color: rgba(122,59,59,0.35); background: rgba(122,59,59,0.08); color: #7A3B3B; }
+    .alert.good { border-color: rgba(62,95,71,0.35); background: rgba(62,95,71,0.08); color: var(--good); }
+    .alert.warn { border-color: rgba(196,154,58,0.4); background: rgba(196,154,58,0.10); color: #7A4F10; }
 
     /* ── Result display ───────────────────────────────────────────── */
     .result { display: grid; gap: 10px; }
     .result .title { font-size: 12px; color: var(--muted); }
-    .result .who { font-size: 16px; font-weight: 700; font-family: var(--ui); color: var(--parchment); }
+    .result .who { font-size: 22px; font-weight: 700; font-family: var(--ui); color: var(--ink); letter-spacing: 0.5px; }
+    .result.att-wins .who { color: var(--att); }
+    .result.def-wins .who { color: var(--def); }
 
     .diceLine { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 5px; }
     .die {
       font-family: var(--mono); padding: 5px 8px; border-radius: 10px;
-      border: 1px solid var(--stroke); background: rgba(0,0,0,0.25);
-      font-size: 11px; color: var(--text);
+      border: 1px solid var(--stroke); background: rgba(255,255,255,0.65);
+      font-size: 11px; color: var(--text); font-weight: 600;
     }
-    .die.att { border-color: rgba(196,30,58,0.4); }
-    .die.def { border-color: rgba(74,144,196,0.4); }
+    .die.att { border-color: rgba(122,59,59,0.45); color: #7A3B3B; background: rgba(122,59,59,0.08); }
+    .die.def { border-color: rgba(43,74,111,0.4); color: #2B4A6F; background: rgba(43,74,111,0.08); }
 
     /* ── Table ────────────────────────────────────────────────────── */
     .tbl {
       width: 100%; border-collapse: collapse; overflow: hidden;
-      border-radius: var(--radius); border: 1px solid rgba(201,162,39,0.15);
-      background: rgba(0,0,0,0.22); font-size: 12px;
+      border-radius: var(--radius); border: 1px solid rgba(74,55,37,0.15);
+      background: rgba(255,255,255,0.45); font-size: 12px;
     }
     .tbl th, .tbl td {
-      padding: 8px 10px; border-bottom: 1px solid rgba(201,162,39,0.08);
+      padding: 8px 10px; border-bottom: 1px solid rgba(74,55,37,0.08);
       text-align: left; vertical-align: top; color: var(--muted);
     }
     .tbl th {
-      color: var(--parchment); font-weight: 600;
-      background: rgba(201,162,39,0.07); font-size: 11px; letter-spacing: 0.4px;
+      color: var(--ink); font-weight: 600;
+      background: rgba(196,154,58,0.10); font-size: 11px; letter-spacing: 0.4px;
     }
     .tbl tr:last-child td { border-bottom: none; }
-    .tbl tr:hover td { background: rgba(201,162,39,0.05); }
-    .tbl td.mono { font-family: var(--mono); color: var(--parchment); }
+    .tbl tr:hover td { background: rgba(196,154,58,0.06); }
+    .tbl td.mono { font-family: var(--mono); color: var(--ink); }
 
     /* ── Army row in armies tab ───────────────────────────────────── */
     .armyRow {
       display: grid; grid-template-columns: 1fr auto;
       gap: 8px; align-items: center; padding: 10px 12px;
       border: 1px solid var(--stroke); border-radius: 12px;
-      background: rgba(0,0,0,0.20); margin-bottom: 7px;
-      transition: border-color 0.15s;
+      background: rgba(255,255,255,0.5); margin-bottom: 7px;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .armyRow:hover { border-color: var(--stroke2); }
-    .armyName { font-size: 13px; color: var(--parchment); font-weight: 600; }
+    .armyRow:hover { border-color: var(--stroke2); box-shadow: 0 2px 8px rgba(43,31,22,0.08); }
+    .armyName { font-size: 13px; color: var(--ink); font-weight: 600; }
     .armyMeta { font-size: 11px; color: var(--faint); margin-top: 2px; }
     .armyActions { display: flex; gap: 6px; flex-shrink: 0; }
 
@@ -357,7 +372,7 @@
     .chip {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 4px 9px; border-radius: 999px; font-size: 11px;
-      border: 1px solid var(--stroke); background: rgba(90,58,30,0.20);
+      border: 1px solid rgba(74,55,37,0.22); background: rgba(255,255,255,0.55);
       color: var(--muted); margin: 2px;
     }
     .chip button {
@@ -370,14 +385,14 @@
     /* ── Battle history ───────────────────────────────────────────── */
     .historyCard {
       padding: 10px 12px; border: 1px solid var(--stroke);
-      border-radius: 12px; background: rgba(0,0,0,0.20);
+      border-radius: 12px; background: rgba(255,255,255,0.5);
       margin-bottom: 7px; font-size: 12px;
     }
     .historyCard .hHead {
       display: flex; justify-content: space-between; align-items: baseline;
       gap: 8px; flex-wrap: wrap; margin-bottom: 5px;
     }
-    .historyCard .hTitle { font-size: 13px; color: var(--parchment); font-weight: 600; }
+    .historyCard .hTitle { font-size: 13px; color: var(--ink); font-weight: 600; }
     .historyCard .hDate { font-size: 11px; color: var(--faint); }
     .historyCard .hDetail { color: var(--muted); line-height: 1.5; }
 
@@ -400,8 +415,8 @@
       gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
     }
     .pageHead h2 {
-      margin: 0; font-size: 17px; font-family: var(--ui);
-      color: var(--gold); letter-spacing: 0.5px;
+      margin: 0; font-size: 18px; font-family: var(--ui);
+      color: #7A4F10; letter-spacing: 0.5px; font-weight: 600;
     }
 
     /* ── Section divider ──────────────────────────────────────────── */
@@ -414,17 +429,17 @@
     dialog {
       max-width: 680px; width: calc(100% - 28px);
       border: 1px solid var(--stroke2); border-radius: 18px;
-      background: #18130e; color: var(--text);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.75); padding: 0;
+      background: #F7F3E9; color: var(--text);
+      box-shadow: 0 12px 40px rgba(43,31,22,0.25); padding: 0;
     }
-    dialog::backdrop { background: rgba(0,0,0,0.65); }
+    dialog::backdrop { background: rgba(43,31,22,0.45); }
     .dlgHead {
       display: flex; align-items: center; justify-content: space-between;
       gap: 10px; padding: 14px 16px 12px;
-      border-bottom: 1px solid rgba(201,162,39,0.15);
-      background: linear-gradient(180deg, rgba(201,162,39,0.06), transparent);
+      border-bottom: 1px solid rgba(74,55,37,0.15);
+      background: linear-gradient(180deg, rgba(196,154,58,0.10), transparent);
     }
-    .dlgHead h3 { margin: 0; font-size: 15px; font-family: var(--ui); color: var(--gold); }
+    .dlgHead h3 { margin: 0; font-size: 15px; font-family: var(--ui); color: var(--ink); }
     .dlgBody { padding: 14px 16px; display: grid; gap: 12px; }
     .dlgFoot {
       display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px;
@@ -454,7 +469,176 @@
     .scrollable { max-height: 420px; overflow-y: auto; padding-right: 4px; }
     .scrollable::-webkit-scrollbar { width: 5px; }
     .scrollable::-webkit-scrollbar-track { background: transparent; }
-    .scrollable::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.2); border-radius: 4px; }
+    .scrollable::-webkit-scrollbar-thumb { background: rgba(90,58,30,0.25); border-radius: 4px; }
+
+    /* ── Weather system ───────────────────────────────────────────── */
+    .weatherPanel {
+      display: grid; gap: 10px; padding: 10px;
+      border: 1px solid rgba(43,74,111,0.22); border-radius: 14px;
+      background: rgba(220,232,248,0.35); margin-top: 6px;
+    }
+    .weatherHeader {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; flex-wrap: wrap;
+    }
+    .weatherTitle {
+      font-size: 12px; font-weight: 600; color: var(--ink);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .weatherTag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px; font-size: 11px;
+      font-weight: 600; letter-spacing: 0.3px;
+      border: 1px solid rgba(43,74,111,0.35);
+      background: rgba(220,232,248,0.65); color: #2B4A6F;
+    }
+    .weatherTag.phenomena {
+      border-color: rgba(100,50,140,0.4); color: #6B3490;
+      background: rgba(220,200,245,0.55);
+    }
+    .weatherTag.day   { border-color: rgba(196,154,58,0.45); color: #7A4F10; background: rgba(255,240,200,0.7); }
+    .weatherTag.night { border-color: rgba(60,70,120,0.35); color: #2B3560; background: rgba(200,210,240,0.6); }
+
+    .clockRow {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .clockDisplay {
+      font-family: var(--mono); font-size: 20px; color: #7A4F10;
+      min-width: 56px; text-align: center; font-weight: 700;
+    }
+    .clockLabel { font-size: 11px; color: var(--muted); }
+
+    .intensityBar {
+      display: flex; gap: 5px; align-items: center;
+    }
+    .intensityPip {
+      width: 22px; height: 10px; border-radius: 4px;
+      border: 1px solid rgba(74,144,196,0.3);
+      background: rgba(74,144,196,0.12); cursor: pointer; transition: all 0.15s;
+    }
+    .intensityPip.active {
+      background: rgba(74,144,196,0.7); border-color: rgba(74,144,196,0.8);
+      box-shadow: 0 0 6px rgba(74,144,196,0.4);
+    }
+    .intensityPip.active.sev3 { background: rgba(220,80,60,0.75); border-color: rgba(220,80,60,0.9); box-shadow: 0 0 6px rgba(220,80,60,0.4); }
+    .intensityPip.active.sev2 { background: rgba(201,162,39,0.75); border-color: rgba(201,162,39,0.9); box-shadow: 0 0 6px rgba(201,162,39,0.4); }
+
+    .weatherModLine {
+      display: flex; align-items: baseline; gap: 6px;
+      font-size: 11px; padding: 4px 8px; border-radius: 8px;
+      background: rgba(255,255,255,0.5); border: 1px solid rgba(74,55,37,0.12);
+    }
+    .weatherModLine .wSign { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+    .weatherModLine .wSign.plus  { color: var(--good); }
+    .weatherModLine .wSign.minus { color: var(--bad); }
+    .weatherModLine .wLabel { color: var(--muted); }
+
+    .phenomenaBanner {
+      padding: 8px 10px; border-radius: 12px;
+      border: 1px solid rgba(100,50,140,0.35);
+      background: rgba(220,200,245,0.55); color: #6B3490;
+      font-size: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .phenomenaBanner .pIcon { font-size: 16px; flex-shrink: 0; }
+
+    .autoToggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted); cursor: pointer; user-select: none;
+    }
+    .autoToggle input[type="checkbox"] { accent-color: #7A4F10; width: 13px; height: 13px; }
+
+    .weatherGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 600px) { .weatherGrid { grid-template-columns: 1fr; } }
+
+    /* ── Badge overrides — flat labels, not interactive-looking ───── */
+    .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+      background: rgba(90,58,30,0.10);
+      color: var(--muted); border: none; font-weight: 500;
+    }
+    .badge.att {
+      color: #7A3B3B; background: rgba(122,59,59,0.10);
+    }
+    .badge.def {
+      color: #2B4A6F; background: rgba(43,74,111,0.10);
+    }
+    .badge.gold {
+      color: #7A4F10; background: rgba(196,154,58,0.14);
+    }
+
+    /* ── Breakdown details wrapper ─────────────────────────────────── */
+    .breakdownDetails {
+      margin-top: 10px; padding: 8px 10px;
+      border: 1px dashed rgba(74,55,37,0.22); border-radius: 12px;
+      background: rgba(255,255,255,0.38);
+    }
+    .breakdownDetails > summary {
+      font-size: 12px; color: var(--muted); padding-bottom: 0;
+    }
+    .breakdownDetails[open] > summary { margin-bottom: 8px; }
+    .breakdownDetails .breakdown {
+      margin-top: 0; border: none; border-radius: 0; background: transparent; padding: 0;
+    }
+
+    /* ── Defeated army state ───────────────────────────────────────── */
+    .card.defeated .cardHead {
+      background: linear-gradient(180deg, rgba(122,59,59,0.15), transparent);
+      border-bottom-color: rgba(122,59,59,0.25);
+    }
+    .defeated-banner {
+      display: none;
+      margin: 4px 13px 0;
+      padding: 7px 11px;
+      background: rgba(122,59,59,0.08);
+      border: 1px solid rgba(122,59,59,0.28);
+      border-radius: 8px;
+      color: #7A3B3B;
+      font-size: 12px; font-weight: 600; line-height: 1.4;
+    }
+    .card.defeated .defeated-banner { display: block; }
+
+    /* ── Header / footer polish ────────────────────────────────────── */
+    header {
+      background: rgba(255,255,255,0.4);
+      border-radius: var(--radius);
+      border-bottom: 1px solid rgba(74,55,37,0.14);
+      margin-bottom: 14px;
+    }
+    footer {
+      color: var(--faint); background: rgba(255,255,255,0.35);
+      border-radius: var(--radius); border-top: 1px solid rgba(74,55,37,0.12);
+    }
+    footer code { font-family: var(--mono); color: var(--muted); }
+
+    /* ── label typography bump ─────────────────────────────────────── */
+    label { display: grid; gap: 5px; font-size: 13px; color: var(--muted); }
+
+    /* ── Empty state ───────────────────────────────────────────────── */
+    .empty { color: var(--muted); }
+
+    /* ── Intensity pips light-mode ─────────────────────────────────── */
+    .intensityPip {
+      background: rgba(43,74,111,0.10); border-color: rgba(43,74,111,0.25);
+    }
+    .intensityPip.active {
+      background: rgba(43,74,111,0.6); border-color: rgba(43,74,111,0.8);
+      box-shadow: 0 0 5px rgba(43,74,111,0.3);
+    }
+    .intensityPip.active.sev3 { background: rgba(122,59,59,0.75); border-color: rgba(122,59,59,0.9); box-shadow: 0 0 5px rgba(122,59,59,0.4); }
+    .intensityPip.active.sev2 { background: rgba(196,154,58,0.75); border-color: rgba(196,154,58,0.9); box-shadow: 0 0 5px rgba(196,154,58,0.4); }
+
+    .turnBtn {
+      appearance: none; cursor: pointer; user-select: none;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 14px; border-radius: 12px;
+      border: 1px solid rgba(43,74,111,0.35);
+      background: rgba(220,232,248,0.6);
+      color: #2B4A6F; font-size: 12px; font-family: var(--sans);
+      font-weight: 500; transition: all 0.15s; width: 100%;
+    }
+    .turnBtn:hover { background: rgba(200,218,242,0.8); border-color: rgba(43,74,111,0.6); }
+    .turnBtn:active { transform: translateY(1px); }
+    .turnBtn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
   </style>
 </head>
 <body>
@@ -468,11 +652,11 @@
       <div class="pill">Ruleset <code id="rulesetVersion"></code> &nbsp;•&nbsp; Local-only</div>
     </div>
     <nav aria-label="Primary navigation" id="mainNav">
-      <button class="tab active" data-tab="battle">Battle</button>
-      <button class="tab" data-tab="armies">Armies</button>
-      <button class="tab" data-tab="factions">Factions</button>
-      <button class="tab" data-tab="history">History</button>
-      <button class="tab" data-tab="settings">Settings</button>
+      <button class="tab active" data-tab="battle">⚔ Battle</button>
+      <button class="tab" data-tab="armies">⛨ Armies</button>
+      <button class="tab" data-tab="factions">⚑ Factions</button>
+      <button class="tab" data-tab="history">📜 History</button>
+      <button class="tab" data-tab="settings">⚙ Settings</button>
     </nav>
   </header>
 
@@ -496,6 +680,10 @@
               <option value="">— Load saved army —</option>
             </select>
             <button class="btn small" id="attLoadBtn" type="button">Load</button>
+          </div>
+
+          <div class="defeated-banner" id="attDefeatedBanner">
+            ☠ Army Defeated — Size is 0. Restore size or load a saved army to continue.
           </div>
 
           <hr class="divider" />
@@ -529,7 +717,10 @@
             </div>
           </div>
 
-          <div class="breakdown" id="attackerBreakdown">Enter values to see breakdown.</div>
+          <details class="breakdownDetails">
+            <summary>Dice math breakdown</summary>
+            <div class="breakdown" id="attackerBreakdown">Enter values to see breakdown.</div>
+          </details>
 
           <div class="controls" aria-label="Manual overrides">
             <div class="stepper">
@@ -594,9 +785,94 @@
             <div class="small">Configure both armies → review dice math → smash <strong>Battle</strong>. Defenders win ties.</div>
           </div>
 
-          <details>
+          <details id="conditionsDetails">
             <summary>Conditions &amp; Settings <span class="summaryRight" id="conditionsSummary">—</span></summary>
-            <div style="display:grid; gap:10px; margin-top:10px;">
+            <div style="display:grid; gap:12px; margin-top:10px;">
+
+              <!-- ── WEATHER PANEL ─────────────────────────────── -->
+              <div class="weatherPanel">
+                <div class="weatherHeader">
+                  <div class="weatherTitle">
+                    🌦 Weather &amp; Time
+                    <span id="weatherTagDisplay" class="weatherTag">CLEAR</span>
+                    <span id="todTagDisplay" class="weatherTag day">☀ Day</span>
+                  </div>
+                  <label class="autoToggle" title="Auto-advance weather on each Battle click">
+                    <input type="checkbox" id="weatherAutoAdvance" checked />
+                    Auto-advance
+                  </label>
+                </div>
+
+                <!-- Phenomena banner (hidden until triggered) -->
+                <div class="phenomenaBanner" id="phenomenaBanner" style="display:none;">
+                  <span class="pIcon">✨</span>
+                  <span id="phenomenaText">Strange Phenomenon: —</span>
+                </div>
+
+                <div class="weatherGrid">
+                  <label>Weather condition
+                    <select id="weatherTagSelect">
+                      <option value="CLEAR">☀ Clear</option>
+                      <option value="CLOUDY">⛅ Cloudy / Overcast</option>
+                      <option value="HEAVY_CLOUDS">☁ Heavy Clouds (no sun)</option>
+                      <option value="FOG">🌫 Fog / Dense Mist</option>
+                      <option value="RAIN">🌧 Rain / Drizzle</option>
+                      <option value="DOWNPOUR">⛈ Downpour / Heavy Rain</option>
+                      <option value="WIND">💨 High Winds / Gale</option>
+                      <option value="THUNDERSTORM">⚡ Thunderstorm</option>
+                      <option value="COLD">🥶 Freezing Cold</option>
+                      <option value="SNOW">❄ Snow</option>
+                      <option value="BLIZZARD">🌨 Blizzard / Whiteout</option>
+                      <option value="DRY">🏜 Dry / Arid</option>
+                      <option value="HEAT">🔥 Scorching Heat</option>
+                      <option value="SMOG">🌑 Smog / Ash Haze</option>
+                      <option value="PHENOMENA">✨ Strange Phenomena</option>
+                    </select>
+                  </label>
+                  <label>Phenomena subtype <span id="phenomenaSubtypeWrap">
+                    <select id="phenomenaSubtype" disabled>
+                      <option value="ASHFALL">Ashfall</option>
+                      <option value="SOLAR_ECLIPSE">Solar Eclipse</option>
+                      <option value="STRANGE_LIGHTS">Strange Lights</option>
+                      <option value="METEOR_SHOWER">Meteor Shower</option>
+                      <option value="MALEVOLENT_STORM">Malevolent Storm</option>
+                      <option value="WILD_MAGIC_STORM">Wild Magic Storm</option>
+                      <option value="MAGNETIC_STORM">Magnetic Storm</option>
+                      <option value="ELEMENTAL_DISTURBANCE">Elemental Disturbance</option>
+                    </select>
+                  </span></label>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                  <div style="display:grid; gap:4px;">
+                    <div style="font-size:11px; color:var(--muted);">Intensity</div>
+                    <div class="intensityBar" id="intensityBar">
+                      <div class="intensityPip" data-i="1" title="Low (±1 die)"></div>
+                      <div class="intensityPip" data-i="2" title="Strong (±2 dice)"></div>
+                      <div class="intensityPip" data-i="3" title="Extreme (±3 dice)"></div>
+                    </div>
+                    <div style="font-size:10px; color:var(--faint);" id="intensityLabel">Low (±1 die)</div>
+                  </div>
+                  <div style="display:grid; gap:4px; flex:1; min-width:130px;">
+                    <div style="font-size:11px; color:var(--muted);">Time of day</div>
+                    <div class="clockRow">
+                      <button class="btn small" id="clockMinus" type="button">−</button>
+                      <div class="clockDisplay" id="clockDisplay">12:00</div>
+                      <button class="btn small" id="clockPlus" type="button">+</button>
+                    </div>
+                    <div class="clockLabel" id="clockLabel">Day (06:00–17:59)</div>
+                  </div>
+                </div>
+
+                <div id="weatherModDisplay" style="display:grid; gap:5px;"></div>
+
+                <label class="autoToggle">
+                  <input type="checkbox" id="phenomenaChanceEnabled" checked />
+                  Enable Strange Phenomena chance on Battle/Turn
+                </label>
+              </div>
+
+              <!-- ── BATTLE SETTINGS ─────────────────────────── -->
               <label>Defender has structures?
                 <select id="defenderStructures">
                   <option value="no">No (open field)</option>
@@ -637,6 +913,10 @@
             <button class="btn" id="prefillExample" type="button">Load Example</button>
             <button class="btn ghost" id="resetBtn" type="button">Reset</button>
           </div>
+
+          <button class="turnBtn" id="turnBtn" type="button">
+            ⏩ Advance Turn <span style="font-size:10px; opacity:0.65;" id="turnSeasonLabel">(Spring · Turn 1)</span>
+          </button>
 
           <div class="alert" id="saveArmyToast" style="display:none;"></div>
 
@@ -695,6 +975,10 @@
             <button class="btn small" id="defLoadBtn" type="button">Load</button>
           </div>
 
+          <div class="defeated-banner" id="defDefeatedBanner">
+            ☠ Army Defeated — Size is 0. Restore size or load a saved army to continue.
+          </div>
+
           <hr class="divider" />
 
           <div class="row single">
@@ -726,7 +1010,10 @@
             </div>
           </div>
 
-          <div class="breakdown" id="defenderBreakdown">Enter values to see breakdown.</div>
+          <details class="breakdownDetails">
+            <summary>Dice math breakdown</summary>
+            <div class="breakdown" id="defenderBreakdown">Enter values to see breakdown.</div>
+          </details>
 
           <div class="controls" aria-label="Manual overrides">
             <div class="stepper">
@@ -828,7 +1115,65 @@
     <div style="display:grid; gap:16px; max-width:520px;">
 
       <div class="card">
-        <div class="cardHead"><div class="sideTitle"><h2>Export / Import</h2></div></div>
+        <div class="cardHead"><div class="sideTitle"><h2>Weather &amp; Season</h2></div></div>
+        <div class="content" style="display:grid; gap:12px;">
+          <p style="font-size:12px; color:var(--muted); margin:0;">Advanced weather configuration. These settings affect random weather generation.</p>
+          <div class="row">
+            <label>Season
+              <select id="settingsSeason">
+                <option value="spring">Spring</option>
+                <option value="summer">Summer</option>
+                <option value="autumn">Autumn</option>
+                <option value="winter">Winter</option>
+              </select>
+            </label>
+            <label>Climate
+              <select id="settingsClimate">
+                <option value="temperate">Temperate</option>
+                <option value="arid">Arid / Desert</option>
+                <option value="polar">Polar / Arctic</option>
+                <option value="tropical">Tropical</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Turns per season
+              <input id="settingsTurnsPerSeason" type="number" min="1" max="20" value="6" />
+              <div class="help">After this many Turn clicks, season advances.</div>
+            </label>
+            <label>Current turn
+              <input id="settingsCurrentTurn" type="number" min="1" value="1" />
+            </label>
+          </div>
+          <div class="row">
+            <label>Day starts (hour)
+              <input id="settingsDayStart" type="number" min="0" max="23" value="6" />
+            </label>
+            <label>Night starts (hour)
+              <input id="settingsNightStart" type="number" min="0" max="23" value="18" />
+            </label>
+          </div>
+          <div>
+            <label class="autoToggle" style="margin-bottom:6px; display:flex;">
+              <input type="checkbox" id="settingsLockSeason" />
+              &nbsp;Lock season (prevent auto-advance)
+            </label>
+            <label class="autoToggle" style="display:flex;">
+              <input type="checkbox" id="settingsLockWeather" />
+              &nbsp;Lock weather (manual control only — disable all auto-randomization)
+            </label>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">Phenomena base chance per Battle (%)</div>
+            <input id="settingsPhenomenaBase" type="number" min="0" max="25" value="2" style="width:80px;" />
+            <div class="help">Max is clamped to 25% even with class modifiers.</div>
+          </div>
+          <button class="btn primary small" id="saveWeatherSettings" type="button">Save Settings</button>
+          <div class="alert" id="weatherSettingsSaved" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="content">
           <p style="font-size:12px; color:var(--muted); margin:0 0 12px;">Export your full War Table state (armies + factions + history) as a JSON file. Import to restore or merge.</p>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -851,7 +1196,7 @@
       <div class="card">
         <div class="cardHead"><div class="sideTitle"><h2>About</h2></div></div>
         <div class="content" style="font-size:12px; color:var(--muted); line-height:1.7;">
-          <div>Version: <span class="mono">Phase 2 (Slices 2.1–2.7)</span></div>
+          <div>Version: <span class="mono">Phase 3.1 (Weather System)</span></div>
           <div>Ruleset: <span class="mono" id="settingsRulesetVer"></span></div>
           <div>Dice caps: <span class="mono">Att 10 / Def 8</span></div>
           <div>Storage: <span class="mono">localStorage (warTableState)</span></div>
@@ -863,7 +1208,7 @@
 
   <footer aria-label="Footer">
     <div>Ruleset: <code id="rulesFooter"></code> &nbsp;•&nbsp; Caps: Att 10 / Def 8 &nbsp;•&nbsp; Modifiers: +3/+1/−1/−3</div>
-    <div>War Table v2 &nbsp;•&nbsp; Local-only &nbsp;•&nbsp; No tracking</div>
+    <div>War Table v3 &nbsp;•&nbsp; Local-only &nbsp;•&nbsp; No tracking</div>
   </footer>
 </div><!-- /app -->
 
@@ -1544,9 +1889,9 @@ const RULES =
         "deadly": "Pikes, Undead,",
         "deadlyDoctrines": "Heavy-Artillery, Armor-Piercing",
         "preferredWeather": "",
-        "undesiredWeather": "Swamp, Quicksand, Deep Mud",
+        "undesiredWeather": "Downpour, Thunderstorm, High Winds",
         "preferredTerrain": "Mountain Passes, Gates, Bridge Crossings, Urban Streets",
-        "undesiredTerrain": ""
+        "undesiredTerrain": "Swamp, Quicksand, Deep Mud"
       }
     },
     {
@@ -1583,7 +1928,7 @@ const RULES =
         "deadly": "Undead",
         "deadlyDoctrines": "Heavy-Artillery, Anti-Magic",
         "preferredWeather": "Clear, Dry Conditions",
-        "undesiredWeather": "Magnetic Storms, EMP-like arcane interference",
+        "undesiredWeather": "Thunderstorm, Lightning, Magnetic Storms, EMP-like arcane interference",
         "preferredTerrain": "",
         "undesiredTerrain": ""
       }
@@ -1946,6 +2291,399 @@ const RULES =
 };
 
 // ═══════════════════════════════════════════════════════════════
+// WEATHER ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+// ── Canonical tag → label/emoji map ──────────────────────────
+const WEATHER_META = {
+  CLEAR:       { label:"Clear",            emoji:"☀",  group:"clear" },
+  CLOUDY:      { label:"Cloudy",           emoji:"⛅",  group:"cloud" },
+  HEAVY_CLOUDS:{ label:"Heavy Clouds",     emoji:"☁",  group:"cloud" },
+  FOG:         { label:"Fog/Mist",         emoji:"🌫",  group:"fog"   },
+  RAIN:        { label:"Rain",             emoji:"🌧",  group:"rain"  },
+  DOWNPOUR:    { label:"Downpour",         emoji:"⛈",  group:"rain"  },
+  WIND:        { label:"High Winds",       emoji:"💨",  group:"wind"  },
+  THUNDERSTORM:{ label:"Thunderstorm",     emoji:"⚡",  group:"storm" },
+  COLD:        { label:"Freezing Cold",    emoji:"🥶",  group:"cold"  },
+  SNOW:        { label:"Snow",             emoji:"❄",  group:"cold"  },
+  BLIZZARD:    { label:"Blizzard",         emoji:"🌨",  group:"cold"  },
+  DRY:         { label:"Dry/Arid",         emoji:"🏜",  group:"dry"   },
+  HEAT:        { label:"Scorching Heat",   emoji:"🔥",  group:"dry"   },
+  SMOG:        { label:"Smog/Ash Haze",    emoji:"🌑",  group:"smog"  },
+  PHENOMENA:   { label:"Phenomena",        emoji:"✨",  group:"weird" }
+};
+
+const PHENOMENA_META = {
+  ASHFALL:             { label:"Ashfall",               emoji:"🌋" },
+  SOLAR_ECLIPSE:       { label:"Solar Eclipse",         emoji:"🌑" },
+  STRANGE_LIGHTS:      { label:"Strange Lights",        emoji:"🌠" },
+  METEOR_SHOWER:       { label:"Meteor Shower",         emoji:"☄"  },
+  MALEVOLENT_STORM:    { label:"Malevolent Storm",      emoji:"⚡" },
+  WILD_MAGIC_STORM:    { label:"Wild Magic Storm",      emoji:"🔮" },
+  MAGNETIC_STORM:      { label:"Magnetic Storm",        emoji:"🧲" },
+  ELEMENTAL_DISTURBANCE:{ label:"Elemental Disturbance",emoji:"🌀" }
+};
+
+// ── Raw string → canonical tag(s) normalizer ─────────────────
+const RAW_TO_TAGS = [
+  [/\bphenomen/i,                "PHENOMENA"],
+  [/\bmagnetic storm/i,          "PHENOMENA"],  // Warforged special
+  [/\bemp.like/i,                "PHENOMENA"],
+  [/\belemental disturbance/i,   "PHENOMENA"],
+  [/\bblizzard|whiteout|snowstorm/i, "BLIZZARD"],
+  [/\bsnow/i,                    "SNOW"],
+  [/\bfreezing|extreme cold|biting cold/i, "COLD"],
+  [/\bscorching heat|blistering heat/i,    "HEAT"],
+  [/\bsunny day/i,               "HEAT"],   // "Sunny Day" → maps to HEAT/CLEAR for fire classes
+  [/\bsmog|ash haze|smoke haze|soot/i,     "SMOG"],
+  [/\bdownpour|heavy rain|torrential/i,    "DOWNPOUR"],
+  [/\brain|drizzle|shower/i,     "RAIN"],
+  [/\bthunderstorm|lightning storm|electrical storm|lightning/i, "THUNDERSTORM"],
+  [/\bgale wind|high wind|strong wind/i,   "WIND"],
+  [/\bheavy cloud|no sky|sky is blocked|outdoor light/i, "HEAVY_CLOUDS"],
+  [/\bfog|foggy|dense mist|heavy mist|moist air|ground haze/i, "FOG"],
+  [/\bcloudy|overcast|heavy sky|muted sun/i, "CLOUDY"],
+  [/\bdry condition|dust.*thirst|arid|desert dryness/i, "DRY"],
+  [/\bdry/i,                     "DRY"],
+  [/\bclear sky|clear skies|clear bright|fair weather|clear$/i, "CLEAR"],
+  [/\bclear/i,                   "CLEAR"],
+  [/\bcold|snow/i,               "COLD"],   // fallback cold catch
+  [/\bstorm/i,                   "THUNDERSTORM"], // generic storm fallback
+  [/\bwind/i,                    "WIND"],
+];
+
+// Returns array of canonical tags from a raw weather string
+function normalizeWeatherString(raw) {
+  if (!raw || !raw.trim()) return [];
+  const tags = new Set();
+  for (const part of raw.split(/[,;\/]+/)) {
+    const p = part.trim();
+    if (!p) continue;
+    let matched = false;
+    for (const [re, tag] of RAW_TO_TAGS) {
+      if (re.test(p)) { tags.add(tag); matched = true; break; }
+    }
+    // "Nighttime" and "Daytime" are TOD, not weather tags — skip
+  }
+  return Array.from(tags);
+}
+
+// Build per-class weather tag arrays, memoized on RULES load
+function buildWeatherTagIndex() {
+  for (const cls of RULES.armyClasses) {
+    const raw = cls.raw || {};
+    cls._preferredTags  = normalizeWeatherString(raw.preferredWeather  || "");
+    cls._undesiredTags  = normalizeWeatherString(raw.undesiredWeather   || "");
+  }
+}
+
+// ── Weather state ─────────────────────────────────────────────
+const DEFAULT_WEATHER = {
+  tag:        "CLEAR",
+  intensity:  1,         // 1=low, 2=strong, 3=extreme
+  phenomena:  null,      // subtype key when tag=PHENOMENA
+  source:     "manual",  // "manual" | "battle-step" | "turn-random"
+  hour:       12,        // 0-23
+  // Settings
+  autoAdvance:      true,
+  phenomenaEnabled: true,
+  season:     "spring",
+  climate:    "temperate",
+  turnsPerSeason: 6,
+  currentTurn: 1,
+  lockSeason:  false,
+  lockWeather: false,
+  dayStart:   6,
+  nightStart: 18,
+  phenomenaBaseChance: 2
+};
+
+// Merge saved weather into defaults (upgrade-safe)
+function loadWeatherState() {
+  const saved = loadPersisted().weather || {};
+  return Object.assign({}, DEFAULT_WEATHER, saved);
+}
+
+// ── Derived helpers ───────────────────────────────────────────
+function isDay(ws) {
+  return ws.hour >= ws.dayStart && ws.hour < ws.nightStart;
+}
+
+// "Sunlight" is distinct from "Day" — heavy clouds / fog / eclipse block it
+function sunlightPresent(ws) {
+  if (!isDay(ws)) return false;
+  const blockers = ["HEAVY_CLOUDS", "FOG", "SMOG", "BLIZZARD"];
+  if (blockers.includes(ws.tag)) return false;
+  if (ws.tag === "PHENOMENA" && ws.phenomena === "SOLAR_ECLIPSE") return false;
+  return true;
+}
+
+function weatherLabel(ws) {
+  if (ws.tag === "PHENOMENA" && ws.phenomena) {
+    const pm = PHENOMENA_META[ws.phenomena];
+    return pm ? `${pm.emoji} ${pm.label}` : `✨ ${ws.phenomena}`;
+  }
+  const wm = WEATHER_META[ws.tag];
+  return wm ? `${wm.emoji} ${wm.label}` : ws.tag;
+}
+
+function intensityLabel(i) {
+  return i === 1 ? "Low (±1 die)" : i === 2 ? "Strong (±2 dice)" : "Extreme (±3 dice)";
+}
+
+function seasonLabel(ws) {
+  return ws.season.charAt(0).toUpperCase() + ws.season.slice(1);
+}
+
+// ── Class-specific weather specials ──────────────────────────
+// Returns { strPenalty, dicePenalty, diceBonus, lines[] } for a side
+function applyClassWeatherSpecials(cls, ws) {
+  const result = { strPenalty: 0, diceBonus: 0, lines: [] };
+  if (!cls) return result;
+  const name = cls.name;
+
+  // Vampires: −50 STR if sunlight present (HEAT or CLEAR in day)
+  if (name === "Vampires") {
+    if (sunlightPresent(ws) && (ws.tag === "HEAT" || ws.tag === "CLEAR")) {
+      result.strPenalty += 50;
+      result.lines.push(`☀ Sunlight penalty: <b>−50 STR</b> (Vampires cannot fight in daylight)`);
+    }
+    // Night bonus: resistance to darkness
+    if (!isDay(ws)) {
+      result.diceBonus += 1;
+      result.lines.push(`🌙 Night bonus: <b>+1 die</b> (Darkness resistance)`);
+    }
+  }
+
+  // Snow Elves: +1d6 in Snow/Blizzard/Cold weather (their force-weather bonus modeled as preferred)
+  if (name === "Snow Elves") {
+    if (["SNOW","BLIZZARD","COLD"].includes(ws.tag)) {
+      result.diceBonus += 1;
+      result.lines.push(`❄ Snow domain: <b>+1 die</b> (Snow Elves rule their element)`);
+    }
+    if (ws.tag === "HEAT" && sunlightPresent(ws)) {
+      result.strPenalty += 20;
+      result.lines.push(`🔥 Heat penalty: <b>−20 STR</b> (Snow Elves wither in scorching heat)`);
+    }
+  }
+
+  // Fire Cult: +1d6 in HEAT/Clear-sunny, penalty in Cold/Snow
+  if (name === "Fire Cult") {
+    if (ws.tag === "HEAT" || (ws.tag === "CLEAR" && sunlightPresent(ws))) {
+      result.diceBonus += 1;
+      result.lines.push(`🔥 Fire domain: <b>+1 die</b> (Fire Cult thrive in heat)`);
+    }
+    if (["COLD","SNOW","BLIZZARD"].includes(ws.tag)) {
+      result.strPenalty += 20;
+      result.lines.push(`❄ Cold weakness: <b>−20 STR</b> (Fire Cult falter in extreme cold)`);
+    }
+  }
+
+  // Drow: −50 STR if sunlight present (mirror of Vampires "Sun (Daytime)" deadly)
+  if (name === "Drow (Underdark)") {
+    if (sunlightPresent(ws) && (ws.tag === "CLEAR" || ws.tag === "HEAT")) {
+      result.strPenalty += 50;
+      result.lines.push(`☀ Sunlight weakness: <b>−50 STR</b> (Drow are underdark creatures)`);
+    }
+    if (!isDay(ws)) {
+      result.diceBonus += 1;
+      result.lines.push(`🌙 Night domain: <b>+1 die</b>`);
+    }
+  }
+
+  // Warforged: −2 dice in THUNDERSTORM/MAGNETIC_STORM/ELEMENTAL_DISTURBANCE (EMP effects)
+  if (name === "Warforged (Artificial Constructs)") {
+    if (ws.tag === "THUNDERSTORM") {
+      result.diceBonus -= 2;
+      result.lines.push(`⚡ Lightning vulnerability: <b>−2 dice</b> (electrical damage to constructs)`);
+    }
+    if (ws.tag === "PHENOMENA" && ["MAGNETIC_STORM","ELEMENTAL_DISTURBANCE"].includes(ws.phenomena)) {
+      result.diceBonus -= 2;
+      result.lines.push(`🧲 ${PHENOMENA_META[ws.phenomena]?.label}: <b>−2 dice</b> (arcane interference shuts down constructs)`);
+    }
+  }
+
+  // Forest Fey: suffer in Blizzard/Snow (Snow Elves force-weather would harm them)
+  if (name === "Forest Fey") {
+    if (["SNOW","BLIZZARD","COLD"].includes(ws.tag)) {
+      result.diceBonus -= 1;
+      result.lines.push(`❄ Winter blight: <b>−1 die</b> (Forest Fey suffer in cold)`);
+    }
+  }
+
+  // Treants: suffer in snow/cold (matches their undesiredWeather)
+  if (name === "Treants") {
+    if (["SNOW","BLIZZARD","COLD"].includes(ws.tag)) {
+      result.diceBonus -= 1;
+      result.lines.push(`❄ Frozen roots: <b>−1 die</b> (Treants suffer in snow)`);
+    }
+  }
+
+  // Aerial Cavalry: suffer in BLIZZARD/DOWNPOUR/WIND
+  if (name === "Aerial Cavalry") {
+    if (["BLIZZARD","WIND"].includes(ws.tag)) {
+      result.diceBonus -= 1;
+      result.lines.push(`💨 Air hazard: <b>−1 die</b> (Aerial Cavalry grounded by extreme weather)`);
+    }
+  }
+
+  // Mutants: bonus in PHENOMENA/THUNDERSTORM (prefer elemental disturbance)
+  if (name === "Mutants") {
+    if (ws.tag === "PHENOMENA" || ws.tag === "THUNDERSTORM") {
+      result.diceBonus += 1;
+      result.lines.push(`⚡ Elemental chaos: <b>+1 die</b> (Mutants thrive in wild conditions)`);
+    }
+    if (["COLD","BLIZZARD"].includes(ws.tag)) {
+      result.diceBonus -= 1;
+      result.lines.push(`🥶 Cold inhibition: <b>−1 die</b> (Extreme cold slows mutant biology)`);
+    }
+  }
+
+  return result;
+}
+
+// ── Generic preferred/undesired modifier ────────────────────
+function weatherPreferredMod(cls, ws) {
+  if (!cls) return { dice: 0, lines: [] };
+  const tag = ws.tag === "PHENOMENA" && ws.phenomena ? ws.tag : ws.tag;
+  const intensity = ws.intensity;
+  const preferred = cls._preferredTags || [];
+  const undesired = cls._undesiredTags || [];
+  let dice = 0; const lines = [];
+
+  // Also check phenomena sub-mapping
+  const checkTags = [tag];
+  if (ws.tag === "PHENOMENA" && ws.phenomena) {
+    // MALEVOLENT_STORM implies THUNDERSTORM+WIND; MAGNETIC_STORM implies PHENOMENA
+    if (ws.phenomena === "MALEVOLENT_STORM") checkTags.push("THUNDERSTORM","WIND");
+    if (ws.phenomena === "ASHFALL") checkTags.push("HEAVY_CLOUDS","SMOG");
+  }
+
+  for (const t of checkTags) {
+    if (preferred.includes(t)) {
+      dice += intensity;
+      lines.push(`🌦 Preferred weather (${WEATHER_META[t]?.label||t}): <b>+${intensity}</b> ${intensity===1?"die":"dice"}`);
+      break;
+    }
+    if (undesired.includes(t)) {
+      dice -= intensity;
+      lines.push(`🌦 Undesired weather (${WEATHER_META[t]?.label||t}): <b>−${intensity}</b> ${intensity===1?"die":"dice"}`);
+      break;
+    }
+  }
+  return { dice, lines };
+}
+
+// ── Semi-random weather transitions ──────────────────────────
+// Defines weather as a graph; nodes connect to plausible neighbors
+const WEATHER_GRAPH = {
+  CLEAR:        ["CLEAR","CLOUDY","DRY"],
+  CLOUDY:       ["CLEAR","CLOUDY","HEAVY_CLOUDS","FOG","RAIN"],
+  HEAVY_CLOUDS: ["CLOUDY","HEAVY_CLOUDS","FOG","RAIN","SMOG"],
+  FOG:          ["CLOUDY","HEAVY_CLOUDS","FOG","RAIN"],
+  RAIN:         ["CLOUDY","RAIN","DOWNPOUR","FOG"],
+  DOWNPOUR:     ["RAIN","DOWNPOUR","THUNDERSTORM"],
+  WIND:         ["CLEAR","CLOUDY","WIND","DOWNPOUR"],
+  THUNDERSTORM: ["DOWNPOUR","THUNDERSTORM","WIND","HEAVY_CLOUDS"],
+  COLD:         ["CLOUDY","COLD","SNOW","FOG"],
+  SNOW:         ["COLD","SNOW","BLIZZARD"],
+  BLIZZARD:     ["SNOW","BLIZZARD","COLD"],
+  DRY:          ["CLEAR","DRY","HEAT","WIND"],
+  HEAT:         ["CLEAR","DRY","HEAT"],
+  SMOG:         ["HEAVY_CLOUDS","FOG","SMOG"],
+  PHENOMENA:    ["HEAVY_CLOUDS","THUNDERSTORM","CLOUDY"] // decay back to normal
+};
+
+// Season → weighted weather pools (climate modifies weights)
+const SEASON_POOLS = {
+  spring:  ["CLEAR","CLEAR","CLOUDY","CLOUDY","RAIN","RAIN","FOG","WIND","DOWNPOUR"],
+  summer:  ["CLEAR","CLEAR","CLEAR","DRY","HEAT","HEAT","CLOUDY","THUNDERSTORM","WIND"],
+  autumn:  ["CLOUDY","CLOUDY","RAIN","RAIN","DOWNPOUR","FOG","WIND","COLD","CLEAR"],
+  winter:  ["COLD","COLD","SNOW","SNOW","BLIZZARD","FOG","HEAVY_CLOUDS","CLOUDY","COLD"]
+};
+
+const CLIMATE_OVERRIDES = {
+  arid:     { replace: [["RAIN","DRY"],["DOWNPOUR","HEAT"],["SNOW","DRY"],["BLIZZARD","COLD"],["FOG","DRY"]] },
+  polar:    { replace: [["HEAT","COLD"],["DRY","COLD"],["CLEAR","SNOW"],["RAIN","SNOW"]] },
+  tropical: { replace: [["COLD","RAIN"],["SNOW","DOWNPOUR"],["BLIZZARD","THUNDERSTORM"],["DRY","RAIN"]] },
+  temperate:{ replace: [] }
+};
+
+function applyClimate(pool, climate) {
+  const ov = CLIMATE_OVERRIDES[climate] || CLIMATE_OVERRIDES.temperate;
+  return pool.map(t => {
+    for (const [from, to] of ov.replace) { if (t === from) return to; }
+    return t;
+  });
+}
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Battle-step: move one step along the graph from current tag
+function advanceWeatherBattleStep(ws) {
+  const neighbors = WEATHER_GRAPH[ws.tag] || ["CLEAR"];
+  return pickRandom(neighbors);
+}
+
+// Turn-random: fully random from season pool (climate-adjusted)
+function randomWeatherForSeason(ws) {
+  const raw = SEASON_POOLS[ws.season] || SEASON_POOLS.spring;
+  const pool = applyClimate(raw, ws.climate);
+  return pickRandom(pool);
+}
+
+// Random hour for a turn (season-influenced: summer → later day; winter → less day)
+function randomHourForSeason(ws) {
+  const pools = {
+    spring: [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],
+    summer: [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22],
+    autumn: [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+    winter: [7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+  };
+  return pickRandom(pools[ws.season] || pools.spring);
+}
+
+// ── Phenomena chance system ───────────────────────────────────
+const PHENOMENA_CLASS_BOOST = {
+  "Mages": 8, "Mutants": 6,
+  "Warforged (Artificial Constructs)": 6, "Fire Cult": 6,
+  "Forest Fey": 4, "Artemis": 4
+};
+
+function calcPhenomenaChance(ws, attClassName, defClassName) {
+  let chance = ws.phenomenaBaseChance || 2;
+  for (const name of [attClassName, defClassName]) {
+    if (name && PHENOMENA_CLASS_BOOST[name]) chance += PHENOMENA_CLASS_BOOST[name];
+  }
+  return Math.min(chance, 25);
+}
+
+function rollPhenomena(ws, attClassName, defClassName) {
+  const chance = calcPhenomenaChance(ws, attClassName, defClassName);
+  return Math.random() * 100 < chance;
+}
+
+function pickRandomPhenomena() {
+  const keys = Object.keys(PHENOMENA_META);
+  return keys[Math.floor(Math.random() * keys.length)];
+}
+
+// ── Advance season ────────────────────────────────────────────
+const SEASONS_ORDER = ["spring","summer","autumn","winter"];
+function advanceSeason(ws) {
+  if (ws.lockSeason) return ws.season;
+  const idx = SEASONS_ORDER.indexOf(ws.season);
+  return SEASONS_ORDER[(idx + 1) % 4];
+}
+
+// ── Weather state → update persistence ───────────────────────
+function persistWeather(ws) {
+  const saved = loadPersisted();
+  saved.weather = ws;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
 // UTILITY
 // ═══════════════════════════════════════════════════════════════
 const $ = (id) => document.getElementById(id);
@@ -1980,7 +2718,7 @@ const STORAGE_KEY = "warTableState";
 const SCHEMA_VERSION = 3;
 
 function emptyState() {
-  return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [] };
+  return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [], weather: Object.assign({}, DEFAULT_WEATHER) };
 }
 
 function loadPersisted() {
@@ -1988,13 +2726,14 @@ function loadPersisted() {
   if (!raw) return emptyState();
   const obj = safeJsonParse(raw);
   if (!obj || typeof obj !== "object") return emptyState();
-  // migrate v1/v2 → v3
+  // migrate v1/v2/v3 → v4
   return {
     schemaVersion: SCHEMA_VERSION,
     updatedAt: obj.updatedAt || nowIso(),
     armies: Array.isArray(obj.armies) ? obj.armies : [],
     factions: Array.isArray(obj.factions) ? obj.factions : [],
-    battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : []
+    battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : [],
+    weather: obj.weather ? Object.assign({}, DEFAULT_WEATHER, obj.weather) : Object.assign({}, DEFAULT_WEATHER)
   };
 }
 
@@ -2005,7 +2744,8 @@ function persist(saved) {
       updatedAt: nowIso(),
       armies: saved.armies || [],
       factions: saved.factions || [],
-      battleHistory: saved.battleHistory || []
+      battleHistory: saved.battleHistory || [],
+      weather: saved.weather || Object.assign({}, DEFAULT_WEATHER)
     }));
   } catch (e) { console.warn("War Table: localStorage write failed", e); }
 }
@@ -2128,13 +2868,21 @@ function computePool(sideKey, st) {
   const roleCap = sideKey === "attacker" ? RULES.diceCaps.attacker : RULES.diceCaps.defender;
   const cls = INDEX.byId.get(self.classId);
   const oppCls = INDEX.byId.get(opp.classId);
-  const size = Math.max(0, self.size ?? 0);
-  const str  = Math.max(0, self.str ?? 0);
+  const ws = st.weather || DEFAULT_WEATHER;
+
+  // Apply STR penalties from class weather specials BEFORE dice calc
+  const classSpecials = applyClassWeatherSpecials(cls, ws);
+  const rawSize = Math.max(0, self.size ?? 0);
+  const rawStr  = Math.max(0, self.str ?? 0);
+  const size = rawSize;
+  const str  = Math.max(0, rawStr - classSpecials.strPenalty);
+
   const sizeDice = Math.floor(size / RULES.sizePerDie);
   const strDice  = Math.floor(str / RULES.strPerDie);
   const base = sizeDice + strDice;
   const mu = matchupMod(cls, oppCls);
-  const preCap = base + mu.total;
+  const weatherMod = weatherPreferredMod(cls, ws);
+  const preCap = base + mu.total + weatherMod.dice + classSpecials.diceBonus;
   const capped = clamp(preCap, 0, roleCap);
   const allowOver = st.settings.allowOverCap;
   let afterManual = capped + (self.manualDiceDelta || 0);
@@ -2146,11 +2894,21 @@ function computePool(sideKey, st) {
   diceSidesList = applyMutantMix(cls?.name, diceSidesList);
 
   const lines = [];
+  if (classSpecials.strPenalty > 0) {
+    lines.push(`<div style="color:var(--bad);"><b>STR Penalty</b>: −${classSpecials.strPenalty} → effective STR <code>${str}</code></div>`);
+  }
   lines.push(`<div><b>Base</b>: Size <code>${sizeDice}</code> (⌊${size}/50⌋) + STR <code>${strDice}</code> (⌊${str}/10⌋) = <code>${base}</code></div>`);
   if (mu.lines.length) {
     lines.push(`<div><b>Matchup</b>:</div><div style="margin-left:10px;">${mu.lines.map(l=>`• ${l}`).join("<br>")}</div>`);
   } else {
     lines.push(`<div><b>Matchup</b>: <span style="color:var(--faint)">No listed modifiers.</span></div>`);
+  }
+  // Weather lines
+  if (weatherMod.lines.length) {
+    lines.push(`<div><b>Weather</b>:</div><div style="margin-left:10px;">${weatherMod.lines.map(l=>`• ${l}`).join("<br>")}</div>`);
+  }
+  if (classSpecials.lines.length) {
+    lines.push(`<div><b>Class specials</b>:</div><div style="margin-left:10px;">${classSpecials.lines.map(l=>`• ${l}`).join("<br>")}</div>`);
   }
   lines.push(`<div style="margin-top:5px;"><b>Pre-cap</b>: <code>${preCap}</code> → Cap (${roleCap}): <code>${capped}</code></div>`);
   if (self.manualDiceDelta) {
@@ -2177,11 +2935,14 @@ function computePool(sideKey, st) {
 // ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
+buildWeatherTagIndex(); // normalize all raw weather strings to canonical tags
+
 const state = {
   attacker: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
   defender: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
   conditions: { defenderHasStructures: false },
   settings: { resolutionMode: "risk", quickLossPreset: "standard", allowOverCap: false },
+  weather: loadWeatherState(),
   lastResult: null,
   saved: loadPersisted(),
   _computed: {}
@@ -2301,6 +3062,8 @@ function validateReady(attComp) {
   if (toInt($("defenderStr").value)===null)  issues.push("Defender STR is required.");
   if (!state.attacker.classId) issues.push("Attacker Army Class is required.");
   if (!state.defender.classId) issues.push("Defender Army Class is required.");
+  if (toInt($("attackerSize").value) === 0) issues.push("Attacker is DEFEATED (Size = 0). Cannot battle.");
+  if (toInt($("defenderSize").value) === 0) issues.push("Defender is DEFEATED (Size = 0). Cannot battle.");
   if (state.settings.resolutionMode==="risk" && attComp.finalCount>0 && attComp.finalCount<5)
     issues.push("Attacker pool <5 dice — cannot initiate attack (per rules).");
   return issues;
@@ -2420,7 +3183,10 @@ function showToast(html, kind) {
 }
 
 function renderResult(result, attRoll, defRoll) {
-  $("resultArea").style.display = "block";
+  const ra = $("resultArea");
+  ra.style.display = "block";
+  ra.classList.remove("att-wins", "def-wins");
+  ra.classList.add(result.winner === "attacker" ? "att-wins" : "def-wins");
   $("resultHeadline").textContent = result.winner==="attacker" ? "⚔ Attacker wins" : "🛡 Defender holds";
   $("resultSummary").innerHTML =
     `${result.summary}<br><b>Updated Size</b> — Attacker: <span class="mono">${result.newAtt}</span> (−${result.attLoss}), Defender: <span class="mono">${result.newDef}</span> (−${result.defLoss}).`;
@@ -2468,7 +3234,12 @@ function render() {
   const defCommit = getCommitCount("defender",def);
   $("attackerCommitSummary").textContent = state.attacker.autoCommit?`auto: ${attCommit}`:`manual: ${attCommit}`;
   $("defenderCommitSummary").textContent = state.defender.autoCommit?`auto: ${defCommit}`:`manual: ${defCommit}`;
-  $("conditionsSummary").textContent = state.conditions.defenderHasStructures?"structures: yes":"structures: no";
+
+  const ws = state.weather;
+  const wl = weatherLabel(ws);
+  const todStr = isDay(ws) ? "☀ Day" : "🌙 Night";
+  $("conditionsSummary").textContent = `${wl} · Int ${ws.intensity} · ${todStr}${state.conditions.defenderHasStructures?" · structures":""}`;
+  renderWeather();
 
   const issues = validateReady(att);
   if (issues.length) {
@@ -2479,6 +3250,98 @@ function render() {
     $("validationMsg").style.display="none";
     $("battleBtn").disabled=false;
   }
+
+  // Defeated army visual state
+  const attCard = document.querySelector('[aria-label="Attacker panel"]');
+  const defCard = document.querySelector('[aria-label="Defender panel"]');
+  const attSize = toInt($("attackerSize").value);
+  const defSize = toInt($("defenderSize").value);
+  if (attCard) attCard.classList.toggle("defeated", attSize === 0);
+  if (defCard) defCard.classList.toggle("defeated", defSize === 0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — WEATHER UI
+// ═══════════════════════════════════════════════════════════════
+function renderWeather() {
+  const ws = state.weather;
+
+  // Tag badge
+  const wm = WEATHER_META[ws.tag] || { emoji:"?", label:ws.tag };
+  const tagEl = $("weatherTagDisplay");
+  if (tagEl) {
+    tagEl.textContent = `${wm.emoji} ${wm.label}`;
+    tagEl.className = "weatherTag" + (ws.tag === "PHENOMENA" ? " phenomena" : "");
+  }
+
+  // ToD badge
+  const todEl = $("todTagDisplay");
+  if (todEl) {
+    const day = isDay(ws);
+    todEl.textContent = day ? "☀ Day" : "🌙 Night";
+    todEl.className = "weatherTag " + (day ? "day" : "night");
+  }
+
+  // Clock
+  const h = String(ws.hour).padStart(2,"0");
+  if ($("clockDisplay")) $("clockDisplay").textContent = `${h}:00`;
+  if ($("clockLabel")) $("clockLabel").textContent =
+    isDay(ws) ? `Day (${String(ws.dayStart).padStart(2,"0")}:00–${String(ws.nightStart-1).padStart(2,"0")}:59)`
+              : `Night (${String(ws.nightStart).padStart(2,"0")}:00–${String(ws.dayStart).padStart(2,"0")}:59)`;
+
+  // Phenomena subtype visibility
+  const isPhen = ws.tag === "PHENOMENA";
+  if ($("phenomenaSubtype")) $("phenomenaSubtype").disabled = !isPhen;
+  if (isPhen && ws.phenomena && $("phenomenaSubtype")) $("phenomenaSubtype").value = ws.phenomena;
+
+  // Intensity pips
+  const pips = document.querySelectorAll(".intensityPip");
+  pips.forEach(pip => {
+    const i = Number(pip.dataset.i);
+    pip.className = "intensityPip" + (i <= ws.intensity ? " active" + (ws.intensity===3?" sev3":ws.intensity===2?" sev2":"") : "");
+  });
+  if ($("intensityLabel")) $("intensityLabel").textContent = intensityLabel(ws.intensity);
+
+  // Phenomena banner
+  const banner = $("phenomenaBanner");
+  if (banner) {
+    if (isPhen && ws.phenomena) {
+      const pm = PHENOMENA_META[ws.phenomena] || { emoji:"✨", label:ws.phenomena };
+      banner.style.display = "flex";
+      $("phenomenaText").textContent = `${pm.emoji} Strange Phenomenon: ${pm.label}`;
+    } else {
+      banner.style.display = "none";
+    }
+  }
+
+  // Weather modifier preview (for both sides)
+  const modContainer = $("weatherModDisplay");
+  if (modContainer) {
+    const lines = [];
+    for (const sideKey of ["attacker","defender"]) {
+      const cls = INDEX.byId.get(state[sideKey].classId);
+      if (!cls) continue;
+      const wmod = weatherPreferredMod(cls, ws);
+      const spec = applyClassWeatherSpecials(cls, ws);
+      const allLines = [...wmod.lines, ...spec.lines];
+      if (allLines.length) {
+        const label = sideKey === "attacker" ? "Att" : "Def";
+        for (const l of allLines) {
+          lines.push(`<div class="weatherModLine"><span class="wSign ${l.includes("+")?"plus":"minus"}">${label}</span><span class="wLabel">${l}</span></div>`);
+        }
+      }
+    }
+    modContainer.innerHTML = lines.join("");
+  }
+
+  // Turn button label
+  const turnLabel = $("turnSeasonLabel");
+  if (turnLabel) turnLabel.textContent = `(${seasonLabel(ws)} · Turn ${ws.currentTurn})`;
+
+  // Sync select & checkboxes
+  if ($("weatherTagSelect") && $("weatherTagSelect").value !== ws.tag) $("weatherTagSelect").value = ws.tag;
+  if ($("weatherAutoAdvance")) $("weatherAutoAdvance").checked = ws.autoAdvance;
+  if ($("phenomenaChanceEnabled")) $("phenomenaChanceEnabled").checked = ws.phenomenaEnabled;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2769,6 +3632,7 @@ function switchTab(tabId) {
   if (tabId==="armies")   { renderArmyList($("armySearch")?.value); }
   if (tabId==="factions") { renderFactionList(); }
   if (tabId==="history")  { renderHistoryList(); }
+  if (tabId==="settings" && typeof document._weatherSettingsSync === "function") { document._weatherSettingsSync(); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2786,6 +3650,7 @@ function resetAll() {
   $("resolutionMode").value="risk"; $("quickLossPreset").value="standard";
   $("allowOverCap").value="no"; $("defenderStructures").value="no";
   $("resultArea").style.display="none"; state.lastResult=null;
+  // Weather is intentionally preserved on reset
   render();
 }
 
@@ -2881,6 +3746,27 @@ function bind() {
       $("validationMsg").style.display="block";
       $("validationMsg").innerHTML="Attacker must commit <b>≥5</b> dice to initiate an attack."; return;
     }
+
+    // Weather: auto-advance + phenomena check (before rolling)
+    const ws = state.weather;
+    if (!ws.lockWeather && ws.autoAdvance) {
+      const attCls = INDEX.byId.get(state.attacker.classId);
+      const defCls = INDEX.byId.get(state.defender.classId);
+      const hasPhenomena = ws.phenomenaEnabled && rollPhenomena(ws, attCls?.name, defCls?.name);
+      if (hasPhenomena) {
+        ws.tag = "PHENOMENA";
+        ws.phenomena = pickRandomPhenomena();
+        ws.source = "battle-step";
+      } else {
+        ws.tag = advanceWeatherBattleStep(ws);
+        ws.phenomena = null;
+        ws.source = "battle-step";
+      }
+      ws.hour = (ws.hour + 1) % 24;
+      persistWeather(ws);
+      renderWeather();
+    }
+
     const attRoll=rollPool(att.diceSidesList,attC), defRoll=rollPool(def.diceSidesList,defC);
     let result;
     if (state.settings.resolutionMode==="risk") {
@@ -2897,6 +3783,103 @@ function bind() {
     renderResult(result,attRoll,defRoll);
   });
 
+  // ── Weather controls ───────────────────────────────────────
+  $("weatherTagSelect").addEventListener("change", () => {
+    state.weather.tag = $("weatherTagSelect").value;
+    if (state.weather.tag !== "PHENOMENA") state.weather.phenomena = null;
+    state.weather.source = "manual";
+    persistWeather(state.weather);
+    render();
+  });
+  $("phenomenaSubtype").addEventListener("change", () => {
+    state.weather.phenomena = $("phenomenaSubtype").value;
+    persistWeather(state.weather);
+    render();
+  });
+  document.querySelectorAll(".intensityPip").forEach(pip => {
+    pip.addEventListener("click", () => {
+      state.weather.intensity = Number(pip.dataset.i);
+      persistWeather(state.weather);
+      render();
+    });
+  });
+  $("clockPlus").addEventListener("click", () => {
+    state.weather.hour = (state.weather.hour + 1) % 24;
+    persistWeather(state.weather);
+    render();
+  });
+  $("clockMinus").addEventListener("click", () => {
+    state.weather.hour = (state.weather.hour + 23) % 24;
+    persistWeather(state.weather);
+    render();
+  });
+  $("weatherAutoAdvance").addEventListener("change", () => {
+    state.weather.autoAdvance = $("weatherAutoAdvance").checked;
+    persistWeather(state.weather);
+  });
+  $("phenomenaChanceEnabled").addEventListener("change", () => {
+    state.weather.phenomenaEnabled = $("phenomenaChanceEnabled").checked;
+    persistWeather(state.weather);
+  });
+
+  // ── Turn button ────────────────────────────────────────────
+  $("turnBtn").addEventListener("click", () => {
+    const ws = state.weather;
+    if (ws.lockWeather) { showToast("Weather is locked. Unlock in Settings to use Turn.", "warn"); return; }
+    ws.currentTurn = (ws.currentTurn || 1) + 1;
+    const tps = ws.turnsPerSeason || 6;
+    if (!ws.lockSeason && ws.currentTurn % tps === 0) {
+      const oldSeason = ws.season;
+      ws.season = advanceSeason(ws);
+      showToast(`🍂 Season changed: <b>${oldSeason}</b> → <b>${ws.season}</b>`, "good");
+    }
+    // Full randomize weather for new turn
+    if (ws.phenomenaEnabled && rollPhenomena(ws, null, null)) {
+      ws.tag = "PHENOMENA"; ws.phenomena = pickRandomPhenomena(); ws.source = "turn-random";
+    } else {
+      ws.tag = randomWeatherForSeason(ws); ws.phenomena = null; ws.source = "turn-random";
+    }
+    ws.intensity = 1 + Math.floor(Math.random() * 3); // random 1–3
+    ws.hour = randomHourForSeason(ws);
+    persistWeather(ws);
+    render();
+    showToast(`⏩ Turn ${ws.currentTurn}: <b>${weatherLabel(ws)}</b> · ${isDay(ws)?"Day":"Night"}`);
+  });
+
+  // ── Weather settings (Settings tab) ───────────────────────
+  $("saveWeatherSettings").addEventListener("click", () => {
+    const ws = state.weather;
+    ws.season = $("settingsSeason").value;
+    ws.climate = $("settingsClimate").value;
+    ws.turnsPerSeason = Math.max(1, toInt($("settingsTurnsPerSeason").value) || 6);
+    ws.currentTurn = Math.max(1, toInt($("settingsCurrentTurn").value) || 1);
+    ws.dayStart = clamp(toInt($("settingsDayStart").value) ?? 6, 0, 23);
+    ws.nightStart = clamp(toInt($("settingsNightStart").value) ?? 18, 0, 23);
+    ws.lockSeason = $("settingsLockSeason").checked;
+    ws.lockWeather = $("settingsLockWeather").checked;
+    ws.phenomenaBaseChance = clamp(toInt($("settingsPhenomenaBase").value) ?? 2, 0, 25);
+    persistWeather(ws);
+    render();
+    const msg = $("weatherSettingsSaved");
+    if (msg) { msg.style.display="block"; msg.className="alert good"; msg.textContent="Settings saved."; setTimeout(()=>msg.style.display="none",2000); }
+  });
+
+  // Sync settings tab fields from state on tab switch
+  // Sync settings tab fields from state when settings tab is opened
+  // (hooked via a tab-change callback — no closure conflict)
+  document._weatherSettingsSync = function() {
+    const ws = state.weather;
+    if ($("settingsSeason"))          $("settingsSeason").value = ws.season;
+    if ($("settingsClimate"))         $("settingsClimate").value = ws.climate;
+    if ($("settingsTurnsPerSeason"))  $("settingsTurnsPerSeason").value = ws.turnsPerSeason;
+    if ($("settingsCurrentTurn"))     $("settingsCurrentTurn").value = ws.currentTurn;
+    if ($("settingsDayStart"))        $("settingsDayStart").value = ws.dayStart;
+    if ($("settingsNightStart"))      $("settingsNightStart").value = ws.nightStart;
+    if ($("settingsLockSeason"))      $("settingsLockSeason").checked = ws.lockSeason;
+    if ($("settingsLockWeather"))     $("settingsLockWeather").checked = ws.lockWeather;
+    if ($("settingsPhenomenaBase"))   $("settingsPhenomenaBase").value = ws.phenomenaBaseChance;
+  };
+
   // Copy result
   $("copyResult").addEventListener("click",async()=>{
     if (!state.lastResult) return;
@@ -2906,6 +3889,7 @@ function bind() {
     const text=`War Table — Battle Result (ruleset ${RULES.rulesetVersion})
 Attacker: ${aClass} | Size: ${state.attacker.size} | STR: ${state.attacker.str} | Pool: ${state._computed.att?.diceSidesDisplay}
 Defender: ${dClass} | Size: ${state.defender.size} | STR: ${state.defender.str} | Pool: ${state._computed.def?.diceSidesDisplay}
+Weather: ${weatherLabel(state.weather)} (Intensity ${state.weather.intensity}) | ${isDay(state.weather)?"Day":"Night"} ${String(state.weather.hour).padStart(2,"0")}:00
 
 Mode: ${result.mode}
 Summary: ${result.summary}
