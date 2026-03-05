@@ -106,11 +106,13 @@
     nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .tab {
       appearance: none; cursor: pointer; user-select: none;
+      display: inline-flex; align-items: center; gap: 5px;
       border: 1px solid rgba(74,55,37,0.18); background: rgba(255,255,255,0.5);
       color: var(--muted); padding: 7px 14px; border-radius: 999px;
       font-size: 12px; font-family: var(--sans); letter-spacing: 0.3px;
       transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
     }
+    .tabIcon { width: 14px; height: 14px; flex-shrink: 0; }
     .tab:hover { background: rgba(255,255,255,0.82); color: var(--text); border-color: rgba(74,55,37,0.35); }
     .tab.active {
       color: #7A4F10; border-color: rgba(196,154,58,0.55);
@@ -137,7 +139,7 @@
     /* ── Cards ────────────────────────────────────────────────────── */
     .card {
       background: var(--panel); border: 1px solid var(--stroke);
-      border-radius: var(--radius2); box-shadow: var(--shadow); overflow: clip;
+      border-radius: var(--radius2); box-shadow: var(--shadow); overflow: visible;
     }
     .card .cardHead {
       display: flex; align-items: center; justify-content: space-between;
@@ -252,12 +254,12 @@
       font-weight: 600;
     }
     .btn.primary:hover { background: linear-gradient(160deg, #A32525, #6E1515); }
-    .btn.ghost { background: transparent; border-color: transparent; color: var(--faint); }
-    .btn.ghost:hover { color: var(--muted); background: rgba(90,58,30,0.08); border-color: var(--stroke); }
+    .btn.ghost { background: rgba(255,255,255,0.35); border-color: var(--stroke); color: var(--muted); }
+    .btn.ghost:hover { background: rgba(255,255,255,0.65); border-color: var(--stroke2); color: var(--text); }
     .btn.danger { border-color: rgba(122,59,59,0.4); color: #7A3B3B; background: rgba(122,59,59,0.08); }
     .btn.danger:hover { background: rgba(122,59,59,0.15); border-color: rgba(122,59,59,0.6); }
     .btn.small { padding: 5px 9px; font-size: 11px; border-radius: 8px; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; filter: grayscale(0.4); }
 
     .battleBtn {
       width: 100%; display: inline-flex; align-items: center;
@@ -655,7 +657,7 @@
       <button class="tab active" data-tab="battle">⚔ Battle</button>
       <button class="tab" data-tab="armies">⛨ Armies</button>
       <button class="tab" data-tab="factions">⚑ Factions</button>
-      <button class="tab" data-tab="history">📜 History</button>
+      <button class="tab" data-tab="history"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> History</button>
       <button class="tab" data-tab="settings">⚙ Settings</button>
     </nav>
   </header>
@@ -691,7 +693,7 @@
           <div class="row single">
             <label>Army Class
               <select id="attackerClass" aria-describedby="attackerClassHelp"></select>
-              <div class="help" id="attackerClassHelp">Matchup modifiers (Immunity/Resistance/Vulnerability/Deadly) apply automatically.</div>
+              <div class="help" id="attackerClassHelp"></div>
             </label>
           </div>
 
@@ -764,7 +766,7 @@
           </div>
 
           <div style="margin-top:10px;">
-            <button class="btn small" id="openSaveAttModal" type="button">💾 Save as Army</button>
+            <button class="btn small" id="openSaveAttModal" type="button"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Save as Army</button>
           </div>
         </div>
       </section>
@@ -774,9 +776,7 @@
         <div class="cardHead">
           <div class="sideTitle">
             <h2>Engagement</h2>
-            <span class="badge">Sandbox</span>
           </div>
-          <button class="btn small ghost" id="swapSides" type="button" title="Swap attacker/defender">⇄ Swap</button>
         </div>
 
         <div class="vs">
@@ -785,123 +785,6 @@
             <div class="small">Configure both armies → review dice math → smash <strong>Battle</strong>. Defenders win ties.</div>
           </div>
 
-          <details id="conditionsDetails">
-            <summary>Conditions &amp; Settings <span class="summaryRight" id="conditionsSummary">—</span></summary>
-            <div style="display:grid; gap:12px; margin-top:10px;">
-
-              <!-- ── WEATHER PANEL ─────────────────────────────── -->
-              <div class="weatherPanel">
-                <div class="weatherHeader">
-                  <div class="weatherTitle">
-                    🌦 Weather &amp; Time
-                    <span id="weatherTagDisplay" class="weatherTag">CLEAR</span>
-                    <span id="todTagDisplay" class="weatherTag day">☀ Day</span>
-                  </div>
-                  <label class="autoToggle" title="Auto-advance weather on each Battle click">
-                    <input type="checkbox" id="weatherAutoAdvance" checked />
-                    Auto-advance
-                  </label>
-                </div>
-
-                <!-- Phenomena banner (hidden until triggered) -->
-                <div class="phenomenaBanner" id="phenomenaBanner" style="display:none;">
-                  <span class="pIcon">✨</span>
-                  <span id="phenomenaText">Strange Phenomenon: —</span>
-                </div>
-
-                <div class="weatherGrid">
-                  <label>Weather condition
-                    <select id="weatherTagSelect">
-                      <option value="CLEAR">☀ Clear</option>
-                      <option value="CLOUDY">⛅ Cloudy / Overcast</option>
-                      <option value="HEAVY_CLOUDS">☁ Heavy Clouds (no sun)</option>
-                      <option value="FOG">🌫 Fog / Dense Mist</option>
-                      <option value="RAIN">🌧 Rain / Drizzle</option>
-                      <option value="DOWNPOUR">⛈ Downpour / Heavy Rain</option>
-                      <option value="WIND">💨 High Winds / Gale</option>
-                      <option value="THUNDERSTORM">⚡ Thunderstorm</option>
-                      <option value="COLD">🥶 Freezing Cold</option>
-                      <option value="SNOW">❄ Snow</option>
-                      <option value="BLIZZARD">🌨 Blizzard / Whiteout</option>
-                      <option value="DRY">🏜 Dry / Arid</option>
-                      <option value="HEAT">🔥 Scorching Heat</option>
-                      <option value="SMOG">🌑 Smog / Ash Haze</option>
-                      <option value="PHENOMENA">✨ Strange Phenomena</option>
-                    </select>
-                  </label>
-                  <label>Phenomena subtype <span id="phenomenaSubtypeWrap">
-                    <select id="phenomenaSubtype" disabled>
-                      <option value="ASHFALL">Ashfall</option>
-                      <option value="SOLAR_ECLIPSE">Solar Eclipse</option>
-                      <option value="STRANGE_LIGHTS">Strange Lights</option>
-                      <option value="METEOR_SHOWER">Meteor Shower</option>
-                      <option value="MALEVOLENT_STORM">Malevolent Storm</option>
-                      <option value="WILD_MAGIC_STORM">Wild Magic Storm</option>
-                      <option value="MAGNETIC_STORM">Magnetic Storm</option>
-                      <option value="ELEMENTAL_DISTURBANCE">Elemental Disturbance</option>
-                    </select>
-                  </span></label>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                  <div style="display:grid; gap:4px;">
-                    <div style="font-size:11px; color:var(--muted);">Intensity</div>
-                    <div class="intensityBar" id="intensityBar">
-                      <div class="intensityPip" data-i="1" title="Low (±1 die)"></div>
-                      <div class="intensityPip" data-i="2" title="Strong (±2 dice)"></div>
-                      <div class="intensityPip" data-i="3" title="Extreme (±3 dice)"></div>
-                    </div>
-                    <div style="font-size:10px; color:var(--faint);" id="intensityLabel">Low (±1 die)</div>
-                  </div>
-                  <div style="display:grid; gap:4px; flex:1; min-width:130px;">
-                    <div style="font-size:11px; color:var(--muted);">Time of day</div>
-                    <div class="clockRow">
-                      <button class="btn small" id="clockMinus" type="button">−</button>
-                      <div class="clockDisplay" id="clockDisplay">12:00</div>
-                      <button class="btn small" id="clockPlus" type="button">+</button>
-                    </div>
-                    <div class="clockLabel" id="clockLabel">Day (06:00–17:59)</div>
-                  </div>
-                </div>
-
-                <div id="weatherModDisplay" style="display:grid; gap:5px;"></div>
-
-                <label class="autoToggle">
-                  <input type="checkbox" id="phenomenaChanceEnabled" checked />
-                  Enable Strange Phenomena chance on Battle/Turn
-                </label>
-              </div>
-
-              <!-- ── BATTLE SETTINGS ─────────────────────────── -->
-              <label>Defender has structures?
-                <select id="defenderStructures">
-                  <option value="no">No (open field)</option>
-                  <option value="yes">Yes (walls / towers)</option>
-                </select>
-                <div class="help">Switches Siege dice: d8 (no structures) → d10 (structures).</div>
-              </label>
-              <label>Resolution mode
-                <select id="resolutionMode">
-                  <option value="risk">Risk-style (rules accurate)</option>
-                  <option value="quick">Quick total (simple)</option>
-                </select>
-              </label>
-              <label>Quick mode losses
-                <select id="quickLossPreset">
-                  <option value="standard">Standard: loser −10, tie −5 each</option>
-                  <option value="flat10">Flat: loser −10, tie 0</option>
-                  <option value="flat20">Heavy: loser −20, tie −10 each</option>
-                </select>
-              </label>
-              <label>Dice caps
-                <select id="allowOverCap">
-                  <option value="no">Enforce caps (recommended)</option>
-                  <option value="yes">Allow manual overrides beyond caps</option>
-                </select>
-              </label>
-            </div>
-          </details>
-
           <div class="alert bad" id="validationMsg" style="display:none;"></div>
 
           <button class="battleBtn" id="battleBtn" type="button">
@@ -909,13 +792,9 @@
             Battle
           </button>
 
-          <div class="row">
-            <button class="btn" id="prefillExample" type="button">Load Example</button>
-            <button class="btn ghost" id="resetBtn" type="button">Reset</button>
-          </div>
-
           <button class="turnBtn" id="turnBtn" type="button">
-            ⏩ Advance Turn <span style="font-size:10px; opacity:0.65;" id="turnSeasonLabel">(Spring · Turn 1)</span>
+            <svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 8l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Advance Turn <span style="font-size:10px; opacity:0.65;" id="turnSeasonLabel">(Spring · Turn 1)</span>
           </button>
 
           <div class="alert" id="saveArmyToast" style="display:none;"></div>
@@ -984,7 +863,7 @@
           <div class="row single">
             <label>Army Class
               <select id="defenderClass" aria-describedby="defenderClassHelp"></select>
-              <div class="help" id="defenderClassHelp">Matchup modifiers apply automatically.</div>
+              <div class="help" id="defenderClassHelp"></div>
             </label>
           </div>
 
@@ -1057,11 +936,119 @@
           </div>
 
           <div style="margin-top:10px;">
-            <button class="btn small" id="openSaveDefModal" type="button">💾 Save as Army</button>
+            <button class="btn small" id="openSaveDefModal" type="button"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Save as Army</button>
           </div>
         </div>
       </section>
     </div><!-- /battleGrid -->
+
+    <!-- ── Conditions + tertiary actions (bottom card) ──────────── -->
+    <div class="card bottom" style="margin-top:12px;">
+      <details id="conditionsDetails">
+        <summary>Conditions <span class="summaryRight" id="conditionsSummary">—</span></summary>
+        <div style="display:grid; gap:12px; margin-top:10px;">
+
+          <!-- ── WEATHER PANEL ─────────────────────────────── -->
+          <div class="weatherPanel">
+            <div class="weatherHeader">
+              <div class="weatherTitle">
+                🌦 Weather
+                <span id="weatherTagDisplay" class="weatherTag">CLEAR</span>
+                <span id="todTagDisplay" class="weatherTag day">☀ Day</span>
+              </div>
+              <label class="autoToggle" title="Auto-advance weather on each Battle click">
+                <input type="checkbox" id="weatherAutoAdvance" checked />
+                Auto-advance
+              </label>
+            </div>
+
+            <!-- Phenomena banner (hidden until triggered) -->
+            <div class="phenomenaBanner" id="phenomenaBanner" style="display:none;">
+              <span class="pIcon">✨</span>
+              <span id="phenomenaText">Strange Phenomenon: —</span>
+            </div>
+
+            <div class="weatherGrid">
+              <label>Weather
+                <select id="weatherTagSelect">
+                  <option value="CLEAR">☀ Clear</option>
+                  <option value="CLOUDY">⛅ Cloudy / Overcast</option>
+                  <option value="HEAVY_CLOUDS">☁ Heavy Clouds (no sun)</option>
+                  <option value="FOG">🌫 Fog / Dense Mist</option>
+                  <option value="RAIN">🌧 Rain / Drizzle</option>
+                  <option value="DOWNPOUR">⛈ Downpour / Heavy Rain</option>
+                  <option value="WIND">💨 High Winds / Gale</option>
+                  <option value="THUNDERSTORM">⚡ Thunderstorm</option>
+                  <option value="COLD">🥶 Freezing Cold</option>
+                  <option value="SNOW">❄ Snow</option>
+                  <option value="BLIZZARD">🌨 Blizzard / Whiteout</option>
+                  <option value="DRY">🏜 Dry / Arid</option>
+                  <option value="HEAT">🔥 Scorching Heat</option>
+                  <option value="SMOG">🌑 Smog / Ash Haze</option>
+                  <option value="PHENOMENA">✨ Strange Phenomena</option>
+                </select>
+              </label>
+              <label>Phenomena <span id="phenomenaSubtypeWrap" style="display:none;">
+                <select id="phenomenaSubtype">
+                  <option value="">— select —</option>
+                  <option value="ASHFALL">Ashfall</option>
+                  <option value="SOLAR_ECLIPSE">Solar Eclipse</option>
+                  <option value="STRANGE_LIGHTS">Strange Lights</option>
+                  <option value="METEOR_SHOWER">Meteor Shower</option>
+                  <option value="MALEVOLENT_STORM">Malevolent Storm</option>
+                  <option value="WILD_MAGIC_STORM">Wild Magic Storm</option>
+                  <option value="MAGNETIC_STORM">Magnetic Storm</option>
+                  <option value="ELEMENTAL_DISTURBANCE">Elemental Disturbance</option>
+                </select>
+              </span></label>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div style="display:grid; gap:4px;">
+                <div style="font-size:11px; color:var(--muted);">Intensity</div>
+                <div class="intensityBar" id="intensityBar">
+                  <div class="intensityPip" data-i="1" title="Low (±1 die)"></div>
+                  <div class="intensityPip" data-i="2" title="Strong (±2 dice)"></div>
+                  <div class="intensityPip" data-i="3" title="Extreme (±3 dice)"></div>
+                </div>
+                <div style="font-size:10px; color:var(--faint);" id="intensityLabel">Low (±1 die)</div>
+              </div>
+              <div style="display:grid; gap:4px; flex:1; min-width:130px;">
+                <div style="font-size:11px; color:var(--muted);">Hour</div>
+                <div class="clockRow">
+                  <button class="btn small" id="clockMinus" type="button">−</button>
+                  <div class="clockDisplay" id="clockDisplay">12:00</div>
+                  <button class="btn small" id="clockPlus" type="button">+</button>
+                </div>
+                <div class="clockLabel" id="clockLabel">Day (06:00–17:59)</div>
+              </div>
+            </div>
+
+            <div id="weatherModDisplay" style="display:grid; gap:5px;"></div>
+
+            <label class="autoToggle">
+              <input type="checkbox" id="phenomenaChanceEnabled" checked />
+              Random phenomena on battle &amp; turn
+            </label>
+          </div>
+
+          <!-- ── STRUCTURES (quick toggle) ──────────────────── -->
+          <label>Defender has structures?
+            <select id="defenderStructures">
+              <option value="no">No (open field)</option>
+              <option value="yes">Yes (walls / towers)</option>
+            </select>
+          </label>
+
+        </div>
+      </details>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--stroke);">
+        <button class="btn small" id="prefillExample" type="button">Load Example</button>
+        <button class="btn ghost small" id="resetBtn" type="button">Reset</button>
+        <button class="btn ghost small" id="swapSides" type="button">⇄ Swap</button>
+      </div>
+    </div><!-- /bottom card -->
+
   </div><!-- /tab-battle -->
 
   <!-- ═══ TAB: ARMIES ══════════════════════════════════════════════ -->
@@ -1170,6 +1157,32 @@
           </div>
           <button class="btn primary small" id="saveWeatherSettings" type="button">Save Settings</button>
           <div class="alert" id="weatherSettingsSaved" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead"><div class="sideTitle"><h2>Battle Rules</h2></div></div>
+        <div class="content" style="display:grid; gap:12px;">
+          <p style="font-size:12px; color:var(--muted); margin:0;">Resolution and loss settings applied on every Battle roll.</p>
+          <label>Resolution mode
+            <select id="resolutionMode">
+              <option value="risk">Risk-style (rules accurate)</option>
+              <option value="quick">Quick total (simple)</option>
+            </select>
+          </label>
+          <label>Quick mode losses
+            <select id="quickLossPreset">
+              <option value="standard">Standard: loser −10, tie −5 each</option>
+              <option value="flat10">Flat: loser −10, tie 0</option>
+              <option value="flat20">Heavy: loser −20, tie −10 each</option>
+            </select>
+          </label>
+          <label>Dice caps
+            <select id="allowOverCap">
+              <option value="no">Enforce caps (recommended)</option>
+              <option value="yes">Allow overrides beyond caps</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -3289,9 +3302,9 @@ function renderWeather() {
     isDay(ws) ? `Day (${String(ws.dayStart).padStart(2,"0")}:00–${String(ws.nightStart-1).padStart(2,"0")}:59)`
               : `Night (${String(ws.nightStart).padStart(2,"0")}:00–${String(ws.dayStart).padStart(2,"0")}:59)`;
 
-  // Phenomena subtype visibility
+  // Phenomena subtype visibility — show/hide wrapper, don't just disable
   const isPhen = ws.tag === "PHENOMENA";
-  if ($("phenomenaSubtype")) $("phenomenaSubtype").disabled = !isPhen;
+  if ($("phenomenaSubtypeWrap")) $("phenomenaSubtypeWrap").style.display = isPhen ? "" : "none";
   if (isPhen && ws.phenomena && $("phenomenaSubtype")) $("phenomenaSubtype").value = ws.phenomena;
 
   // Intensity pips
