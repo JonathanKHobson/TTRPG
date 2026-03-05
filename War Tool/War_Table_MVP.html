@@ -184,7 +184,7 @@
     input, select, button, textarea { font-family: var(--sans); font-size: 13px; }
 
     input[type="number"], input[type="text"], select, textarea {
-      width: 100%; padding: 9px 10px; border-radius: 10px;
+      width: 100%; padding: 9px 32px 9px 10px; border-radius: 10px;
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,0.72); color: var(--text); outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
@@ -383,6 +383,90 @@
       padding: 0; line-height: 1;
     }
     .chip button:hover { color: var(--bad); }
+    .chip select {
+      width: auto;
+      min-width: 110px;
+      padding: 3px 22px 3px 8px;
+      font-size: 11px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--stroke);
+    }
+    .factionPickerRow { display: flex; gap: 8px; align-items: center; }
+    .factionPickerRow select { flex: 1; }
+    .factionChipWrap {
+      min-height: 30px; display: flex; flex-wrap: wrap; gap: 4px;
+      padding: 6px 4px; border: 1px dashed rgba(74,55,37,0.18); border-radius: 10px;
+      background: rgba(255,255,255,0.35);
+    }
+    .doctrineSection {
+      margin-top: 10px;
+      border: 1px dashed rgba(74,55,37,0.2);
+      border-radius: 12px;
+      padding: 8px;
+      background: rgba(255,255,255,0.35);
+      display: grid;
+      gap: 8px;
+    }
+    .doctrineHead {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .doctrinePickerRow {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+    .doctrineChoiceRow {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .doctrineChoiceRow.visible { display: grid; }
+    .doctrineChipWrap {
+      min-height: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 6px 4px;
+      border: 1px dashed rgba(74,55,37,0.18);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.35);
+    }
+    .chip.ineligible {
+      border-style: dashed;
+      opacity: 0.78;
+      background: rgba(196,154,58,0.12);
+    }
+    .chipFlag {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(196,154,58,0.45);
+      color: #7A4F10;
+      background: rgba(196,154,58,0.12);
+    }
+    .doctrineToggleList {
+      display: grid;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .doctrineToggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .doctrineToggle input[type="checkbox"] { width: auto; margin: 0; }
+    .doctrineQueued {
+      font-size: 11px;
+      color: var(--faint);
+    }
 
     /* ── Battle history ───────────────────────────────────────────── */
     .historyCard {
@@ -442,7 +526,7 @@
       background: linear-gradient(180deg, rgba(196,154,58,0.10), transparent);
     }
     .dlgHead h3 { margin: 0; font-size: 15px; font-family: var(--ui); color: var(--ink); }
-    .dlgBody { padding: 14px 16px; display: grid; gap: 12px; }
+    .dlgBody { padding: 14px 16px; display: grid; gap: 10px; }
     .dlgFoot {
       display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px;
     }
@@ -629,18 +713,38 @@
     .intensityPip.active.sev3 { background: rgba(122,59,59,0.75); border-color: rgba(122,59,59,0.9); box-shadow: 0 0 5px rgba(122,59,59,0.4); }
     .intensityPip.active.sev2 { background: rgba(196,154,58,0.75); border-color: rgba(196,154,58,0.9); box-shadow: 0 0 5px rgba(196,154,58,0.4); }
 
+    .battleActions {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .battleActions .battleBtn { width: 100%; }
+
     .turnBtn {
       appearance: none; cursor: pointer; user-select: none;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 9px 14px; border-radius: 12px;
-      border: 1px solid rgba(43,74,111,0.35);
-      background: rgba(220,232,248,0.6);
-      color: #2B4A6F; font-size: 12px; font-family: var(--sans);
-      font-weight: 500; transition: all 0.15s; width: 100%;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 7px 14px; border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.35);
+      color: var(--muted); font-size: 12px; font-family: var(--sans);
+      font-weight: 500; transition: all 0.15s;
     }
-    .turnBtn:hover { background: rgba(200,218,242,0.8); border-color: rgba(43,74,111,0.6); }
+    .turnBtn:hover { background: rgba(255,255,255,0.65); border-color: var(--stroke2); color: var(--text); }
     .turnBtn:active { transform: translateY(1px); }
     .turnBtn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+    .commitRule { display: none; font-size: 11px; color: var(--warning, #b45309); }
+    .commitRule.visible { display: block; }
+    .card.bottom > details { padding: 12px 12px 4px; }
+    .army-defeated {
+      opacity: 0.7;
+      border-color: rgba(180, 40, 40, 0.3) !important;
+      background: rgba(180, 40, 40, 0.04) !important;
+    }
+    .army-defeated .armyName { color: var(--muted); }
+    .badge.defeated {
+      background: rgba(180, 40, 40, 0.12);
+      color: rgba(180, 40, 40, 0.85);
+      border: 1px solid rgba(180, 40, 40, 0.25);
+      font-size: 10px; padding: 1px 6px; border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -695,6 +799,25 @@
               <select id="attackerClass" aria-describedby="attackerClassHelp"></select>
               <div class="help" id="attackerClassHelp"></div>
             </label>
+          </div>
+          <div class="doctrineSection">
+            <div class="doctrineHead">Doctrines</div>
+            <div class="doctrinePickerRow">
+              <select id="attDoctrineSelect" aria-label="Add doctrine to attacker">
+                <option value="">— Select doctrine —</option>
+              </select>
+              <button class="btn small" id="attDoctrineAddBtn" type="button">Add</button>
+            </div>
+            <div class="doctrineChoiceRow" id="attDoctrineChoiceRow">
+              <label>Elemental Ammunition damage type
+                <select id="attDoctrineDamageType">
+                  <option value="">— Select damage type —</option>
+                </select>
+              </label>
+            </div>
+            <div id="attDoctrineChips" class="doctrineChipWrap"></div>
+            <div id="attDoctrineRuntime" class="doctrineToggleList"></div>
+            <div id="attDoctrineQueued" class="doctrineQueued"></div>
           </div>
 
           <div class="row" style="margin-top:10px;">
@@ -753,7 +876,7 @@
               <div class="row" style="margin-top:10px;">
                 <label>Dice to commit
                   <input id="attackerCommit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto" />
-                  <div class="help">Rule: attacker must commit <span class="mono">≥5</span> dice.</div>
+                  <div class="commitRule" id="attCommitRule">Rule: attacker must commit <span class="mono">≥5</span> dice.</div>
                 </label>
                 <label>Auto-commit
                   <select id="attackerAutoCommit">
@@ -787,26 +910,33 @@
 
           <div class="alert bad" id="validationMsg" style="display:none;"></div>
 
-          <button class="battleBtn" id="battleBtn" type="button">
-            <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M3 20l5-5m0 0L6 6l2-2 9 9-2 2-1.2-1.2M8 15l1.2 1.2M21 20l-5-5m0 0 2-9-2-2-9 9 2 2 1.2-1.2M16 15l-1.2 1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Battle
-          </button>
-
-          <button class="turnBtn" id="turnBtn" type="button">
-            <svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 8l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Advance Turn <span style="font-size:10px; opacity:0.65;" id="turnSeasonLabel">(Spring · Turn 1)</span>
-          </button>
+          <div class="battleActions">
+            <button class="battleBtn" id="battleBtn" type="button">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="4" x2="20" y2="20"/>
+                <polyline points="4,4 4,8 8,4"/>
+                <line x1="20" y1="4" x2="4" y2="20"/>
+                <polyline points="20,4 16,4 20,8"/>
+                <line x1="10" y1="14" x2="14" y2="10"/>
+              </svg>
+              Battle
+            </button>
+            <button class="turnBtn" id="turnBtn" type="button">
+              <svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 8l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Advance Turn <span style="font-size:10px; opacity:0.65;" id="turnSeasonLabel">(Spring · Turn 1)</span>
+            </button>
+          </div>
 
           <div class="alert" id="saveArmyToast" style="display:none;"></div>
 
           <div class="result" id="resultArea" style="display:none;">
             <hr class="divider" />
-            <div class="title">Result</div>
             <div class="who" id="resultHeadline">—</div>
-            <div class="alert" id="resultSummary"></div>
-            <div>
-              <div class="title" style="margin-top:8px;">Rolls</div>
-              <div class="alert" style="margin-top:5px;">
+            <div class="alert" id="resultSummary" style="margin-top:8px;"></div>
+
+            <details id="rollsDetails" style="margin-top:12px;">
+              <summary style="font-size:12px; font-weight:600; color:var(--muted); cursor:pointer;">Rolls</summary>
+              <div class="alert" style="margin-top:8px;">
                 <div style="display:grid; gap:10px;">
                   <div>
                     <div class="title">Attacker</div>
@@ -820,17 +950,20 @@
                   </div>
                 </div>
               </div>
-            </div>
-            <div id="riskCompareWrap" style="display:none;">
-              <div class="title" style="margin-top:8px;">Risk-style comparisons</div>
-              <table class="tbl" aria-label="Per-die comparisons">
-                <thead><tr><th>#</th><th>Att die</th><th>Def die</th><th>Loss</th></tr></thead>
-                <tbody id="riskCompareBody"></tbody>
-              </table>
-            </div>
-            <div class="row" style="margin-top:8px;">
-              <button class="btn" id="copyResult" type="button">Copy summary</button>
-              <button class="btn ghost small" id="saveBattleToHistory" type="button">Save to History</button>
+            </details>
+
+            <details id="riskDetails" style="margin-top:8px; display:none;">
+              <summary style="font-size:12px; font-weight:600; color:var(--muted); cursor:pointer;">Risk comparisons</summary>
+              <div id="riskCompareWrap" style="margin-top:8px;">
+                <table class="tbl" aria-label="Per-die comparisons">
+                  <thead><tr><th>#</th><th>Att die</th><th>Def die</th><th>Loss</th></tr></thead>
+                  <tbody id="riskCompareBody"></tbody>
+                </table>
+              </div>
+            </details>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="btn" id="copyResult" type="button">Copy</button>
             </div>
           </div>
         </div>
@@ -865,6 +998,25 @@
               <select id="defenderClass" aria-describedby="defenderClassHelp"></select>
               <div class="help" id="defenderClassHelp"></div>
             </label>
+          </div>
+          <div class="doctrineSection">
+            <div class="doctrineHead">Doctrines</div>
+            <div class="doctrinePickerRow">
+              <select id="defDoctrineSelect" aria-label="Add doctrine to defender">
+                <option value="">— Select doctrine —</option>
+              </select>
+              <button class="btn small" id="defDoctrineAddBtn" type="button">Add</button>
+            </div>
+            <div class="doctrineChoiceRow" id="defDoctrineChoiceRow">
+              <label>Elemental Ammunition damage type
+                <select id="defDoctrineDamageType">
+                  <option value="">— Select damage type —</option>
+                </select>
+              </label>
+            </div>
+            <div id="defDoctrineChips" class="doctrineChipWrap"></div>
+            <div id="defDoctrineRuntime" class="doctrineToggleList"></div>
+            <div id="defDoctrineQueued" class="doctrineQueued"></div>
           </div>
 
           <div class="row" style="margin-top:10px;">
@@ -923,7 +1075,7 @@
               <div class="row" style="margin-top:10px;">
                 <label>Dice to commit
                   <input id="defenderCommit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto" />
-                  <div class="help">Rule: defender min 1 die. Pool ≤0 = auto-loss.</div>
+                  <div class="commitRule" id="defCommitRule">Rule: defender min 1 die. Pool ≤0 = auto-loss.</div>
                 </label>
                 <label>Auto-commit
                   <select id="defenderAutoCommit">
@@ -1042,7 +1194,7 @@
 
         </div>
       </details>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--stroke);">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; padding: 0 12px 12px; border-top:1px solid var(--stroke);">
         <button class="btn small" id="prefillExample" type="button">Load Example</button>
         <button class="btn ghost small" id="resetBtn" type="button">Reset</button>
         <button class="btn ghost small" id="swapSides" type="button">⇄ Swap</button>
@@ -1057,6 +1209,7 @@
       <h2>⚔ Armies</h2>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn primary" id="newArmyBtn" type="button">+ New Army</button>
+        <span class="badge gold" id="armyCount">0 armies</span>
         <button class="btn ghost small" id="exportArmiesBtn" type="button">Export JSON</button>
         <button class="btn ghost small" id="importArmiesBtn" type="button">Import JSON</button>
         <input type="file" id="importFileInput" accept=".json" style="display:none;" />
@@ -1075,19 +1228,38 @@
   <!-- ═══ TAB: FACTIONS ════════════════════════════════════════════ -->
   <div class="tabPage" id="tab-factions">
     <div class="pageHead">
-      <h2>🏰 Factions</h2>
-      <span class="badge gold" id="factionCount">0 factions</span>
+      <h2>
+        <svg class="tabIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3h18v5l-9 5-9-5V3z"/><line x1="12" y1="13" x2="12" y2="21"/>
+        </svg>
+        Factions
+      </h2>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span class="badge gold" id="factionCount">0 factions</span>
+        <button class="btn primary" id="newFactionBtn" type="button">+ New Faction</button>
+        <button class="btn ghost small" id="exportFactionsBtn" type="button">Export JSON</button>
+        <button class="btn ghost small" id="importFactionsBtn" type="button">Import JSON</button>
+        <input type="file" id="importFactionsFile" accept=".json" style="display:none;">
+      </div>
     </div>
-    <p style="font-size:12px; color:var(--muted); margin:0 0 14px;">
-      Factions are derived automatically from your saved armies. Rename or delete them here — changes propagate to all linked armies.
-    </p>
+    <div style="max-width:360px; margin-bottom:12px;">
+      <div class="searchBar">
+        <input type="text" id="factionSearch" placeholder="Search factions..." />
+      </div>
+    </div>
     <div id="factionList" class="scrollable"></div>
   </div>
 
   <!-- ═══ TAB: HISTORY ═════════════════════════════════════════════ -->
   <div class="tabPage" id="tab-history">
     <div class="pageHead">
-      <h2>📜 Battle History</h2>
+      <h2>
+        <svg class="tabIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="8" y="2" width="8" height="4" rx="1"/><rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/>
+        </svg>
+        Battle History
+      </h2>
       <div style="display:flex; gap:8px;">
         <button class="btn ghost small" id="exportHistoryBtn" type="button">Export JSON</button>
         <button class="btn danger small" id="clearHistoryBtn" type="button">Clear All</button>
@@ -1155,8 +1327,6 @@
             <input id="settingsPhenomenaBase" type="number" min="0" max="25" value="2" style="width:80px;" />
             <div class="help">Max is clamped to 25% even with class modifiers.</div>
           </div>
-          <button class="btn primary small" id="saveWeatherSettings" type="button">Save Settings</button>
-          <div class="alert" id="weatherSettingsSaved" style="display:none;"></div>
         </div>
       </div>
 
@@ -1183,7 +1353,17 @@
               <option value="yes">Allow overrides beyond caps</option>
             </select>
           </label>
+          <label>Override Doctrine Eligibility
+            <select id="overrideDoctrineEligibility">
+              <option value="no">No (enforce doctrine class rules)</option>
+              <option value="yes">Yes (GM override)</option>
+            </select>
+          </label>
         </div>
+      </div>
+      <div style="display:flex; gap:8px; padding: 4px 0;">
+        <button class="btn primary small" id="saveWeatherSettings" type="button">Save Settings</button>
+        <div class="alert" id="weatherSettingsSaved" style="display:none;"></div>
       </div>
 
       <div class="card">
@@ -1236,7 +1416,6 @@
     <div class="row">
       <label class="req">Army name
         <input id="armyName" type="text" placeholder="e.g. 3rd Dawn Phalanx" />
-        <div class="help">Unique (case-insensitive). Existing name = update.</div>
       </label>
       <label>Faction
         <input id="armyFaction" type="text" list="factionDatalist" placeholder="e.g. Heartland Coalition" />
@@ -1259,10 +1438,52 @@
         <input id="armyStr" type="number" min="0" step="1" inputmode="numeric" />
       </label>
     </div>
+    <div class="doctrineSection">
+      <div class="doctrineHead">Doctrines</div>
+      <div class="doctrinePickerRow">
+        <select id="armyDoctrineSelect" aria-label="Add doctrine to army">
+          <option value="">— Select doctrine —</option>
+        </select>
+        <button class="btn small" id="armyDoctrineAddBtn" type="button">Add</button>
+      </div>
+      <div class="doctrineChoiceRow" id="armyDoctrineChoiceRow">
+        <label>Elemental Ammunition damage type
+          <select id="armyDoctrineDamageType">
+            <option value="">— Select damage type —</option>
+          </select>
+        </label>
+      </div>
+      <div id="armyDoctrineChips" class="doctrineChipWrap"></div>
+    </div>
     <div class="alert bad" id="armyModalError" style="display:none;"></div>
     <div class="dlgFoot">
       <button class="btn ghost" id="armyModalCancel" type="button">Cancel</button>
       <button class="btn primary" id="armyModalSave" type="button">Save Army</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ═══ MODAL: CREATE FACTION ═════════════════════════════════════ -->
+<dialog id="factionModal">
+  <div class="dlgHead">
+    <h3>Create Faction</h3>
+    <button class="btn small ghost" id="factionModalClose" type="button">✕ Close</button>
+  </div>
+  <div class="dlgBody">
+    <label class="req">Faction name
+      <input id="factionName" type="text" placeholder="e.g. Northwatch Compact" />
+    </label>
+    <div class="factionPickerRow">
+      <select id="factionArmySelect" aria-label="Add existing army to faction">
+        <option value="">— Load existing army —</option>
+      </select>
+      <button class="btn small" id="factionArmyAddBtn" type="button">Load</button>
+    </div>
+    <div id="factionArmyChips" class="factionChipWrap"></div>
+    <div class="alert bad" id="factionModalError" style="display:none;"></div>
+    <div class="dlgFoot">
+      <button class="btn ghost" id="factionModalCancel" type="button">Cancel</button>
+      <button class="btn primary" id="factionModalSave" type="button">Save Faction</button>
     </div>
   </div>
 </dialog>
@@ -2693,6 +2914,7 @@ function advanceSeason(ws) {
 function persistWeather(ws) {
   const saved = loadPersisted();
   saved.weather = ws;
+  if (typeof state !== "undefined" && state?.saved) state.saved.weather = Object.assign({}, ws);
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch(e) {}
 }
 
@@ -2725,13 +2947,245 @@ function escHtml(s) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PERSISTENCE (schema v3)
+// DOCTRINES
+// ═══════════════════════════════════════════════════════════════
+const DAMAGE_TYPES = ["acid","cold","fire","force","lightning","necrotic","poison","psychic","radiant","thunder"];
+const DAMAGE_TYPE_LABEL = {
+  acid: "Acid", cold: "Cold", fire: "Fire", force: "Force", lightning: "Lightning",
+  necrotic: "Necrotic", poison: "Poison", psychic: "Psychic", radiant: "Radiant", thunder: "Thunder"
+};
+const DOCTRINES = [
+  { id:"anti_air", label:"Anti-Air", type:"general", classIds:["archers","pikes","gunners","siege"] },
+  { id:"anti_magic", label:"Anti-Magic", type:"general", eligible:"non_mage" },
+  { id:"heavy_artillery", label:"Heavy Artillery", type:"general", classIds:["siege","mutants","warforged"] },
+  { id:"fire_artillery", label:"Fire Artillery", type:"general", classIds:["archers","siege"] },
+  { id:"elemental_ammunition", label:"Elemental Ammunition", type:"general", classIds:["gunners","archers","siege","mages"], requiresDamageType:true },
+  { id:"armor_piercing", label:"Armor-Piercing", type:"general", classIds:["gunners","archers","siege","mages"] },
+  { id:"heavy_protection", label:"Heavy-Protection", type:"general", eligible:"not_rebels_bandits" },
+  { id:"battlefield_weavers", label:"Battlefield Weavers", type:"mage", classIds:["mages"] },
+  { id:"counterspell_cadre", label:"Counterspell Cadre", type:"mage", classIds:["mages"] },
+  { id:"wild_surge_license", label:"Wild Surge License", type:"mage", classIds:["mages"] },
+  { id:"ritual_artillery", label:"Ritual Artillery", type:"mage", classIds:["mages"] },
+  { id:"ward_smiths", label:"Ward-Smiths", type:"mage", classIds:["mages"] },
+  { id:"soul_binders", label:"Soul-Binders", type:"mage", classIds:["mages"] },
+  { id:"spellthief_detachment", label:"Spellthief Detachment", type:"mage", classIds:["mages"] }
+];
+const DOCTRINE_IDS = DOCTRINES.map(d => d.id);
+const DOCTRINE_SET = new Set(DOCTRINE_IDS);
+const DOCTRINE_BY_ID = Object.fromEntries(DOCTRINES.map(d => [d.id, d]));
+const DOCTRINE_LABEL_ALIASES = {
+  "anti-air": "anti_air", "anti air": "anti_air", "anti_air": "anti_air",
+  "anti-magic": "anti_magic", "anti magic": "anti_magic", "anti_magic": "anti_magic",
+  "heavy-artillery": "heavy_artillery", "heavy artillery": "heavy_artillery", "heavy_artillery": "heavy_artillery",
+  "fire-artillery": "fire_artillery", "fire artillery": "fire_artillery", "fire_artillery": "fire_artillery",
+  "elemental-ammunition": "elemental_ammunition", "elemental ammunition": "elemental_ammunition", "elemental_ammunition": "elemental_ammunition",
+  "armor-piercing": "armor_piercing", "armor piercing": "armor_piercing", "armor_piercing": "armor_piercing",
+  "heavy-protection": "heavy_protection", "heavy protection": "heavy_protection", "heavy_protection": "heavy_protection",
+  "battlefield-weavers": "battlefield_weavers", "battlefield weavers": "battlefield_weavers", "battlefield_weavers": "battlefield_weavers",
+  "counterspell-cadre": "counterspell_cadre", "counterspell cadre": "counterspell_cadre", "counterspell_cadre": "counterspell_cadre",
+  "wild-surge-license": "wild_surge_license", "wild surge license": "wild_surge_license", "wild_surge_license": "wild_surge_license",
+  "ritual-artillery": "ritual_artillery", "ritual artillery": "ritual_artillery", "ritual_artillery": "ritual_artillery",
+  "ward-smiths": "ward_smiths", "ward smiths": "ward_smiths", "ward_smiths": "ward_smiths",
+  "soul-binders": "soul_binders", "soul binders": "soul_binders", "soul_binders": "soul_binders",
+  "spellthief-detachment": "spellthief_detachment", "spellthief detachment": "spellthief_detachment", "spellthief_detachment": "spellthief_detachment"
+};
+
+const ELEMENTAL_TOKENS = {
+  fire:      ["fire","explosive","sun","sunny","scorching heat","hot","dry"],
+  cold:      ["cold","ice","snow","blizzard","freezing","rain","downpour","wet"],
+  lightning: ["lightning","thunderstorm","magnetic storm"],
+  thunder:   ["thunder","thunderstorm"],
+  poison:    ["poison","fog","cloudy","heavy clouds","smog"],
+  necrotic:  ["necrotic","undead","night","darkness","shadow"],
+  radiant:   ["radiant","clear skies at daylight","sun","sunny","daylight","clear"],
+  acid:      ["acid","rain","downpour"],
+  psychic:   ["psychic"],
+  force:     ["force"]
+};
+
+function normalizeDoctrineId(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (DOCTRINE_LABEL_ALIASES[raw]) return DOCTRINE_LABEL_ALIASES[raw];
+  const cleaned = raw.replace(/[’']/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  if (DOCTRINE_LABEL_ALIASES[cleaned]) return DOCTRINE_LABEL_ALIASES[cleaned];
+  return DOCTRINE_SET.has(cleaned) ? cleaned : "";
+}
+
+function normalizeDamageType(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return DAMAGE_TYPES.includes(v) ? v : "";
+}
+
+function normalizeDoctrineChoice(doctrineId, choice) {
+  if (doctrineId !== "elemental_ammunition") return undefined;
+  const damageType = normalizeDamageType(choice?.damageType || choice || "");
+  return damageType ? { damageType } : undefined;
+}
+
+function normalizeDoctrineInstance(entry) {
+  if (!entry) return null;
+  const doctrineId = normalizeDoctrineId(typeof entry === "string" ? entry : (entry.doctrineId || entry.id || entry.name));
+  if (!doctrineId || !DOCTRINE_SET.has(doctrineId)) return null;
+  const choice = normalizeDoctrineChoice(doctrineId, entry?.choice || entry?.damageType);
+  if (doctrineId === "elemental_ammunition" && !choice?.damageType) return null;
+  return choice ? { doctrineId, choice } : { doctrineId };
+}
+
+function normalizeDoctrineList(list) {
+  const out = [];
+  const seen = new Set();
+  for (const entry of (Array.isArray(list) ? list : [])) {
+    const normalized = normalizeDoctrineInstance(entry);
+    if (!normalized || seen.has(normalized.doctrineId)) continue;
+    seen.add(normalized.doctrineId);
+    out.push(normalized);
+  }
+  return out;
+}
+
+function cloneDoctrineList(list) {
+  return normalizeDoctrineList(list).map(d => (
+    d.choice ? { doctrineId: d.doctrineId, choice: Object.assign({}, d.choice) } : { doctrineId: d.doctrineId }
+  ));
+}
+
+function hasDoctrine(list, doctrineId) {
+  const id = normalizeDoctrineId(doctrineId);
+  return !!normalizeDoctrineList(list).find(d => d.doctrineId === id);
+}
+
+function isDoctrineEligibleForClass(doctrineId, classId) {
+  const id = normalizeDoctrineId(doctrineId);
+  const meta = DOCTRINE_BY_ID[id];
+  if (!meta || !classId) return false;
+  if (Array.isArray(meta.classIds)) return meta.classIds.includes(classId);
+  if (meta.eligible === "non_mage") return classId !== "mages";
+  if (meta.eligible === "not_rebels_bandits") return classId !== "rebels" && classId !== "bandits";
+  return true;
+}
+
+function doctrineLabel(inst) {
+  const id = normalizeDoctrineId(inst?.doctrineId || inst);
+  if (!id) return "";
+  const label = DOCTRINE_BY_ID[id]?.label || id;
+  if (id === "elemental_ammunition") {
+    const damageType = normalizeDamageType(inst?.choice?.damageType);
+    if (damageType) return `${label} (${DAMAGE_TYPE_LABEL[damageType] || damageType})`;
+  }
+  return label;
+}
+
+function doctrineListText(list) {
+  const docs = normalizeDoctrineList(list);
+  return docs.length ? docs.map(d => doctrineLabel(d)).join(", ") : "None";
+}
+
+function parseDeadlyDoctrineIds(raw) {
+  const text = String(raw || "");
+  if (!text) return [];
+  const seen = new Set();
+  const ids = [];
+  for (const token of text.split(",")) {
+    const id = normalizeDoctrineId(token);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
+function buildClassTokenBlob(cls) {
+  if (!cls) return "";
+  const raw = cls.raw || {};
+  return [
+    raw.immunities, raw.resistances, raw.vulnerabilities, raw.deadly,
+    raw.preferredWeather, raw.undesiredWeather, raw.preferredTerrain, raw.undesiredTerrain,
+    cls.name
+  ].map(v => String(v || "").toLowerCase()).join(" | ");
+}
+
+function tokenMatch(blob, type) {
+  const needles = ELEMENTAL_TOKENS[type] || [];
+  return needles.some(t => blob.includes(t));
+}
+
+function titleCaseWord(s) {
+  const str = String(s || "");
+  return str ? str[0].toUpperCase() + str.slice(1) : "";
+}
+
+function defaultDoctrineRuntime() {
+  return {
+    useArmorPiercing: false,
+    useBattlefieldWeavers: false,
+    useWardSmiths: false,
+    useWildSurge: false,
+    phasePenalty: 0,
+    nextPhasePenalty: 0
+  };
+}
+
+function normalizeDoctrineRuntime(runtime) {
+  const r = Object.assign(defaultDoctrineRuntime(), runtime || {});
+  r.useArmorPiercing = !!r.useArmorPiercing;
+  r.useBattlefieldWeavers = !!r.useBattlefieldWeavers;
+  r.useWardSmiths = !!r.useWardSmiths;
+  r.useWildSurge = !!r.useWildSurge;
+  r.phasePenalty = Math.max(0, toInt(r.phasePenalty) || 0);
+  r.nextPhasePenalty = Math.max(0, toInt(r.nextPhasePenalty) || 0);
+  return r;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PERSISTENCE (schema v5)
 // ═══════════════════════════════════════════════════════════════
 const STORAGE_KEY = "warTableState";
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 5;
+const DEFAULT_APP_SETTINGS = {
+  resolutionMode: "risk",
+  quickLossPreset: "standard",
+  allowOverCap: false,
+  overrideDoctrineEligibility: false
+};
+
+function normalizeSettings(settings) {
+  const s = Object.assign({}, DEFAULT_APP_SETTINGS, settings || {});
+  s.resolutionMode = s.resolutionMode === "quick" ? "quick" : "risk";
+  s.quickLossPreset = ["standard", "flat10", "flat20"].includes(s.quickLossPreset) ? s.quickLossPreset : "standard";
+  s.allowOverCap = !!s.allowOverCap;
+  s.overrideDoctrineEligibility = !!s.overrideDoctrineEligibility;
+  return s;
+}
+
+function sanitizeArmyRecord(rawArmy) {
+  const classId = String(rawArmy?.classId || "").trim();
+  if (!INDEX.byId.has(classId)) return null;
+  const id = String(rawArmy?.id || "").trim() || uuid();
+  return {
+    id,
+    name: String(rawArmy?.name || "Army").trim() || "Army",
+    faction: String(rawArmy?.faction || "").trim(),
+    classId,
+    size: Math.max(0, toInt(rawArmy?.size) ?? 0),
+    str: Math.max(0, toInt(rawArmy?.str) ?? 0),
+    notes: String(rawArmy?.notes || "").trim(),
+    doctrines: normalizeDoctrineList(rawArmy?.doctrines),
+    createdAt: rawArmy?.createdAt || nowIso(),
+    updatedAt: rawArmy?.updatedAt || nowIso()
+  };
+}
 
 function emptyState() {
-  return { schemaVersion: SCHEMA_VERSION, updatedAt: nowIso(), armies: [], factions: [], battleHistory: [], weather: Object.assign({}, DEFAULT_WEATHER) };
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    updatedAt: nowIso(),
+    armies: [],
+    factions: [],
+    battleHistory: [],
+    weather: Object.assign({}, DEFAULT_WEATHER),
+    settings: Object.assign({}, DEFAULT_APP_SETTINGS)
+  };
 }
 
 function loadPersisted() {
@@ -2739,14 +3193,18 @@ function loadPersisted() {
   if (!raw) return emptyState();
   const obj = safeJsonParse(raw);
   if (!obj || typeof obj !== "object") return emptyState();
-  // migrate v1/v2/v3 → v4
+  const armies = (Array.isArray(obj.armies) ? obj.armies : [])
+    .map(sanitizeArmyRecord)
+    .filter(Boolean);
+  // migrate older schemas → v5
   return {
     schemaVersion: SCHEMA_VERSION,
     updatedAt: obj.updatedAt || nowIso(),
-    armies: Array.isArray(obj.armies) ? obj.armies : [],
+    armies,
     factions: Array.isArray(obj.factions) ? obj.factions : [],
     battleHistory: Array.isArray(obj.battleHistory) ? obj.battleHistory : [],
-    weather: obj.weather ? Object.assign({}, DEFAULT_WEATHER, obj.weather) : Object.assign({}, DEFAULT_WEATHER)
+    weather: obj.weather ? Object.assign({}, DEFAULT_WEATHER, obj.weather) : Object.assign({}, DEFAULT_WEATHER),
+    settings: normalizeSettings(obj.settings)
   };
 }
 
@@ -2755,16 +3213,23 @@ function persist(saved) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       schemaVersion: SCHEMA_VERSION,
       updatedAt: nowIso(),
-      armies: saved.armies || [],
+      armies: (saved.armies || []).map(sanitizeArmyRecord).filter(Boolean),
       factions: saved.factions || [],
       battleHistory: saved.battleHistory || [],
-      weather: saved.weather || Object.assign({}, DEFAULT_WEATHER)
+      weather: saved.weather || Object.assign({}, DEFAULT_WEATHER),
+      settings: normalizeSettings(saved.settings)
     }));
   } catch (e) { console.warn("War Table: localStorage write failed", e); }
 }
 
 function recomputeFactions(saved) {
   const seen = new Map();
+  for (const f of (saved.factions || [])) {
+    const v = String(f || "").trim();
+    if (!v) continue;
+    const k = v.toLowerCase();
+    if (!seen.has(k)) seen.set(k, v);
+  }
   for (const a of (saved.armies || [])) {
     const f = String(a?.faction || "").trim();
     if (!f) continue;
@@ -2861,6 +3326,168 @@ function applyMutantMix(clsName, list) {
   const c = list.slice(); c[0] = 10; return c;
 }
 
+function stepDieSize(sides, steps) {
+  const track = [4, 6, 8, 10, 12];
+  let idx = track.indexOf(Number(sides) || 6);
+  if (idx < 0) idx = 1;
+  idx = clamp(idx + (toInt(steps) || 0), 0, track.length - 1);
+  return track[idx];
+}
+
+function doctrineRuntimeFor(sideKey, st) {
+  return normalizeDoctrineRuntime(st?.[sideKey]?.doctrineRuntime);
+}
+
+function getDoctrineById(list, id) {
+  return normalizeDoctrineList(list).find(d => d.doctrineId === id) || null;
+}
+
+function computeDoctrineEffects(sideKey, st, selfCls, oppCls, ws) {
+  const oppKey = sideKey === "attacker" ? "defender" : "attacker";
+  const self = st?.[sideKey] || {};
+  const opp = st?.[oppKey] || {};
+  const selfDoctrines = normalizeDoctrineList(self.doctrines);
+  const oppDoctrines = normalizeDoctrineList(opp.doctrines);
+  const selfIds = new Set(selfDoctrines.map(d => d.doctrineId));
+  const oppIds = new Set(oppDoctrines.map(d => d.doctrineId));
+  const runtime = doctrineRuntimeFor(sideKey, st);
+  const oppRaw = oppCls?.raw || {};
+  const immBlob = String(oppRaw.immunities || "").toLowerCase();
+  const resBlob = String(oppRaw.resistances || "").toLowerCase();
+  const vulBlob = String(oppRaw.vulnerabilities || "").toLowerCase();
+  const deadBlob = String(oppRaw.deadly || "").toLowerCase();
+  const prefBlob = String(oppRaw.preferredWeather || "").toLowerCase();
+  const undesBlob = String(oppRaw.undesiredWeather || "").toLowerCase();
+
+  let dice = 0;
+  let dieStep = 0;
+  let forcedAutoSides = null;
+  const lines = [];
+  const plainLines = [];
+
+  if (runtime.phasePenalty > 0) {
+    dice -= runtime.phasePenalty;
+    lines.push(`Queued doctrine fatigue: <b>−${runtime.phasePenalty}</b> ${runtime.phasePenalty === 1 ? "die" : "dice"}`);
+    plainLines.push(`Queued doctrine fatigue −${runtime.phasePenalty}`);
+  }
+
+  const deadlyDoctrineIds = parseDeadlyDoctrineIds(selfCls?.raw?.deadlyDoctrines);
+  for (const id of deadlyDoctrineIds) {
+    if (!oppIds.has(id)) continue;
+    dice += RULES.modifierShorthand.deadly;
+    lines.push(`Deadly Doctrine trigger vs <b>${escHtml(DOCTRINE_BY_ID[id]?.label || id)}</b>: <b>${RULES.modifierShorthand.deadly}</b> dice`);
+    plainLines.push(`Deadly Doctrine vs ${DOCTRINE_BY_ID[id]?.label || id} ${RULES.modifierShorthand.deadly}`);
+  }
+
+  if (selfIds.has("heavy_artillery")) {
+    dieStep += 1;
+    lines.push(`Heavy Artillery: die size <b>+1 step</b>`);
+    plainLines.push("Heavy Artillery +1 die step");
+  }
+
+  if (selfIds.has("anti_air") && oppCls?.id === "aerial-cavalry") {
+    dice += 3;
+    lines.push(`Anti-Air vs Aerial Cavalry: <b>+3 dice</b>`);
+    plainLines.push("Anti-Air vs Aerial Cavalry +3");
+  }
+
+  if (selfIds.has("anti_magic") && oppCls?.id === "mages") {
+    dice += 3;
+    lines.push(`Anti-Magic vs Mages: <b>+3 dice</b>`);
+    plainLines.push("Anti-Magic vs Mages +3");
+  }
+
+  if (selfCls?.id === "mages" && oppIds.has("anti_magic")) {
+    forcedAutoSides = 4;
+    lines.push(`Anti-Magic vs Mages: auto dice forced to <b>d4</b>`);
+    plainLines.push("Anti-Magic forces Mages to d4");
+  }
+
+  if (oppIds.has("heavy_protection")) {
+    const armorPiercingUsed = selfIds.has("armor_piercing") && runtime.useArmorPiercing;
+    if (armorPiercingUsed) {
+      dice += 1;
+      lines.push(`Armor-Piercing used: negates Heavy-Protection and grants <b>+1 die</b>`);
+      plainLines.push("Armor-Piercing negates Heavy-Protection (+1)");
+    } else {
+      dice -= 1;
+      lines.push(`Enemy Heavy-Protection: <b>−1 die</b>`);
+      plainLines.push("Enemy Heavy-Protection −1");
+    }
+  }
+
+  const elemental = getDoctrineById(selfDoctrines, "elemental_ammunition");
+  if (elemental?.choice?.damageType) {
+    const dt = elemental.choice.damageType;
+    const imm = tokenMatch(immBlob, dt);
+    const res = tokenMatch(resBlob, dt);
+    const vul = tokenMatch(vulBlob, dt);
+    const dead = tokenMatch(deadBlob, dt);
+    const prefers = tokenMatch(prefBlob, dt);
+    const undesired = tokenMatch(undesBlob, dt);
+    if (imm) {
+      dice -= RULES.modifierShorthand.immunity;
+      lines.push(`Elemental Ammunition (${titleCaseWord(dt)}): enemy immunity <b>−${RULES.modifierShorthand.immunity}</b> dice`);
+      plainLines.push(`Elemental ${dt} enemy immunity -${RULES.modifierShorthand.immunity}`);
+    }
+    if (res) {
+      dice -= RULES.modifierShorthand.resistance;
+      lines.push(`Elemental Ammunition (${titleCaseWord(dt)}): enemy resistance <b>−${RULES.modifierShorthand.resistance}</b> die`);
+      plainLines.push(`Elemental ${dt} enemy resistance -${RULES.modifierShorthand.resistance}`);
+    }
+    if (vul) {
+      dice += 1;
+      lines.push(`Elemental Ammunition (${titleCaseWord(dt)}): enemy vulnerability <b>+1 die</b>`);
+      plainLines.push(`Elemental ${dt} enemy vulnerability +1`);
+    }
+    if (dead) {
+      dice += 3;
+      lines.push(`Elemental Ammunition (${titleCaseWord(dt)}): enemy deadly token <b>+3 dice</b>`);
+      plainLines.push(`Elemental ${dt} enemy deadly +3`);
+    }
+    if (prefers) {
+      dice -= 1;
+      lines.push(`Elemental affinity (${titleCaseWord(dt)}): enemy preferred-weather alignment <b>−1 die</b>`);
+      plainLines.push(`Elemental ${dt} enemy preferred-weather alignment -1`);
+    }
+    if (undesired) {
+      dice += 1;
+      lines.push(`Elemental affinity (${titleCaseWord(dt)}): enemy undesired-weather alignment <b>+1 die</b>`);
+      plainLines.push(`Elemental ${dt} enemy undesired-weather alignment +1`);
+    }
+    if (imm || res) {
+      dice -= 1;
+      lines.push(`Elemental Ammunition drawback: resisted/immune type <b>−1 die</b>`);
+      plainLines.push("Elemental drawback -1 (resisted/immune)");
+    }
+  }
+
+  if (selfIds.has("fire_artillery")) {
+    const fireVul = tokenMatch(vulBlob, "fire");
+    const fireDead = tokenMatch(deadBlob, "fire");
+    const fireBonus = fireDead ? 6 : (fireVul ? 3 : 0);
+    if (fireBonus > 0) {
+      dice += fireBonus;
+      lines.push(`Fire Artillery pressure: <b>+${fireBonus}</b> dice (cap equivalent to −6 on enemy)`);
+      plainLines.push(`Fire Artillery +${fireBonus}`);
+    }
+    const coldWetTags = new Set(["RAIN","DOWNPOUR","COLD","SNOW","BLIZZARD","THUNDERSTORM"]);
+    if (coldWetTags.has(ws?.tag)) {
+      dice -= 1;
+      lines.push(`Fire Artillery weather penalty (cold/wet): <b>−1 die</b>`);
+      plainLines.push("Fire Artillery cold/wet -1");
+    }
+  }
+
+  if (selfIds.has("wild_surge_license") && runtime.useWildSurge) {
+    dieStep += 1;
+    lines.push(`Wild Surge License used: die size <b>+1 step</b>`);
+    plainLines.push("Wild Surge +1 die step");
+  }
+
+  return { dice, dieStep, forcedAutoSides, lines, plainLines };
+}
+
 function matchupMod(selfCls, oppCls) {
   if (!selfCls || !oppCls) return { total:0, lines:[] };
   const name = oppCls.name;
@@ -2895,13 +3522,16 @@ function computePool(sideKey, st) {
   const base = sizeDice + strDice;
   const mu = matchupMod(cls, oppCls);
   const weatherMod = weatherPreferredMod(cls, ws);
-  const preCap = base + mu.total + weatherMod.dice + classSpecials.diceBonus;
+  const doctrine = computeDoctrineEffects(sideKey, st, cls, oppCls, ws);
+  const preCap = base + mu.total + weatherMod.dice + classSpecials.diceBonus + doctrine.dice;
   const capped = clamp(preCap, 0, roleCap);
   const allowOver = st.settings.allowOverCap;
   let afterManual = capped + (self.manualDiceDelta || 0);
   afterManual = Math.max(0, afterManual);
   const finalCount = allowOver ? afterManual : clamp(afterManual, 0, roleCap);
-  const autoSides = autoDiceType(cls, cls?.matchups || {immunities:[],resistances:[],vulnerabilities:[],deadly:[]}, oppCls, st.conditions);
+  let autoSides = autoDiceType(cls, cls?.matchups || {immunities:[],resistances:[],vulnerabilities:[],deadly:[]}, oppCls, st.conditions);
+  if (doctrine.forcedAutoSides) autoSides = doctrine.forcedAutoSides;
+  autoSides = stepDieSize(autoSides, doctrine.dieStep);
   const sides = (self.diceOverride && self.diceOverride !== "auto") ? Number(self.diceOverride) : autoSides;
   let diceSidesList = Array.from({length: finalCount}, ()=>sides);
   diceSidesList = applyMutantMix(cls?.name, diceSidesList);
@@ -2923,6 +3553,9 @@ function computePool(sideKey, st) {
   if (classSpecials.lines.length) {
     lines.push(`<div><b>Class specials</b>:</div><div style="margin-left:10px;">${classSpecials.lines.map(l=>`• ${l}`).join("<br>")}</div>`);
   }
+  if (doctrine.lines.length) {
+    lines.push(`<div><b>Doctrine effects</b>:</div><div style="margin-left:10px;">${doctrine.lines.map(l=>`• ${l}`).join("<br>")}</div>`);
+  }
   lines.push(`<div style="margin-top:5px;"><b>Pre-cap</b>: <code>${preCap}</code> → Cap (${roleCap}): <code>${capped}</code></div>`);
   if (self.manualDiceDelta) {
     const sign = self.manualDiceDelta > 0 ? "+" : "";
@@ -2941,6 +3574,8 @@ function computePool(sideKey, st) {
     size, str, base, preCap, capped, finalCount,
     diceSidesList, diceSidesDisplay: formatDiceList(diceSidesList),
     dieSidesPrimary: sides,
+    doctrineEffects: doctrine,
+    doctrineSummary: doctrine.plainLines,
     breakdownHtml: lines.join("") + notesHtml
   };
 }
@@ -2951,17 +3586,27 @@ function computePool(sideKey, st) {
 buildWeatherTagIndex(); // normalize all raw weather strings to canonical tags
 
 const state = {
-  attacker: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
-  defender: { classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true },
+  attacker: {
+    classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true, loadedArmyId: null,
+    doctrines: [], doctrineRuntime: defaultDoctrineRuntime()
+  },
+  defender: {
+    classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true, loadedArmyId: null,
+    doctrines: [], doctrineRuntime: defaultDoctrineRuntime()
+  },
   conditions: { defenderHasStructures: false },
-  settings: { resolutionMode: "risk", quickLossPreset: "standard", allowOverCap: false },
+  settings: Object.assign({}, DEFAULT_APP_SETTINGS),
   weather: loadWeatherState(),
   lastResult: null,
   saved: loadPersisted(),
   _computed: {}
 };
-state.saved.armies = state.saved.armies || [];
+state.saved.armies = (state.saved.armies || []).map(sanitizeArmyRecord).filter(Boolean);
 state.saved.battleHistory = state.saved.battleHistory || [];
+state.saved.settings = normalizeSettings(state.saved.settings);
+state.saved.weather = Object.assign({}, DEFAULT_WEATHER, state.saved.weather || {});
+state.settings = Object.assign({}, state.saved.settings);
+state.weather = Object.assign({}, DEFAULT_WEATHER, state.saved.weather);
 recomputeFactions(state.saved);
 persist(state.saved);
 
@@ -2994,18 +3639,19 @@ function saveArmyRecord(data) {
   const str  = Math.max(0, Number.isFinite(Number(data?.str)) ? Math.trunc(Number(data.str)) : 0);
   const faction = String(data?.faction||"").trim();
   const notes = String(data?.notes||"").trim();
+  const doctrines = normalizeDoctrineList(data?.doctrines);
 
   let target = null;
   if (data?.id) target = findArmyById(String(data.id));
   if (!target) target = findArmyByName(name);
 
   if (target) {
-    Object.assign(target, { name, faction, classId, size, str, notes, updatedAt: nowIso() });
+    Object.assign(target, { name, faction, classId, size, str, notes, doctrines, updatedAt: nowIso() });
     recomputeFactions(state.saved);
     persist(state.saved);
     return { ok:true, mode:"update", army: target };
   }
-  const army = { id: uuid(), name, faction, classId, size, str, notes, createdAt: nowIso(), updatedAt: nowIso() };
+  const army = { id: uuid(), name, faction, classId, size, str, notes, doctrines, createdAt: nowIso(), updatedAt: nowIso() };
   state.saved.armies.unshift(army);
   upsertFaction(faction);
   recomputeFactions(state.saved);
@@ -3025,6 +3671,9 @@ function renameFaction(oldName, newName) {
   const newKey = newTrimmed.toLowerCase();
   const conflict = (state.saved.factions||[]).some(f=>f.toLowerCase()===newKey && f.toLowerCase()!==oldName.toLowerCase());
   if (conflict) return { ok:false, error:"That faction name already exists." };
+  state.saved.factions = (state.saved.factions || []).map(f =>
+    String(f || "").toLowerCase() === oldName.toLowerCase() ? newTrimmed : f
+  );
   for (const a of (state.saved.armies||[])) {
     if (String(a?.faction||"").toLowerCase() === oldName.toLowerCase()) a.faction = newTrimmed;
   }
@@ -3034,6 +3683,7 @@ function renameFaction(oldName, newName) {
 }
 
 function deleteFaction(name) {
+  state.saved.factions = (state.saved.factions || []).filter(f => String(f || "").toLowerCase() !== name.toLowerCase());
   for (const a of (state.saved.armies||[])) {
     if (String(a?.faction||"").toLowerCase() === name.toLowerCase()) a.faction = "";
   }
@@ -3044,19 +3694,31 @@ function deleteFaction(name) {
 // ═══════════════════════════════════════════════════════════════
 // BATTLE HISTORY
 // ═══════════════════════════════════════════════════════════════
-function appendHistory(result, attRoll, defRoll) {
+function appendHistory(result, attRoll, defRoll, attComp, defComp) {
   const attCls = INDEX.byId.get(state.attacker.classId);
   const defCls = INDEX.byId.get(state.defender.classId);
+  const attDocs = cloneDoctrineList(state.attacker.doctrines);
+  const defDocs = cloneDoctrineList(state.defender.doctrines);
   const entry = {
     id: uuid(),
     ts: nowIso(),
-    attacker: { class: attCls?.name||"?", size: state.attacker.size, str: state.attacker.str, pool: state._computed.att?.diceSidesDisplay },
-    defender: { class: defCls?.name||"?", size: state.defender.size, str: state.defender.str, pool: state._computed.def?.diceSidesDisplay },
+    attacker: {
+      class: attCls?.name||"?", size: state.attacker.size, str: state.attacker.str, pool: attComp?.diceSidesDisplay || state._computed.att?.diceSidesDisplay,
+      doctrines: attDocs
+    },
+    defender: {
+      class: defCls?.name||"?", size: state.defender.size, str: state.defender.str, pool: defComp?.diceSidesDisplay || state._computed.def?.diceSidesDisplay,
+      doctrines: defDocs
+    },
     winner: result.winner,
     attLoss: result.attLoss, defLoss: result.defLoss,
     newAttSize: result.newAtt, newDefSize: result.newDef,
     summary: result.summary,
-    mode: result.mode
+    mode: result.mode,
+    doctrineSummary: {
+      attacker: attComp?.doctrineSummary || state._computed.att?.doctrineSummary || [],
+      defender: defComp?.doctrineSummary || state._computed.def?.doctrineSummary || []
+    }
   };
   state.saved.battleHistory = state.saved.battleHistory || [];
   state.saved.battleHistory.unshift(entry);
@@ -3094,6 +3756,33 @@ function getCommitCount(sideKey, comp) {
   if (self.autoCommit) return comp.diceSidesList.length;
   const n = toInt($(sideKey+"Commit").value);
   return n===null ? comp.diceSidesList.length : clamp(n,0,comp.diceSidesList.length);
+}
+
+function applyDoctrinePhaseBoundary(attRoll, defRoll) {
+  const rollBySide = { attacker: attRoll, defender: defRoll };
+  for (const sideKey of ["attacker","defender"]) {
+    const runtime = normalizeDoctrineRuntime(state[sideKey].doctrineRuntime);
+    const docs = normalizeDoctrineList(state[sideKey].doctrines);
+    const has = (id) => docs.some(d => d.doctrineId === id);
+    if (has("armor_piercing") && runtime.useArmorPiercing) runtime.nextPhasePenalty += 1;
+    if (has("battlefield_weavers") && runtime.useBattlefieldWeavers) runtime.nextPhasePenalty += 1;
+    if (has("ward_smiths") && runtime.useWardSmiths) runtime.nextPhasePenalty += 1;
+    if (has("wild_surge_license") && runtime.useWildSurge) {
+      const rolls = rollBySide[sideKey]?.rolls || [];
+      const minHit = rolls.some(r => Number(r.roll) === 1);
+      if (minHit) {
+        runtime.nextPhasePenalty += 1;
+        showToast(`${sideKey==="attacker"?"Attacker":"Defender"} Wild Surge complication: next phase <b>−1 die</b>.`, "warn");
+      }
+    }
+    runtime.phasePenalty = runtime.nextPhasePenalty;
+    runtime.nextPhasePenalty = 0;
+    runtime.useArmorPiercing = false;
+    runtime.useBattlefieldWeavers = false;
+    runtime.useWardSmiths = false;
+    runtime.useWildSurge = false;
+    state[sideKey].doctrineRuntime = runtime;
+  }
 }
 
 function resolveQuick(att, def, aRoll, dRoll) {
@@ -3169,6 +3858,240 @@ function renderArmyLoaders() {
   }
 }
 
+function fillDamageTypeSelect(selectEl, selected) {
+  if (!selectEl) return;
+  const cur = normalizeDamageType(selected || selectEl.value);
+  selectEl.innerHTML = '<option value="">— Select damage type —</option>';
+  for (const type of DAMAGE_TYPES) {
+    const opt = document.createElement("option");
+    opt.value = type;
+    opt.textContent = DAMAGE_TYPE_LABEL[type] || titleCaseWord(type);
+    selectEl.appendChild(opt);
+  }
+  if (cur) selectEl.value = cur;
+}
+
+function doctrineIdsForSide(sideKey) {
+  return normalizeDoctrineList(state?.[sideKey]?.doctrines).map(d => d.doctrineId);
+}
+
+function renderSideDoctrinePicker(sideKey) {
+  const pfx = sideKey === "attacker" ? "att" : "def";
+  const selectEl = $(`${pfx}DoctrineSelect`);
+  const choiceRow = $(`${pfx}DoctrineChoiceRow`);
+  const damageEl = $(`${pfx}DoctrineDamageType`);
+  const runtimeWrap = $(`${pfx}DoctrineRuntime`);
+  const queuedEl = $(`${pfx}DoctrineQueued`);
+  if (!selectEl || !choiceRow || !damageEl) return;
+
+  const current = normalizeDoctrineId(selectEl.value);
+  const selectedIds = new Set(doctrineIdsForSide(sideKey));
+  const classId = state?.[sideKey]?.classId;
+  const allowOverride = !!state?.settings?.overrideDoctrineEligibility;
+  const available = DOCTRINE_IDS.filter(id => (
+    (allowOverride || isDoctrineEligibleForClass(id, classId)) && !selectedIds.has(id)
+  ));
+
+  selectEl.innerHTML = '<option value="">— Select doctrine —</option>';
+  for (const id of available) {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = DOCTRINE_BY_ID[id]?.label || id;
+    selectEl.appendChild(opt);
+  }
+  if (current && available.includes(current)) selectEl.value = current;
+  const selectedDoctrine = normalizeDoctrineId(selectEl.value);
+  const showChoice = selectedDoctrine === "elemental_ammunition";
+  choiceRow.classList.toggle("visible", showChoice);
+  fillDamageTypeSelect(damageEl, damageEl.value);
+
+  const runtime = normalizeDoctrineRuntime(state?.[sideKey]?.doctrineRuntime);
+  const docs = new Set(doctrineIdsForSide(sideKey));
+  const toggles = [];
+  if (docs.has("armor_piercing")) toggles.push({ key: "useArmorPiercing", label: "Armor-Piercing (use this phase)" });
+  if (docs.has("battlefield_weavers")) toggles.push({ key: "useBattlefieldWeavers", label: "Battlefield Weavers (used this phase)" });
+  if (docs.has("ward_smiths")) toggles.push({ key: "useWardSmiths", label: "Ward-Smiths (used this phase)" });
+  if (docs.has("wild_surge_license")) toggles.push({ key: "useWildSurge", label: "Wild Surge License (use this phase)" });
+  if (!toggles.length) {
+    runtimeWrap.innerHTML = "";
+  } else {
+    runtimeWrap.innerHTML = toggles.map(t => (
+      `<label class="doctrineToggle"><span>${escHtml(t.label)}</span><input type="checkbox" data-doctrine-toggle="${escHtml(t.key)}"${runtime[t.key] ? " checked" : ""}></label>`
+    )).join("");
+    runtimeWrap.querySelectorAll("input[data-doctrine-toggle]").forEach(el => {
+      el.addEventListener("change", () => {
+        const key = el.getAttribute("data-doctrine-toggle");
+        state[sideKey].doctrineRuntime[key] = el.checked;
+        render();
+      });
+    });
+  }
+  if (queuedEl) {
+    const projectedQueued = runtime.nextPhasePenalty
+      + ((docs.has("armor_piercing") && runtime.useArmorPiercing) ? 1 : 0)
+      + ((docs.has("battlefield_weavers") && runtime.useBattlefieldWeavers) ? 1 : 0)
+      + ((docs.has("ward_smiths") && runtime.useWardSmiths) ? 1 : 0);
+    queuedEl.textContent = projectedQueued > 0
+      ? `Queued next-phase doctrine penalty: −${projectedQueued} ${projectedQueued === 1 ? "die" : "dice"}`
+      : "";
+  }
+}
+
+function removeDoctrineFromSide(sideKey, doctrineId) {
+  const id = normalizeDoctrineId(doctrineId);
+  state[sideKey].doctrines = normalizeDoctrineList(state[sideKey].doctrines).filter(d => d.doctrineId !== id);
+  if (!hasDoctrine(state[sideKey].doctrines, "armor_piercing")) state[sideKey].doctrineRuntime.useArmorPiercing = false;
+  if (!hasDoctrine(state[sideKey].doctrines, "battlefield_weavers")) state[sideKey].doctrineRuntime.useBattlefieldWeavers = false;
+  if (!hasDoctrine(state[sideKey].doctrines, "ward_smiths")) state[sideKey].doctrineRuntime.useWardSmiths = false;
+  if (!hasDoctrine(state[sideKey].doctrines, "wild_surge_license")) state[sideKey].doctrineRuntime.useWildSurge = false;
+  render();
+}
+
+function renderSideDoctrineChips(sideKey) {
+  const pfx = sideKey === "attacker" ? "att" : "def";
+  const wrap = $(`${pfx}DoctrineChips`);
+  if (!wrap) return;
+  const docs = normalizeDoctrineList(state[sideKey].doctrines);
+  if (!docs.length) {
+    wrap.innerHTML = `<span class="help">No doctrines selected.</span>`;
+    return;
+  }
+  const classId = state[sideKey].classId;
+  const allowOverride = !!state.settings.overrideDoctrineEligibility;
+  wrap.innerHTML = docs.map(d => {
+    const eligible = isDoctrineEligibleForClass(d.doctrineId, classId);
+    const ineligible = !allowOverride && !eligible;
+    const chipClass = `chip${ineligible ? " ineligible" : ""}`;
+    const flag = ineligible ? `<span class="chipFlag">Grandfathered</span>` : "";
+    return `<span class="${chipClass}">${escHtml(doctrineLabel(d))}${flag}<button type="button" data-remove-doctrine="${escHtml(d.doctrineId)}" aria-label="Remove doctrine">×</button></span>`;
+  }).join("");
+  wrap.querySelectorAll("button[data-remove-doctrine]").forEach(btn => {
+    btn.addEventListener("click", () => removeDoctrineFromSide(sideKey, btn.getAttribute("data-remove-doctrine")));
+  });
+}
+
+function addDoctrineToSide(sideKey) {
+  const pfx = sideKey === "attacker" ? "att" : "def";
+  const id = normalizeDoctrineId($(`${pfx}DoctrineSelect`)?.value);
+  if (!id) return;
+  if (!state.settings.overrideDoctrineEligibility && !isDoctrineEligibleForClass(id, state[sideKey].classId)) {
+    showToast("Doctrine is not eligible for this class (override is off).", "warn");
+    return;
+  }
+  if (hasDoctrine(state[sideKey].doctrines, id)) return;
+  const doctrine = { doctrineId: id };
+  if (id === "elemental_ammunition") {
+    const damageType = normalizeDamageType($(`${pfx}DoctrineDamageType`)?.value);
+    if (!damageType) {
+      showToast("Choose a damage type for Elemental Ammunition.", "warn");
+      return;
+    }
+    doctrine.choice = { damageType };
+  }
+  state[sideKey].doctrines = normalizeDoctrineList([...(state[sideKey].doctrines || []), doctrine]);
+  if ($(`${pfx}DoctrineSelect`)) $(`${pfx}DoctrineSelect`).value = "";
+  if ($(`${pfx}DoctrineDamageType`)) $(`${pfx}DoctrineDamageType`).value = "";
+  render();
+}
+
+let _armyModalDoctrines = [];
+
+function renderArmyModalDoctrinePicker() {
+  const selectEl = $("armyDoctrineSelect");
+  const choiceRow = $("armyDoctrineChoiceRow");
+  const damageEl = $("armyDoctrineDamageType");
+  if (!selectEl || !choiceRow || !damageEl) return;
+  const classId = $("armyClass")?.value || "";
+  const allowOverride = !!state.settings.overrideDoctrineEligibility;
+  const selectedIds = new Set(normalizeDoctrineList(_armyModalDoctrines).map(d => d.doctrineId));
+  const current = normalizeDoctrineId(selectEl.value);
+  const available = DOCTRINE_IDS.filter(id => (
+    (allowOverride || isDoctrineEligibleForClass(id, classId)) && !selectedIds.has(id)
+  ));
+  selectEl.innerHTML = '<option value="">— Select doctrine —</option>';
+  for (const id of available) {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = DOCTRINE_BY_ID[id]?.label || id;
+    selectEl.appendChild(opt);
+  }
+  if (current && available.includes(current)) selectEl.value = current;
+  const selectedDoctrine = normalizeDoctrineId(selectEl.value);
+  choiceRow.classList.toggle("visible", selectedDoctrine === "elemental_ammunition");
+  fillDamageTypeSelect(damageEl, damageEl.value);
+}
+
+function renderArmyModalDoctrineChips() {
+  const wrap = $("armyDoctrineChips");
+  if (!wrap) return;
+  const doctrines = normalizeDoctrineList(_armyModalDoctrines);
+  if (!doctrines.length) {
+    wrap.innerHTML = `<span class="help">No doctrines selected.</span>`;
+    return;
+  }
+  const classId = $("armyClass")?.value || "";
+  const allowOverride = !!state.settings.overrideDoctrineEligibility;
+  wrap.innerHTML = doctrines.map(d => {
+    const eligible = isDoctrineEligibleForClass(d.doctrineId, classId);
+    const ineligible = !allowOverride && !eligible;
+    const elementalChoice = d.doctrineId === "elemental_ammunition"
+      ? `<select data-army-doctrine-damage="${escHtml(d.doctrineId)}">${DAMAGE_TYPES.map(type=>`<option value="${type}"${d.choice?.damageType===type?" selected":""}>${escHtml(DAMAGE_TYPE_LABEL[type] || titleCaseWord(type))}</option>`).join("")}</select>`
+      : "";
+    return `<span class="chip${ineligible ? " ineligible" : ""}">${escHtml(DOCTRINE_BY_ID[d.doctrineId]?.label || d.doctrineId)}${ineligible ? `<span class="chipFlag">Grandfathered</span>` : ""}${elementalChoice}<button type="button" data-army-remove-doctrine="${escHtml(d.doctrineId)}" aria-label="Remove doctrine">×</button></span>`;
+  }).join("");
+  wrap.querySelectorAll("button[data-army-remove-doctrine]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = normalizeDoctrineId(btn.getAttribute("data-army-remove-doctrine"));
+      _armyModalDoctrines = normalizeDoctrineList(_armyModalDoctrines).filter(d => d.doctrineId !== id);
+      renderArmyModalDoctrinePicker();
+      renderArmyModalDoctrineChips();
+    });
+  });
+  wrap.querySelectorAll("select[data-army-doctrine-damage]").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const damageType = normalizeDamageType(sel.value);
+      _armyModalDoctrines = normalizeDoctrineList(_armyModalDoctrines).map(d => {
+        if (d.doctrineId !== "elemental_ammunition") return d;
+        return damageType ? { doctrineId: d.doctrineId, choice: { damageType } } : d;
+      });
+      renderArmyModalDoctrineChips();
+    });
+  });
+}
+
+function resetArmyModalDoctrines(list) {
+  _armyModalDoctrines = cloneDoctrineList(list);
+  renderArmyModalDoctrinePicker();
+  renderArmyModalDoctrineChips();
+}
+
+function addDoctrineToArmyModal() {
+  const id = normalizeDoctrineId($("armyDoctrineSelect")?.value);
+  if (!id) return;
+  if (!state.settings.overrideDoctrineEligibility && !isDoctrineEligibleForClass(id, $("armyClass")?.value || "")) {
+    $("armyModalError").style.display = "block";
+    $("armyModalError").textContent = "Doctrine is not eligible for this class (override is off).";
+    return;
+  }
+  if (_armyModalDoctrines.some(d => d.doctrineId === id)) return;
+  const doctrine = { doctrineId: id };
+  if (id === "elemental_ammunition") {
+    const damageType = normalizeDamageType($("armyDoctrineDamageType")?.value);
+    if (!damageType) {
+      $("armyModalError").style.display = "block";
+      $("armyModalError").textContent = "Elemental Ammunition requires a damage type.";
+      return;
+    }
+    doctrine.choice = { damageType };
+  }
+  $("armyModalError").style.display = "none";
+  _armyModalDoctrines = normalizeDoctrineList([..._armyModalDoctrines, doctrine]);
+  if ($("armyDoctrineSelect")) $("armyDoctrineSelect").value = "";
+  if ($("armyDoctrineDamageType")) $("armyDoctrineDamageType").value = "";
+  renderArmyModalDoctrinePicker();
+  renderArmyModalDoctrineChips();
+}
+
 function loadArmyIntoSide(sideKey, army) {
   if (!army) return;
   const pfx = sideKey;
@@ -3181,6 +4104,9 @@ function loadArmyIntoSide(sideKey, army) {
     $(pfx+"Class").value = army.classId;
     state[sideKey].classId = army.classId;
   }
+  state[sideKey].loadedArmyId = army.id;
+  state[sideKey].doctrines = cloneDoctrineList(army.doctrines);
+  state[sideKey].doctrineRuntime = defaultDoctrineRuntime();
   render();
   showToast(`Loaded "${escHtml(army.name)}" into ${sideKey==="attacker"?"Attacker":"Defender"}.`);
 }
@@ -3198,6 +4124,8 @@ function showToast(html, kind) {
 function renderResult(result, attRoll, defRoll) {
   const ra = $("resultArea");
   ra.style.display = "block";
+  if ($("rollsDetails")) $("rollsDetails").open = false;
+  if ($("riskDetails")) $("riskDetails").open = false;
   ra.classList.remove("att-wins", "def-wins");
   ra.classList.add(result.winner === "attacker" ? "att-wins" : "def-wins");
   $("resultHeadline").textContent = result.winner==="attacker" ? "⚔ Attacker wins" : "🛡 Defender holds";
@@ -3214,20 +4142,24 @@ function renderResult(result, attRoll, defRoll) {
   $("attackerTotal").textContent = String(attRoll.total);
   $("defenderTotal").textContent = String(defRoll.total);
   if (result.mode==="risk" && result.comparisons) {
-    $("riskCompareWrap").style.display = "block";
+    $("riskDetails").style.display = "";
     const tb = $("riskCompareBody"); tb.innerHTML = "";
     for (const row of result.comparisons) {
       const tr=document.createElement("tr");
       tr.innerHTML=`<td class="mono">${row.i}</td><td class="mono">${row.a}</td><td class="mono">${row.d}</td><td>${row.loss}</td>`;
       tb.appendChild(tr);
     }
-  } else { $("riskCompareWrap").style.display="none"; }
+  } else { $("riskDetails").style.display = "none"; }
 }
 
 function render() {
   $("rulesetVersion").textContent = RULES.rulesetVersion;
   $("rulesFooter").textContent = RULES.rulesetVersion;
   if ($("settingsRulesetVer")) $("settingsRulesetVer").textContent = RULES.rulesetVersion;
+  for (const side of ["attacker","defender"]) {
+    state[side].doctrines = normalizeDoctrineList(state[side].doctrines);
+    state[side].doctrineRuntime = normalizeDoctrineRuntime(state[side].doctrineRuntime);
+  }
 
   const att = computePool("attacker", state);
   const def = computePool("defender", state);
@@ -3247,6 +4179,25 @@ function render() {
   const defCommit = getCommitCount("defender",def);
   $("attackerCommitSummary").textContent = state.attacker.autoCommit?`auto: ${attCommit}`:`manual: ${attCommit}`;
   $("defenderCommitSummary").textContent = state.defender.autoCommit?`auto: ${defCommit}`:`manual: ${defCommit}`;
+  const attCommitRaw = toInt($("attackerCommit").value);
+  const defCommitRaw = toInt($("defenderCommit").value);
+  const attViolating = !state.attacker.autoCommit && attCommitRaw !== null && state.settings.resolutionMode === "risk" && attCommitRaw < 5;
+  const defViolating = !state.defender.autoCommit && defCommitRaw !== null && def.finalCount > 0 && defCommitRaw < 1;
+  if ($("attCommitRule")) $("attCommitRule").classList.toggle("visible", attViolating);
+  if ($("defCommitRule")) $("defCommitRule").classList.toggle("visible", defViolating);
+  const setSaveLabel = (btnId, sideKey) => {
+    const btn = $(btnId);
+    if (!btn) return;
+    const hasLoaded = !!state[sideKey]?.loadedArmyId;
+    btn.innerHTML = `<svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> ${hasLoaded ? "Update Army" : "Save as Army"}`;
+  };
+  setSaveLabel("openSaveAttModal", "attacker");
+  setSaveLabel("openSaveDefModal", "defender");
+  renderSideDoctrinePicker("attacker");
+  renderSideDoctrinePicker("defender");
+  renderSideDoctrineChips("attacker");
+  renderSideDoctrineChips("defender");
+  if ($("overrideDoctrineEligibility")) $("overrideDoctrineEligibility").value = state.settings.overrideDoctrineEligibility ? "yes" : "no";
 
   const ws = state.weather;
   const wl = weatherLabel(ws);
@@ -3364,6 +4315,7 @@ function renderArmyList(filter) {
   const container = $("armyList");
   if (!container) return;
   const armies = state.saved.armies || [];
+  if ($("armyCount")) $("armyCount").textContent = `${armies.length} arm${armies.length!==1?"ies":"y"}`;
   const query = String(filter||"").trim().toLowerCase();
   const filtered = query ? armies.filter(a=>
     normalizeName(a.name).includes(query) ||
@@ -3378,15 +4330,17 @@ function renderArmyList(filter) {
   container.innerHTML = filtered.map(a=>{
     const cls = INDEX.byId.get(a.classId);
     const clsName = cls?.name || a.classId || "?";
+    const isDefeated = (a.size === 0 || a.size === "0");
+    const defeatedBadge = isDefeated ? `<span class="badge defeated">Defeated</span>` : "";
     const meta = [
       a.faction?`<span>⚑ ${escHtml(a.faction)}</span>`:"",
       `<span>${escHtml(clsName)}</span>`,
       `<span>Size ${a.size||0} / STR ${a.str||0}</span>`,
       a.notes?`<span>${escHtml(a.notes)}</span>`:""
     ].filter(Boolean).join(" · ");
-    return `<div class="armyRow" data-id="${escHtml(a.id)}">
+    return `<div class="armyRow ${isDefeated ? "army-defeated" : ""}" data-id="${escHtml(a.id)}">
       <div>
-        <div class="armyName">${escHtml(a.name)}</div>
+        <div class="armyName">${escHtml(a.name)} ${defeatedBadge}</div>
         <div class="armyMeta">${meta}</div>
       </div>
       <div class="armyActions">
@@ -3409,17 +4363,19 @@ function loadArmyToSide(id, side) {
 // ═══════════════════════════════════════════════════════════════
 // RENDER — FACTIONS TAB
 // ═══════════════════════════════════════════════════════════════
-function renderFactionList() {
+function renderFactionList(filter) {
   const container = $("factionList");
   if (!container) return;
   const factions = state.saved.factions || [];
+  const query = normalizeName(filter);
+  const filtered = query ? factions.filter(f => normalizeName(f).includes(query)) : factions;
   const armyCount = (f) => (state.saved.armies||[]).filter(a=>String(a.faction||"").toLowerCase()===f.toLowerCase()).length;
   if ($("factionCount")) $("factionCount").textContent = `${factions.length} faction${factions.length!==1?"s":""}`;
-  if (!factions.length) {
-    container.innerHTML = `<div class="empty"><span class="emptyIcon">🏰</span>No factions yet. Add a faction when saving an army.</div>`;
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty"><span class="emptyIcon">🏰</span>${factions.length ? "No factions match your search." : "No factions yet. Add a faction when saving an army."}</div>`;
     return;
   }
-  container.innerHTML = factions.map(f=>`
+  container.innerHTML = filtered.map(f=>`
     <div class="armyRow">
       <div>
         <div class="armyName">${escHtml(f)}</div>
@@ -3441,7 +4397,7 @@ function renderHistoryList() {
   if (!container) return;
   const hist = state.saved.battleHistory || [];
   if (!hist.length) {
-    container.innerHTML = `<div class="empty"><span class="emptyIcon">📜</span>No battles recorded yet. After rolling, hit "Save to History" in the Battle tab.</div>`;
+    container.innerHTML = `<div class="empty"><span class="emptyIcon">📜</span>No battles recorded yet. Battles are auto-saved after each roll.</div>`;
     return;
   }
   container.innerHTML = hist.map((h,i)=>`
@@ -3453,8 +4409,10 @@ function renderHistoryList() {
       <div class="hDetail">
         Att: Size ${h.attacker?.size||0} / STR ${h.attacker?.str||0} / Pool ${escHtml(h.attacker?.pool||"?")} →
         lost −${h.attLoss||0} (new size ${h.newAttSize||0})<br>
+        Att doctrines: ${escHtml(doctrineListText(h.attacker?.doctrines))}<br>
         Def: Size ${h.defender?.size||0} / STR ${h.defender?.str||0} / Pool ${escHtml(h.defender?.pool||"?")} →
         lost −${h.defLoss||0} (new size ${h.newDefSize||0})<br>
+        Def doctrines: ${escHtml(doctrineListText(h.defender?.doctrines))}<br>
         <span style="color:var(--faint)">${escHtml(h.summary||"")}</span>
       </div>
     </div>
@@ -3478,8 +4436,10 @@ function openSaveArmyModal(prefillSide) {
     $("armySize").value = state[pfx]?.size || "";
     $("armyStr").value  = state[pfx]?.str  || "";
     groupOptions($("armyClass"), state[pfx]?.classId);
+    resetArmyModalDoctrines(state[pfx]?.doctrines || []);
   } else {
     groupOptions($("armyClass"));
+    resetArmyModalDoctrines([]);
   }
   $("armyModalError").style.display = "none";
   renderFactionDatalist();
@@ -3498,10 +4458,22 @@ function openEditArmyModal(id) {
   $("armySize").value = army.size || "";
   $("armyStr").value = army.str || "";
   groupOptions($("armyClass"), army.classId);
+  resetArmyModalDoctrines(army.doctrines || []);
   $("armyModalError").style.display = "none";
   renderFactionDatalist();
   $("armyModal").showModal?.() || $("armyModal").setAttribute("open","");
   $("armyName").focus();
+}
+
+function openUpdateArmyModalFromSide(sideKey) {
+  const id = state[sideKey]?.loadedArmyId;
+  if (!id) { openSaveArmyModal(sideKey); return; }
+  if (!findArmyById(id)) { openSaveArmyModal(sideKey); return; }
+  openEditArmyModal(id);
+  $("armySize").value = state[sideKey]?.size ?? "";
+  $("armyStr").value = state[sideKey]?.str ?? "";
+  resetArmyModalDoctrines(state[sideKey]?.doctrines || []);
+  $("armyModalTitle").textContent = "Update Army";
 }
 
 function closeArmyModal() {
@@ -3510,6 +4482,15 @@ function closeArmyModal() {
 }
 
 function commitArmyModal() {
+  const hasInvalidElemental = (_armyModalDoctrines || []).some(d => (
+    normalizeDoctrineId(d?.doctrineId) === "elemental_ammunition" &&
+    !normalizeDamageType(d?.choice?.damageType)
+  ));
+  if (hasInvalidElemental) {
+    $("armyModalError").style.display = "block";
+    $("armyModalError").textContent = "Elemental Ammunition requires a valid damage type.";
+    return;
+  }
   const res = saveArmyRecord({
     id: $("armyModalArmyId")?.value || null,
     name: $("armyName")?.value,
@@ -3517,15 +4498,18 @@ function commitArmyModal() {
     classId: $("armyClass")?.value,
     size: $("armySize")?.value,
     str: $("armyStr")?.value,
-    notes: $("armyNotes")?.value
+    notes: $("armyNotes")?.value,
+    doctrines: _armyModalDoctrines
   });
   if (!res.ok) { $("armyModalError").style.display="block"; $("armyModalError").textContent=res.error; return; }
   $("armyModalError").style.display="none";
+  if (state.attacker.loadedArmyId && state.attacker.loadedArmyId === res.army?.id) state.attacker.doctrines = cloneDoctrineList(res.army.doctrines);
+  if (state.defender.loadedArmyId && state.defender.loadedArmyId === res.army?.id) state.defender.doctrines = cloneDoctrineList(res.army.doctrines);
   closeArmyModal();
   renderFactionDatalist();
   renderArmyLoaders();
   renderArmyList($("armySearch")?.value);
-  renderFactionList();
+  renderFactionList($("factionSearch")?.value);
   showToast(res.mode==="update"?"<b>Army updated.</b>":"<b>Army saved.</b>", "good");
 }
 
@@ -3534,7 +4518,7 @@ function confirmDeleteArmy(id) {
   openConfirm(`Delete Army: ${army?.name||id}?`, `This will permanently remove "${army?.name||id}" from your saved armies.`, ()=>{
     deleteArmy(id);
     renderArmyList($("armySearch")?.value);
-    renderFactionList();
+    renderFactionList($("factionSearch")?.value);
     renderArmyLoaders();
   });
 }
@@ -3559,17 +4543,125 @@ function commitRenameFaction() {
   const res = renameFaction(_renameFactionOld, $("renameFactionInput").value);
   if (!res.ok) { $("renameFactionError").style.display="block"; $("renameFactionError").textContent=res.error; return; }
   closeRenameFaction();
-  renderFactionList();
+  renderFactionList($("factionSearch")?.value);
   renderArmyList($("armySearch")?.value);
   renderArmyLoaders();
 }
 function confirmDeleteFaction(name) {
   openConfirm(`Delete Faction: ${name}?`, `This removes the faction label from all armies in that faction. The armies themselves are kept.`, ()=>{
     deleteFaction(name);
-    renderFactionList();
+    renderFactionList($("factionSearch")?.value);
     renderArmyList($("armySearch")?.value);
     renderArmyLoaders();
+    renderFactionDatalist();
   });
+}
+
+let _factionDraftArmyIds = [];
+
+function renderFactionArmyOptions() {
+  const sel = $("factionArmySelect");
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Load existing army —</option>';
+  for (const a of (state.saved.armies || [])) {
+    const opt = document.createElement("option");
+    opt.value = a.id;
+    opt.textContent = `${a.name}${a.faction ? ` [Current: ${a.faction}]` : ""}`;
+    sel.appendChild(opt);
+  }
+  if (cur && (state.saved.armies || []).some(a => a.id === cur)) sel.value = cur;
+}
+
+function removeFactionDraftArmy(id) {
+  _factionDraftArmyIds = _factionDraftArmyIds.filter(v => v !== id);
+  renderFactionDraftChips();
+}
+
+function renderFactionDraftChips() {
+  const wrap = $("factionArmyChips");
+  if (!wrap) return;
+  if (!_factionDraftArmyIds.length) {
+    wrap.innerHTML = `<span class="help">No armies added yet. You can save the faction empty or load armies above.</span>`;
+    return;
+  }
+  const chips = [];
+  for (const id of _factionDraftArmyIds) {
+    const army = findArmyById(id);
+    if (!army) continue;
+    chips.push(
+      `<span class="chip">${escHtml(army.name)}${army.faction ? ` (${escHtml(army.faction)})` : ""}`+
+      `<button type="button" data-remove-army="${escHtml(id)}" aria-label="Remove army">×</button></span>`
+    );
+  }
+  if (!chips.length) {
+    wrap.innerHTML = `<span class="help">No armies added yet. You can save the faction empty or load armies above.</span>`;
+    return;
+  }
+  wrap.innerHTML = chips.join("");
+  wrap.querySelectorAll("button[data-remove-army]").forEach(btn => {
+    btn.addEventListener("click", () => removeFactionDraftArmy(btn.getAttribute("data-remove-army")));
+  });
+}
+
+function closeFactionModal() {
+  const d = $("factionModal");
+  if (!d) return;
+  if (d.open && typeof d.close === "function") d.close(); else d.removeAttribute("open");
+}
+
+function openFactionModal() {
+  _factionDraftArmyIds = [];
+  if ($("factionName")) $("factionName").value = "";
+  if ($("factionModalError")) $("factionModalError").style.display = "none";
+  renderFactionArmyOptions();
+  renderFactionDraftChips();
+  const d = $("factionModal");
+  if (d) d.showModal?.() || d.setAttribute("open", "");
+  if ($("factionName")) $("factionName").focus();
+}
+
+function addFactionDraftArmy() {
+  const id = $("factionArmySelect")?.value;
+  if (!id || _factionDraftArmyIds.includes(id)) return;
+  if (!findArmyById(id)) return;
+  _factionDraftArmyIds.push(id);
+  renderFactionDraftChips();
+  if ($("factionArmySelect")) $("factionArmySelect").value = "";
+}
+
+function commitFactionModal() {
+  const name = String($("factionName")?.value || "").trim();
+  const error = $("factionModalError");
+  if (!name) {
+    if (error) { error.style.display = "block"; error.textContent = "Faction name is required."; }
+    return;
+  }
+  const key = name.toLowerCase();
+  const exists = (state.saved.factions || []).some(f => String(f || "").toLowerCase() === key);
+  if (exists) {
+    if (error) { error.style.display = "block"; error.textContent = "That faction name already exists."; }
+    return;
+  }
+  if (error) error.style.display = "none";
+  state.saved.factions = state.saved.factions || [];
+  state.saved.factions.push(name);
+  for (const id of _factionDraftArmyIds) {
+    const army = findArmyById(id);
+    if (army) army.faction = name;
+  }
+  recomputeFactions(state.saved);
+  persist(state.saved);
+  closeFactionModal();
+  renderArmyList($("armySearch")?.value);
+  renderFactionList($("factionSearch")?.value);
+  renderArmyLoaders();
+  renderFactionDatalist();
+  showToast("<b>Faction saved.</b>", "good");
+}
+
+function newFactionModal() {
+  openFactionModal();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3617,12 +4709,92 @@ function doExportAll() {
 
 function doImportAll(data) {
   if (!data || typeof data !== "object") { showImportMsg("Invalid file format.", "bad"); return; }
-  if (Array.isArray(data.armies)) state.saved.armies = data.armies;
+  if (Array.isArray(data.armies)) state.saved.armies = data.armies.map(sanitizeArmyRecord).filter(Boolean);
+  if (Array.isArray(data.factions)) state.saved.factions = data.factions;
   if (Array.isArray(data.battleHistory)) state.saved.battleHistory = data.battleHistory;
+  if (data.weather && typeof data.weather === "object") {
+    state.weather = Object.assign({}, DEFAULT_WEATHER, data.weather);
+    state.saved.weather = Object.assign({}, state.weather);
+  }
+  if (data.settings && typeof data.settings === "object") {
+    state.saved.settings = normalizeSettings(data.settings);
+    state.settings = Object.assign({}, state.saved.settings);
+  }
   recomputeFactions(state.saved);
   persist(state.saved);
-  renderArmyList(); renderFactionList(); renderHistoryList(); renderArmyLoaders(); renderFactionDatalist();
+  renderArmyList(); renderFactionList($("factionSearch")?.value); renderHistoryList(); renderArmyLoaders(); renderFactionDatalist();
+  if (typeof document._weatherSettingsSync === "function") document._weatherSettingsSync();
+  if ($("resolutionMode")) $("resolutionMode").value = state.settings.resolutionMode;
+  if ($("quickLossPreset")) $("quickLossPreset").value = state.settings.quickLossPreset;
+  if ($("allowOverCap")) $("allowOverCap").value = state.settings.allowOverCap ? "yes" : "no";
+  if ($("overrideDoctrineEligibility")) $("overrideDoctrineEligibility").value = state.settings.overrideDoctrineEligibility ? "yes" : "no";
+  render();
   showImportMsg("State imported successfully.", "good");
+}
+
+function exportFactions() {
+  const groups = {};
+  for (const f of (state.saved.factions || [])) {
+    const name = String(f || "").trim();
+    if (!name) continue;
+    if (!groups[name]) groups[name] = [];
+  }
+  for (const a of (state.saved.armies || [])) {
+    const faction = String(a?.faction || "").trim() || "Unaligned";
+    if (!groups[faction]) groups[faction] = [];
+    groups[faction].push(a);
+  }
+  const factions = Object.keys(groups).sort((a, b) => a.localeCompare(b)).map(name => ({ name, armies: groups[name] }));
+  exportJson({ schemaVersion: SCHEMA_VERSION, exportedAt: nowIso(), factions }, "war_table_factions.json");
+}
+
+function importFactions(file) {
+  importJsonFromFile(file, (data) => {
+    const entries = Array.isArray(data?.factions) ? data.factions : [];
+    if (!entries.length) { alert("No factions array found in file."); return; }
+    const existingArmyIds = new Set((state.saved.armies || []).map(a => String(a?.id || "")));
+    const existingFactionKeys = new Set((state.saved.factions || []).map(f => String(f || "").toLowerCase()));
+    let armiesAdded = 0;
+    let factionsAdded = 0;
+    for (const entry of entries) {
+      const factionName = typeof entry === "string"
+        ? entry.trim()
+        : String(entry?.name || entry?.faction || "").trim();
+      if (factionName && !existingFactionKeys.has(factionName.toLowerCase())) {
+        state.saved.factions = state.saved.factions || [];
+        state.saved.factions.push(factionName);
+        existingFactionKeys.add(factionName.toLowerCase());
+        factionsAdded++;
+      }
+      const armies = Array.isArray(entry?.armies) ? entry.armies : [];
+      for (const a of armies) {
+        const id = String(a?.id || "").trim();
+        if (!id || existingArmyIds.has(id)) continue;
+        if (!INDEX.byId.has(String(a?.classId || ""))) continue;
+        state.saved.armies.push({
+          id,
+          name: String(a?.name || "Imported Army").trim() || "Imported Army",
+          faction: factionName || String(a?.faction || "").trim(),
+          classId: String(a.classId),
+          size: Math.max(0, toInt(a?.size) ?? 0),
+          str: Math.max(0, toInt(a?.str) ?? 0),
+          notes: String(a?.notes || "").trim(),
+          doctrines: normalizeDoctrineList(a?.doctrines),
+          createdAt: a?.createdAt || nowIso(),
+          updatedAt: a?.updatedAt || nowIso()
+        });
+        existingArmyIds.add(id);
+        armiesAdded++;
+      }
+    }
+    recomputeFactions(state.saved);
+    persist(state.saved);
+    renderArmyList($("armySearch")?.value);
+    renderFactionList($("factionSearch")?.value);
+    renderArmyLoaders();
+    renderFactionDatalist();
+    showToast(`Imported ${factionsAdded} factions and ${armiesAdded} armies.`, "good");
+  });
 }
 
 function showImportMsg(msg, kind) {
@@ -3643,7 +4815,7 @@ function switchTab(tabId) {
   if (btn) btn.classList.add("active");
   // Refresh tab content
   if (tabId==="armies")   { renderArmyList($("armySearch")?.value); }
-  if (tabId==="factions") { renderFactionList(); }
+  if (tabId==="factions") { renderFactionList($("factionSearch")?.value); }
   if (tabId==="history")  { renderHistoryList(); }
   if (tabId==="settings" && typeof document._weatherSettingsSync === "function") { document._weatherSettingsSync(); }
 }
@@ -3655,13 +4827,18 @@ function resetAll() {
   for (const side of ["attacker","defender"]) {
     state[side].size=null; state[side].str=null;
     state[side].manualDiceDelta=0; state[side].diceOverride="auto"; state[side].autoCommit=true;
+    state[side].loadedArmyId=null;
+    state[side].doctrines=[];
+    state[side].doctrineRuntime=defaultDoctrineRuntime();
     $(side+"Size").value=""; $(side+"Str").value="";
     $(side+"DiceOverride").value="auto"; $(side+"AutoCommit").value="yes"; $(side+"Commit").value="";
   }
   state.settings.resolutionMode="risk"; state.settings.quickLossPreset="standard"; state.settings.allowOverCap=false;
+  state.settings.overrideDoctrineEligibility=false;
   state.conditions.defenderHasStructures=false;
   $("resolutionMode").value="risk"; $("quickLossPreset").value="standard";
   $("allowOverCap").value="no"; $("defenderStructures").value="no";
+  if ($("overrideDoctrineEligibility")) $("overrideDoctrineEligibility").value="no";
   $("resultArea").style.display="none"; state.lastResult=null;
   // Weather is intentionally preserved on reset
   render();
@@ -3678,6 +4855,10 @@ function prefillExample() {
   $("defenderStr").value=80;   state.defender.str=80;
   state.attacker.manualDiceDelta=0; state.defender.manualDiceDelta=0;
   state.attacker.diceOverride="auto"; state.defender.diceOverride="auto";
+  state.attacker.loadedArmyId=null; state.defender.loadedArmyId=null;
+  state.attacker.doctrines=[]; state.defender.doctrines=[];
+  state.attacker.doctrineRuntime=defaultDoctrineRuntime();
+  state.defender.doctrineRuntime=defaultDoctrineRuntime();
   $("resultArea").style.display="none"; state.lastResult=null;
   render();
 }
@@ -3704,6 +4885,10 @@ function bind() {
   groupOptions($("attackerClass")); groupOptions($("defenderClass"));
   state.attacker.classId=$("attackerClass").value;
   state.defender.classId=$("defenderClass").value;
+  if ($("resolutionMode")) $("resolutionMode").value = state.settings.resolutionMode;
+  if ($("quickLossPreset")) $("quickLossPreset").value = state.settings.quickLossPreset;
+  if ($("allowOverCap")) $("allowOverCap").value = state.settings.allowOverCap ? "yes" : "no";
+  if ($("overrideDoctrineEligibility")) $("overrideDoctrineEligibility").value = state.settings.overrideDoctrineEligibility ? "yes" : "no";
   $("attackerClass").addEventListener("change",()=>{ state.attacker.classId=$("attackerClass").value; render(); });
   $("defenderClass").addEventListener("change",()=>{ state.defender.classId=$("defenderClass").value; render(); });
 
@@ -3717,6 +4902,10 @@ function bind() {
     $(side+"ManualReset").addEventListener("click",()=>{ state[side].manualDiceDelta=0; render(); });
     $(side+"AutoCommit").addEventListener("change",()=>{ state[side].autoCommit=$(side+"AutoCommit").value==="yes"; render(); });
     $(side+"Commit").addEventListener("input",()=>render());
+    const pfx = side === "attacker" ? "att" : "def";
+    fillDamageTypeSelect($(`${pfx}DoctrineDamageType`));
+    $(`${pfx}DoctrineSelect`).addEventListener("change", () => renderSideDoctrinePicker(side));
+    $(`${pfx}DoctrineAddBtn`).addEventListener("click", () => addDoctrineToSide(side));
   }
 
   // Settings
@@ -3724,6 +4913,12 @@ function bind() {
   $("resolutionMode").addEventListener("change",()=>{ state.settings.resolutionMode=$("resolutionMode").value; render(); });
   $("quickLossPreset").addEventListener("change",()=>{ state.settings.quickLossPreset=$("quickLossPreset").value; render(); });
   $("allowOverCap").addEventListener("change",()=>{ state.settings.allowOverCap=$("allowOverCap").value==="yes"; render(); });
+  if ($("overrideDoctrineEligibility")) {
+    $("overrideDoctrineEligibility").addEventListener("change",()=> {
+      state.settings.overrideDoctrineEligibility = $("overrideDoctrineEligibility").value === "yes";
+      render();
+    });
+  }
 
   // Battle controls
   $("resetBtn").addEventListener("click", resetAll);
@@ -3741,14 +4936,21 @@ function bind() {
   });
 
   // Save army from battle panel
-  $("openSaveAttModal").addEventListener("click",()=>openSaveArmyModal("attacker"));
-  $("openSaveDefModal").addEventListener("click",()=>openSaveArmyModal("defender"));
+  $("openSaveAttModal").addEventListener("click",()=>openUpdateArmyModalFromSide("attacker"));
+  $("openSaveDefModal").addEventListener("click",()=>openUpdateArmyModalFromSide("defender"));
 
   // Army modal
   $("armyModalClose").addEventListener("click", closeArmyModal);
   $("armyModalCancel").addEventListener("click", closeArmyModal);
   $("armyModalSave").addEventListener("click", commitArmyModal);
   $("armyName").addEventListener("keydown",(e)=>{ if(e.key==="Enter") commitArmyModal(); });
+  fillDamageTypeSelect($("armyDoctrineDamageType"));
+  $("armyDoctrineSelect").addEventListener("change", renderArmyModalDoctrinePicker);
+  $("armyDoctrineAddBtn").addEventListener("click", addDoctrineToArmyModal);
+  $("armyClass").addEventListener("change", () => {
+    renderArmyModalDoctrinePicker();
+    renderArmyModalDoctrineChips();
+  });
 
   // Battle button
   $("battleBtn").addEventListener("click",()=>{
@@ -3791,9 +4993,11 @@ function bind() {
     } else { result=resolveQuick(att,def,attRoll,defRoll); }
     $("attackerSize").value=result.newAtt; $("defenderSize").value=result.newDef;
     state.attacker.size=result.newAtt; state.defender.size=result.newDef;
+    applyDoctrinePhaseBoundary(attRoll, defRoll);
     render();
     state.lastResult={result,attRoll,defRoll};
     renderResult(result,attRoll,defRoll);
+    appendHistory(result,attRoll,defRoll,att,def);
   });
 
   // ── Weather controls ───────────────────────────────────────
@@ -3871,8 +5075,16 @@ function bind() {
     ws.lockSeason = $("settingsLockSeason").checked;
     ws.lockWeather = $("settingsLockWeather").checked;
     ws.phenomenaBaseChance = clamp(toInt($("settingsPhenomenaBase").value) ?? 2, 0, 25);
+    state.settings.resolutionMode = $("resolutionMode")?.value || "risk";
+    state.settings.quickLossPreset = $("quickLossPreset")?.value || "standard";
+    state.settings.allowOverCap = ($("allowOverCap")?.value || "no") === "yes";
+    state.settings.overrideDoctrineEligibility = ($("overrideDoctrineEligibility")?.value || "no") === "yes";
+    state.saved.settings = Object.assign({}, state.settings);
+    state.saved.weather = Object.assign({}, ws);
     persistWeather(ws);
+    persist(state.saved);
     render();
+    showToast("<b>Settings saved.</b>", "good");
     const msg = $("weatherSettingsSaved");
     if (msg) { msg.style.display="block"; msg.className="alert good"; msg.textContent="Settings saved."; setTimeout(()=>msg.style.display="none",2000); }
   });
@@ -3891,6 +5103,10 @@ function bind() {
     if ($("settingsLockSeason"))      $("settingsLockSeason").checked = ws.lockSeason;
     if ($("settingsLockWeather"))     $("settingsLockWeather").checked = ws.lockWeather;
     if ($("settingsPhenomenaBase"))   $("settingsPhenomenaBase").value = ws.phenomenaBaseChance;
+    if ($("resolutionMode"))          $("resolutionMode").value = state.settings.resolutionMode;
+    if ($("quickLossPreset"))         $("quickLossPreset").value = state.settings.quickLossPreset;
+    if ($("allowOverCap"))            $("allowOverCap").value = state.settings.allowOverCap ? "yes" : "no";
+    if ($("overrideDoctrineEligibility")) $("overrideDoctrineEligibility").value = state.settings.overrideDoctrineEligibility ? "yes" : "no";
   };
 
   // Copy result
@@ -3901,7 +5117,9 @@ function bind() {
     const dClass=INDEX.byId.get(state.defender.classId)?.name||"Defender";
     const text=`War Table — Battle Result (ruleset ${RULES.rulesetVersion})
 Attacker: ${aClass} | Size: ${state.attacker.size} | STR: ${state.attacker.str} | Pool: ${state._computed.att?.diceSidesDisplay}
+Attacker doctrines: ${doctrineListText(state.attacker.doctrines)}
 Defender: ${dClass} | Size: ${state.defender.size} | STR: ${state.defender.str} | Pool: ${state._computed.def?.diceSidesDisplay}
+Defender doctrines: ${doctrineListText(state.defender.doctrines)}
 Weather: ${weatherLabel(state.weather)} (Intensity ${state.weather.intensity}) | ${isDay(state.weather)?"Day":"Night"} ${String(state.weather.hour).padStart(2,"0")}:00
 
 Mode: ${result.mode}
@@ -3912,15 +5130,8 @@ New Size: Attacker ${result.newAtt}, Defender ${result.newDef}
 Attacker rolls: ${attRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | Total ${attRoll.total}
 Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | Total ${defRoll.total}
 `;
-    try { await navigator.clipboard.writeText(text); $("copyResult").textContent="Copied!"; setTimeout(()=>{ $("copyResult").textContent="Copy summary"; },1200); }
+    try { await navigator.clipboard.writeText(text); $("copyResult").textContent="Copied!"; setTimeout(()=>{ $("copyResult").textContent="Copy"; },1200); }
     catch { alert("Clipboard failed. Select and copy manually."); }
-  });
-
-  // Save to history
-  $("saveBattleToHistory").addEventListener("click",()=>{
-    if (!state.lastResult) return;
-    appendHistory(state.lastResult.result, state.lastResult.attRoll, state.lastResult.defRoll);
-    showToast("Battle saved to History.", "good");
   });
 
   // Tab nav
@@ -3936,14 +5147,33 @@ Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | T
   $("importFileInput").addEventListener("change",(e)=>{
     importJsonFromFile(e.target.files[0],(data)=>{
       if (Array.isArray(data.armies)) {
-        for (const a of data.armies) { if (!findArmyById(a.id)) state.saved.armies.push(a); }
+        for (const raw of data.armies) {
+          const a = sanitizeArmyRecord(raw);
+          if (!a) continue;
+          if (!findArmyById(a.id)) state.saved.armies.push(a);
+        }
         recomputeFactions(state.saved); persist(state.saved);
-        renderArmyList(); renderFactionList(); renderArmyLoaders();
+        renderArmyList(); renderFactionList($("factionSearch")?.value); renderArmyLoaders();
         showToast("Armies imported (no duplicates added).","good");
       } else { alert("No armies array found in file."); }
     });
     e.target.value="";
   });
+
+  // Factions tab
+  $("newFactionBtn").addEventListener("click", newFactionModal);
+  $("exportFactionsBtn").addEventListener("click", exportFactions);
+  $("importFactionsBtn").addEventListener("click",()=>$("importFactionsFile").click());
+  $("importFactionsFile").addEventListener("change",(e)=>{
+    importFactions(e.target.files[0]);
+    e.target.value = "";
+  });
+  $("factionSearch").addEventListener("input",()=>renderFactionList($("factionSearch").value));
+  $("factionModalClose").addEventListener("click", closeFactionModal);
+  $("factionModalCancel").addEventListener("click", closeFactionModal);
+  $("factionModalSave").addEventListener("click", commitFactionModal);
+  $("factionArmyAddBtn").addEventListener("click", addFactionDraftArmy);
+  $("factionName").addEventListener("keydown",(e)=>{ if (e.key==="Enter") commitFactionModal(); });
 
   // History tab
   $("exportHistoryBtn").addEventListener("click",()=>exportJson({ battleHistory:state.saved.battleHistory, exportedAt:nowIso() },"war_table_history.json"));
@@ -3963,7 +5193,14 @@ Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | T
   $("nukeBtn").addEventListener("click",()=>{
     openConfirm("Wipe All Data","This permanently erases ALL armies, factions, and battle history from this browser.",()=>{
       state.saved=emptyState(); persist(state.saved);
-      renderArmyList(); renderFactionList(); renderHistoryList(); renderArmyLoaders(); renderFactionDatalist();
+      state.settings = Object.assign({}, DEFAULT_APP_SETTINGS);
+      state.weather = Object.assign({}, DEFAULT_WEATHER);
+      for (const side of ["attacker","defender"]) {
+        state[side].loadedArmyId = null;
+        state[side].doctrines = [];
+        state[side].doctrineRuntime = defaultDoctrineRuntime();
+      }
+      renderArmyList(); renderFactionList($("factionSearch")?.value); renderHistoryList(); renderArmyLoaders(); renderFactionDatalist();
       showToast("All local data wiped.","warn");
     });
   });
@@ -3982,6 +5219,8 @@ Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | T
   // Initial render
   renderArmyLoaders();
   renderFactionDatalist();
+  renderArmyList($("armySearch")?.value);
+  renderFactionList($("factionSearch")?.value);
   render();
 }
 
