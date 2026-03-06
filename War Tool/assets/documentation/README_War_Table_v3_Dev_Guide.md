@@ -14,17 +14,18 @@ Policy:
 Companion docs:
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/ARCHITECTURE_INDEX_War_Table_v3.md`
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/BACKEND_CLEANUP_PARITY_CHECKLIST.md`
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/PHASE2_Sessions_Turns_Battles_Prep.md` (design memo retained for implementation context)
 
 ## Current Snapshot (refreshed March 6, 2026)
 
 - App file: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html`
-- App lines: `8,601`
+- App lines: `9,058`
 - Help wiki file: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_Help_Wiki.html`
 - Help wiki lines: `1,076`
 - Rulebook file: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Encounter_Rules_2026_v4.html`
 - Rulebook lines: `12,642`
 - Shared base stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-theme.css`
-- Base stylesheet lines: `1,317`
+- Base stylesheet lines: `1,439`
 - Shared runtime theme stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-state-themes.css`
 - Runtime theme stylesheet lines: `437`
 - Help layout stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-help.css`
@@ -39,7 +40,8 @@ Companion docs:
 
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html` - `battleBtn`, `showWarReportModal`, `runBattleRound`, `openWarReportModal`, `startWarReportAutoResolve`, `setWarReportActionState`, `requestWarReportAutoStop`, `closeWarReportModal`, `clearWarReportLastBattlePreview`, `buildWarReportBattleContextKey`
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html` - `warReportRoundLimit`, `warReportWeatherStrip`, `warReportStagingWrap`, `warReportStagingNotice`, `warReportStageAttCommit`, `warReportStageDefCommit`, `warReportPreviousWrap`, `warReportSessionLine`, `warReportSessionSummary`, `warReportRoundList`, `warReportAutoStatus`
-- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-theme.css` - `.battleGrid`, `.card.center`, `#resultHeadline`, `#warReportModal .dlgFoot`, `.warReportActionRow`, `.warReportAutoControls`
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html` - `startNewRuntimeSession`, `advanceRuntimeBattleTurn`, `nextRuntimeBattleIndex`, `handleStartNewSessionFromUi`, `appendHistory`, `renderHistoryList`, `newHistorySessionBtn`, `newBattleSessionBtn`
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-theme.css` - `.battleGrid`, `.card.center`, `#resultHeadline`, `#warReportModal .dlgFoot`, `.warReportActionRow`, `.warReportAutoControls`, `.battleBottomActions`, `.historyGroups`, `.historySessionGroup`, `.historyTurnGroup`, `.historyToggleBtn`
 
 ## Canonical Architecture Contract
 
@@ -97,6 +99,25 @@ Runtime side state compatibility note:
   - `setupMode: "chooser" | "creating" | "loaded"`
   - `armyNameDraft: string`
 
+Runtime session/turn state (non-persisted):
+- `runtimeSessionId`
+- `runtimeSessionStartedAt`
+- `runtimeSessionLabel`
+- `runtimeBattleTurn` (starts at `1`)
+- `runtimeBattleIndexInTurn` (in-turn counter, starts at `1`)
+
+History entry additive metadata (persisted per battle record):
+- `sessionId`
+- `sessionStartedAt`
+- `sessionLabel`
+- `turnNumber`
+- `battleIndexInTurn`
+
+Runtime session/turn helpers:
+- `startNewRuntimeSession({ source })`
+- `advanceRuntimeBattleTurn()`
+- `nextRuntimeBattleIndex()`
+
 Core persistence helpers:
 - `emptyState`
 - `loadPersisted`
@@ -132,10 +153,10 @@ Important:
 8. Resolve outcome (`risk` or `quick`).
 9. Apply doctrine and assist runtime boundaries.
 10. Persist draft + rerender base surfaces.
-11. Store `state.lastResult`.
-12. Render inline result area.
-13. Append battle history entry.
-14. Auto-advance weather for next battle if enabled.
+11. Auto-advance weather for next battle if enabled.
+12. Store `state.lastResult`.
+13. Render inline result area.
+14. Append battle history entry.
 15. Return payload to caller.
 
 Stop reasons:
@@ -154,12 +175,14 @@ Each battle side panel (`attacker`, `defender`) uses a three-state setup flow:
 
 Chooser mode:
 - Shows saved-army loader + `Create new army` CTA.
+- Shows an explicit `or` divider between load and create actions.
 - Hides defeated styling/banner and advanced controls.
 
 Creating mode:
 - Shows `Army Name` draft input, class, size, STR, commit, pool summary, dice type.
 - Shows one collapsed `Advanced setup` disclosure containing doctrines, nearby, breakdown, context, manual override.
 - `Army Name` is draft-only and never auto-persists.
+- Side-invoked `Save Army` opens modal with `armyNameDraft` prefilled.
 
 Loaded mode:
 - Same visible layout as creating mode.
@@ -171,6 +194,7 @@ Transitions:
 - `Create new army`: `chooser -> creating` and clears side runtime battle setup.
 - `Load`: `chooser -> loaded` via `loadArmyIntoSide`.
 - `Set up another army` / `Cancel setup`: `creating|loaded -> chooser` using side-local reset.
+- `Save/Update` from side-origin modal: side transitions/retains `loaded`, binds `loadedArmyId`, and syncs side class/size/STR/doctrines from saved result.
 - `resetAll()`: both sides return to chooser.
 - `prefillExample()`: both sides become creating (manual, unsaved setup).
 - `swapSides()`: swaps setup state and draft names along with side runtime state.
@@ -181,6 +205,7 @@ Implementation helpers:
 - `resetSideToChooser`
 - `syncSideSetupVisibility`
 - `collapseSideAdvancedSetup`
+- `setArmyModalContext`
 
 ## War Report Contract (State Machine)
 
@@ -306,6 +331,10 @@ Not included in preview context key:
 Implication:
 - manual weather/time changes alone do not invalidate previous-battle preview.
 
+`getWarReportTurnIdentity` now keys on runtime session + dedicated battle turn:
+- `${runtimeSessionId}:${runtimeBattleTurn}`
+- It is intentionally decoupled from weather turn/season identity.
+
 Explicit preview clears happen on:
 - army loading/reset flows
 - attacker/defender class changes
@@ -355,8 +384,13 @@ Button alignment/styling:
 ## History and Transparency Contracts
 
 History:
-- `appendHistory` writes enriched battle entries with round context, weather snapshots, roll logs, assist/hinder context, and stop reason.
-- `renderHistoryList` remains null-safe for older entries.
+- `appendHistory` writes enriched battle entries with round context, weather snapshots, roll logs, assist/hinder context, stop reason, and additive session/turn metadata (`sessionId`, `sessionStartedAt`, `sessionLabel`, `turnNumber`, `battleIndexInTurn`).
+- `renderHistoryList` groups flat records as `session -> turn -> battle cards` while remaining null-safe for older entries.
+- Session and turn groups render collapsed by default; users expand on demand via toggle buttons.
+- `newHistorySessionBtn` and `newBattleSessionBtn` both start a new runtime session, reset dedicated battle turn/index to `1`, and do not clear history.
+- `turnBtn` advances weather turn/season behavior as before, and also advances dedicated battle turn (separate counter).
+- Battle actions (`battleBtn`, War Report `Battle Again`, War Report `Auto-Battle`) do not create or advance battle turns.
+- Records without session metadata are grouped under `Older History`.
 
 Math transparency:
 - `computePool` breakdown includes advantage/disadvantage counts and net reroll display.
@@ -370,7 +404,10 @@ Assist/Hinder and doctrines:
 
 High-use IDs:
 - Battle controls: `battleBtn`, `turnBtn`, `resultArea`, `resultHeadline`, `copyResult`, `attackerCommit`, `defenderCommit`
+- Battle bottom actions: `prefillExample`, `resetBtn`, `swapSides`, `newBattleSessionBtn`
 - Battle setup flow: `attChooserWrap`, `defChooserWrap`, `attSetupWrap`, `defSetupWrap`, `attCreateArmyBtn`, `defCreateArmyBtn`, `attSetupChangeBtn`, `defSetupChangeBtn`, `attackerArmyNameDraft`, `defenderArmyNameDraft`, `attAdvancedSetupDetails`, `defAdvancedSetupDetails`
+- Battle chooser UX class: `chooserOr`
+- History controls: `newHistorySessionBtn`, `exportHistoryBtn`, `clearHistoryBtn`, `historyList`
 - War Report core: `warReportModal`, `warReportClose`, `warReportClosePrimary`, `warReportBattleAgainBtn`, `warReportAutoResolveBtn`, `warReportAutoStatus`
 - War Report staging/session: `warReportWeatherStrip`, `warReportStagingNotice`, `warReportStagingWrap`, `warReportStageAttCommit`, `warReportStageDefCommit`, `warReportPreviousWrap`, `warReportRoundLimit`, `warReportSessionLine`, `warReportSessionSummary`, `warReportRoundList`
 - Settings: `showWarReportModal`, `assistHinderEnabled`, `assistHinderDiceCap`, `overrideDoctrineEligibility`, `settingsWeatherThemesEnabled`, `settingsPhenomenaThemesEnabled`, `settingsDefeatThemesEnabled`, `settingsThemeStrengthMode`
@@ -386,8 +423,15 @@ High-risk functions:
 - `resetSideToChooser`
 - `syncSideSetupVisibility`
 - `collapseSideAdvancedSetup`
+- `openSaveArmyModal`
+- `openUpdateArmyModalFromSide`
+- `commitArmyModal`
 - `buildWarReportBattleContextKey`
 - `clearWarReportLastBattlePreview`
+- `startNewRuntimeSession`
+- `advanceRuntimeBattleTurn`
+- `nextRuntimeBattleIndex`
+- `handleStartNewSessionFromUi`
 - `appendHistory`
 - `renderHistoryList`
 - `persist`
@@ -414,9 +458,19 @@ High-risk functions:
 6. Side setup state is runtime-only
 - Do not persist `setupMode` or `armyNameDraft` into storage schema.
 - Keep side reset transitions local to the selected side.
+- Keep army-modal side-origin context runtime-only.
 
 7. Stylesheet ordering
 - Preserve base theme before runtime state theme.
+
+8. Session/turn metadata flow
+- Keep battle-history storage flat; do not migrate to nested persisted structures.
+- Keep additive metadata optional/null-safe for import compatibility.
+- Do not couple dedicated battle turn progression to battle actions.
+
+9. Grouped history accessibility
+- Session/turn groups use real toggle buttons with `aria-expanded` and `aria-controls`.
+- Keep keyboard focus and toggle semantics intact when editing `renderHistoryList`.
 
 ## Known Mismatches and Technical Debt
 
@@ -429,11 +483,14 @@ High-risk functions:
 3. Legacy runtime key retained
 - `autoCommit` remains in side runtime state for compatibility.
 
-4. Battle setup naming is draft-only by design
-- `armyNameDraft` is UI state only; save/update remains modal-driven and explicit.
+4. Battle setup naming remains draft-only until explicit save
+- `armyNameDraft` pre-fills side-origin save modal, but only `Save/Update` writes persisted army records.
 
 5. Mixed icon language
 - Some surfaces still mix emoji and SVG iconography.
+
+6. Dedicated battle turn is runtime-only
+- Session/turn counters reset on refresh by design and are not persisted top-level state.
 
 ## Documentation QA Checklist
 
@@ -444,7 +501,8 @@ High-risk functions:
 5. README documents center-card containment selectors and one-line headline truncation behavior.
 6. README reflects current auto-battle controls (`Auto-Battle`, round limit selector, stop semantics).
 7. README keeps persistence schema/storage keys accurate.
-8. README avoids documenting unshipped PRD behavior as implemented.
+8. README reflects grouped History behavior (`session -> turn -> battle cards`) and `New Session` runtime control.
+9. README avoids documenting unshipped PRD behavior as implemented.
 
 ## Maintenance Checklist
 
