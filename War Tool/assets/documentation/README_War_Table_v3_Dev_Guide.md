@@ -12,14 +12,22 @@ Companion docs:
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/ARCHITECTURE_INDEX_War_Table_v3.md`
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/BACKEND_CLEANUP_PARITY_CHECKLIST.md`
 
-## Current Snapshot (refreshed March 5, 2026)
+## Current Snapshot (refreshed March 6, 2026)
 
 - App file: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html`
-- App lines: `7,878`
-- Dev guide lines before this refresh: `543`
-- Persistence schema: `SCHEMA_VERSION = 6`
+- App lines: `7,818`
+- Help wiki file: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_Help_Wiki.html`
+- Help wiki lines: `1,099`
+- Shared base stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-theme.css`
+- Shared runtime theme stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-state-themes.css`
+- Help layout stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-help.css`
+- Base stylesheet lines: `1,043`
+- Runtime theme stylesheet lines: `437`
+- Help layout stylesheet lines: `397`
+- Dev guide lines before this refresh: `707`
+- Persistence schema: `SCHEMA_VERSION = 7`
 - Storage key: `warTableState`
-- Architecture: single-file local-first app (HTML + CSS + JS + embedded rules data)
+- Architecture: local-first app (HTML + shared CSS + JS + embedded rules data)
 
 ## Major Implemented Changes Since Baseline
 
@@ -64,24 +72,84 @@ Companion docs:
 - Shared `runBattleRound(options)` execution path introduced.
 - War Report now supports `Battle Again` and `Auto-Resolve Until Stop`.
 
+8. Theme/CSS extraction + state-theme routing pass
+- Shared stylesheet linked from HTML head: `assets/css/war-table-theme.css`.
+- Additive runtime stylesheet linked after base: `assets/css/war-table-state-themes.css`.
+- Stable global/component styles were extracted first, then remaining inline page styles were migrated.
+- `War_Table_v3.html` no longer contains an inline `<style>` block.
+- Runtime theming now routes through root `body` `data-*` attributes (season/weather/phenomena/intensity/defeat and theme toggles).
+
+9. P2.1 phenomena identity pass
+- Strange phenomena now use signature effect tokens (overlay layers, border/frame tokens, sparkle/streak/speckle controls) rather than tint-only differentiation.
+- Dramatic mode now amplifies phenomena overlays/framing more meaningfully.
+- Defeat-state route now derives from live side sizes first (lastResult stop reason is fallback only when sizes are unavailable).
+- Center result headline wrap behavior tightened for narrow widths.
+
+10. Help Wiki expansion (PRD A Scope 1+2 + PRD B Scope 3)
+- Added native in-product Help Wiki page: `War_Table_Help_Wiki.html`.
+- Added technical helper framework sections: Start Here, Battle Guide, Armies/Factions, Import/Export, Settings Reference, War Report/History, FAQ, Glossary.
+- Replaced Game Rules placeholder with full rules helper sections: Rules Landing, Quick Start, Strategic Core, Army Classes, Doctrines, Weather/Terrain, Command Meters, Optional Mechanics, and Appendix.
+- Added full in-page indexed search with keyboard navigation and visible content highlighting.
+- Added CSV template downloads: `assets/templates/war_table_armies_template.csv` and `assets/templates/war_table_factions_template.csv`.
+- Added Help links in app footer and Settings card, opening wiki in new tab.
+
+11. Rules reading-mode reframe (Field Manual + Full Rulebook)
+- Help Wiki rules area is player/GM-facing field-manual content (no PRD/source-file/status-label framing in the rules surface).
+- Removed rules-area terminology bridge copy and standardized wording to `Compare-style`.
+- User-facing mode wording is standardized to `Compare-style`; internal mode key remains `risk`.
+- Added explicit quick-vs-full navigation:
+  - Quick rules: `War_Table_Help_Wiki.html`
+  - Full rules: `War_Encounter_Rules_2026_v4.html`
+- Added reciprocal links between both pages.
+- Cleaned full rulebook page to War Table styling by removing Google Docs-export style blob and loading shared theme stack.
+- Added rulebook-specific long-form stylesheet: `assets/css/war-table-rulebook.css`.
+- Added full rulebook left-rail utility system:
+  - indexed in-page search
+  - hierarchical table-of-contents navigation
+  - quick actions (PDF download + Google Docs link)
+- In-content long ToC is retained but collapsed under `Table of Contents`.
+- Help Wiki and Full Rulebook UI copy is user-facing by default (player/GM language, no dev-status framing in visible copy).
+
+12. Help -> app cross-link routing
+- Added hash-tab routing in app shell for deep links:
+  - `#tab-battle`
+  - `#tab-armies`
+  - `#tab-factions`
+  - `#tab-history`
+  - `#tab-settings`
+- `switchTab()` is now reachable through hash routing on load and `hashchange`.
+
 ## Top-Level Architecture
 
-Single file layout in `War_Table_v3.html`:
+App layout:
 
-1. CSS layer
-- Tokens, component styles, modal styles, history/report styles.
+1. HTML shell in `War_Table_v3.html`
+- Structure, controls, IDs, and all JavaScript logic.
+- No inline CSS block remains.
+
+2. Shared CSS base layer in `assets/css/war-table-theme.css`
+- Tokens, component styles, modal styles, history/report styles, and page-specific battle styles.
 - Base parchment gradient + grain.
 - Desktop-only texture overlay (`body::after`) for map tile.
 
-2. HTML app shell
-- Tabs: battle, armies, factions, history, settings.
-- Modals: army, faction, rename faction, confirm, import report, war report.
+3. Shared CSS runtime state layer in `assets/css/war-table-state-themes.css`
+- Additive weather/phenomena/defeat visual routing only.
+- No mechanics logic in CSS; all state comes from body dataset flags.
 
-3. JavaScript sections
+4. Rulebook reading layer in `assets/css/war-table-rulebook.css`
+- Long-form typography and table readability for the full rulebook surface.
+- Extends shared theme styles without changing app mechanics or contracts.
+- Loaded after base CSS to keep deterministic override order.
+
+5. Help page CSS layout layer in `assets/css/war-table-help.css`
+- Help page shell layout, nav/search/results styling, long-form readability helpers, and responsive behavior.
+- Relies on shared theme tokens/components from base/runtime stylesheets.
+
+6. JavaScript sections in `War_Table_v3.html`
 - Rules/data constants.
 - Weather models and helpers.
 - Utilities and normalizers.
-- Persistence and migration (`schema v6`).
+- Persistence and migration (`schema v7`).
 - Engines:
   - doctrine effects
   - assist/hinder effects
@@ -93,20 +161,68 @@ Single file layout in `War_Table_v3.html`:
 - Import/export adapters.
 - Event binding in `bind()`.
 
+6. JavaScript in `War_Table_Help_Wiki.html`
+- Client-side indexed search for headings/sections/FAQ/glossary.
+- Result ranking, keyboard navigation, anchor focus/scroll behavior.
+- Copy-to-clipboard helpers for CSV example blocks.
+
 Section/index markers exist in code via `// [SECTION] ...` and `// [INDEX] ...` comments for fast navigation.
+
+## CSS Source-of-Truth Contract
+
+- Canonical base stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-theme.css`
+- Canonical runtime state stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-state-themes.css`
+- Help layout stylesheet: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/css/war-table-help.css`
+- HTML load order:
+  1. `<link rel="stylesheet" href="assets/css/war-table-theme.css" />`
+  2. `<link rel="stylesheet" href="assets/css/war-table-state-themes.css" />`
+  3. `<link rel="stylesheet" href="assets/css/war-table-help.css" />` (Help wiki page only)
+- There is no inline style fallback in `War_Table_v3.html` anymore.
+- Base component rules go in `war-table-theme.css`; state-driven visual routing rules go in `war-table-state-themes.css`.
+- Help-page-only layout/search/readability rules go in `war-table-help.css`.
+- Keep asset URLs in CSS relative to the CSS file location (example: `../backgrounds/...` for map textures).
+
+## Runtime Theme Routing Contract
+
+Theme route is applied on `body` via `applyThemeRoute(resolveThemeRoute())` from `render()`.
+
+Dataset keys:
+- `data-season`
+- `data-weather`
+- `data-phenomena`
+- `data-intensity`
+- `data-state`
+- `data-defeat-side`
+- `data-theme-weather-enabled`
+- `data-theme-phenomena-enabled`
+- `data-theme-defeat-enabled`
+- `data-theme-strength`
+
+Precedence:
+1. base parchment
+2. season tint
+3. weather layer
+4. phenomena layer
+5. intensity scaling
+6. defeat layer
+
+Defeat side routing:
+- Primary source: live attacker/defender sizes (`0` => defeated).
+- Fallback source: `lastResult.stopReason` only when live sizes are unavailable (`null`/unset).
+- Outputs: `attacker`, `defender`, `mutual`, or `none`.
 
 ## Persistence Contracts
 
 ### Storage
 
 - Key: `warTableState`
-- Schema: `6`
+- Schema: `7`
 
 ### Persisted state shape
 
 ```json
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "updatedAt": "ISO timestamp",
   "armies": [],
   "factions": [],
@@ -132,7 +248,11 @@ Section/index markers exist in code via `// [SECTION] ...` and `// [INDEX] ...` 
   "overrideDoctrineEligibility": false,
   "assistHinderEnabled": true,
   "assistHinderDiceCap": 6,
-  "showWarReportModal": true
+  "showWarReportModal": true,
+  "weatherThemesEnabled": true,
+  "phenomenaThemesEnabled": true,
+  "defeatThemesEnabled": true,
+  "themeStrengthMode": "subtle | dramatic"
 }
 ```
 
@@ -206,10 +326,11 @@ Notes:
 - `normalizeBattleDraft(draft)`
 
 Behavior:
-1. `loadPersisted()` always returns schema v6 shape and normalizes army/settings/draft payloads.
-2. `persist(saved)` writes full canonical payload, and snapshots assist/hinder draft when writing live state.
-3. `persistWeather(ws)` updates weather in storage while preserving other fields.
-4. Import paths sanitize and normalize before mutation.
+1. `loadPersisted()` always returns schema v7 shape and normalizes army/settings/draft payloads.
+2. Legacy bridge maps weather-level theme flags (`weather.enablePhenomenaTheme`, `weather.enableDefeatTheme`) into canonical `settings.*ThemesEnabled` when missing.
+3. `persist(saved)` writes full canonical payload, and snapshots assist/hinder draft when writing live state.
+4. `persistWeather(ws)` updates weather in storage while preserving other fields.
+5. Import paths sanitize and normalize before mutation.
 
 ## Battle Execution Contract
 
@@ -454,7 +575,70 @@ Draft persistence:
 ## Settings tab
 
 - Unified save path via `saveWeatherSettings`.
-- Saves weather + battle rules + doctrine eligibility + assist/hinder controls + war report modal setting.
+- Saves weather + battle rules + doctrine eligibility + assist/hinder controls + war report modal setting + theme toggles/strength mode.
+- Theme controls:
+  - `settingsWeatherThemesEnabled`
+  - `settingsPhenomenaThemesEnabled`
+  - `settingsDefeatThemesEnabled`
+  - `settingsThemeStrengthMode`
+- Includes Help/Wiki card with CTA link to `War_Table_Help_Wiki.html` (new tab).
+
+## App tab hash routing
+
+- App supports direct tab routing by URL hash:
+  - `War_Table_v3.html#tab-battle`
+  - `War_Table_v3.html#tab-armies`
+  - `War_Table_v3.html#tab-factions`
+  - `War_Table_v3.html#tab-history`
+  - `War_Table_v3.html#tab-settings`
+- `parseTabFromHash()` validates allowed tabs.
+- `applyHashTabRoute()` applies route on load and on `hashchange`.
+- Tab clicks now update hash via `history.replaceState(...)` to preserve deep-link state.
+
+## Help Wiki page
+
+- Dedicated documentation surface at `War_Table_Help_Wiki.html`.
+- Includes anchored sections:
+  - `#start-here`
+  - `#battle-guide`
+  - `#armies-factions`
+  - `#import-export`
+  - `#settings-reference`
+  - `#war-report-history`
+  - `#faq`
+  - `#glossary`
+  - `#game-rules-placeholder`
+  - `#rules-landing`
+  - `#rules-quick-start`
+  - `#rules-strategic-core`
+  - `#rules-army-classes`
+  - `#rules-doctrines`
+  - `#rules-weather-terrain`
+  - `#rules-command-meters`
+  - `#rules-optional-mechanics`
+  - `#rules-appendix`
+- Includes indexed search input (`#helpSearchInput`) with result list (`#helpSearchResults`) and status (`#helpSearchStatus`).
+- Includes copy buttons for inline CSV examples and direct download links for template files.
+- Uses two reading modes:
+  - quick field-manual rules inside Help Wiki (player/GM-facing language)
+  - full canonical rulebook at `War_Encounter_Rules_2026_v4.html`
+- Rules sections keep the same anchor/search architecture but no longer display implementation-status labels in player-facing content.
+- Help chip/badge layout remains, with wording rewritten to player/GM-friendly microcopy.
+
+## Full Rulebook page
+
+- Canonical long-form rules page at `War_Encounter_Rules_2026_v4.html`.
+- Loads shared theme stack:
+  - `assets/css/war-table-theme.css`
+  - `assets/css/war-table-state-themes.css`
+  - `assets/css/war-table-rulebook.css`
+- Includes reciprocal link back to Help Wiki quick rules.
+- Contains full rules text coverage with gameplay meaning preserved.
+- Adds sticky left-rail cards:
+  - `Find in Rulebook` (`#rulebookSearchInput`, `#rulebookSearchResults`, `#rulebookSearchStatus`)
+  - `Table of Contents` (`#rulebookTocList`) generated from `h1..h4`
+  - `Quick Actions` (PDF download, Google Docs, back-to-top)
+- Uses a load-time DOM transform to wrap the inline long ToC into collapsed details (`Table of Contents`), preserving source content while improving readability.
 
 ## Import / Export Contracts
 
@@ -472,6 +656,9 @@ Draft persistence:
   - `armies.csv`
   - `factions.csv`
   - `manifest.json`
+- Help wiki template assets:
+  - `assets/templates/war_table_armies_template.csv`
+  - `assets/templates/war_table_factions_template.csv`
 
 ## History export
 - Exports `battleHistory` as currently persisted objects.
@@ -491,16 +678,35 @@ Primary asset path:
 Optional retina:
 - `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/backgrounds/bg-map-parchment-tile@2x.webp`
 
+Implementation location:
+- Base visual rules are defined in `assets/css/war-table-theme.css`.
+- Runtime weather/phenomena/defeat routing is defined in `assets/css/war-table-state-themes.css`.
+- No inline HTML CSS is used.
+
+Phenomena identity contract (P2.1):
+- Runtime CSS exposes tokenized signatures per phenomenon:
+  - `--phen-overlay-a/b/c`
+  - `--phen-border`, `--phen-frame-shadow`
+  - `--phen-sparkle-opacity`, `--phen-streak-opacity`, `--phen-speckle-opacity`
+  - `--phen-vignette-strength`, `--phen-corner-pool`
+- Phenomena must differ by composition/shape language, not color only.
+- Dramatic mode primarily increases phenomena impact, while normal weather stays restrained.
+
 ## Key IDs and Function Anchors
 
 High-use IDs:
 - Battle controls: `battleBtn`, `copyResult`, `attackerCommit`, `defenderCommit`
 - War Report: `warReportModal`, `warReportBattleAgainBtn`, `warReportAutoResolveBtn`, `warReportAutoStatus`
-- Settings: `showWarReportModal`, `assistHinderEnabled`, `assistHinderDiceCap`, `overrideDoctrineEligibility`
+- Settings: `showWarReportModal`, `assistHinderEnabled`, `assistHinderDiceCap`, `overrideDoctrineEligibility`, `settingsWeatherThemesEnabled`, `settingsPhenomenaThemesEnabled`, `settingsDefeatThemesEnabled`, `settingsThemeStrengthMode`
 - Faction modal: `factionModal`, `factionName`, `factionArmySelect`, `factionArmyChips`, `factionModalSave`
+- Help wiki: `helpSearchInput`, `helpSearchResults`, `helpSearchStatus`
+- Rules helper anchors: `game-rules-placeholder`, `rules-landing`, `rules-quick-start`, `rules-strategic-core`, `rules-army-classes`, `rules-doctrines`, `rules-weather-terrain`, `rules-command-meters`, `rules-optional-mechanics`, `rules-appendix`
 
 High-risk functions:
 - `runBattleRound`
+- `switchTab`
+- `parseTabFromHash`
+- `applyHashTabRoute`
 - `computePool`
 - `computeDoctrineEffects`
 - `resolveAssistHinderEffects`
@@ -531,6 +737,13 @@ High-risk functions:
 - `persist` should remain canonical for full-state writes.
 - `persistWeather` should remain weather-focused and non-destructive.
 
+6. Shared stylesheet ordering
+- Because CSS is externalized, load order and selector specificity are critical:
+  1. `war-table-theme.css` (base components/tokens)
+  2. `war-table-state-themes.css` (runtime state themes)
+  3. `war-table-help.css` (Help wiki layout/search/readability; loaded on Help page only)
+- Keep `applyThemeRoute()` observer-only (no battle mechanics coupling), and test battle/history/modal surfaces together.
+
 ## Known Mismatches / Technical Debt
 
 1. About card version string is stale:
@@ -547,7 +760,7 @@ High-risk functions:
 
 ## Documentation QA Checklist
 
-1. README states schema v6 and `battleDraft.assistHinder`.
+1. README states schema v7 and `battleDraft.assistHinder`.
 2. README reflects current settings keys including `showWarReportModal`.
 3. README documents `runBattleRound` and war report chain controls.
 4. README documents enriched history fields and null-safe rendering behavior.
@@ -555,6 +768,7 @@ High-risk functions:
 6. README documents adv/dis transparency in breakdown.
 7. README documents auto-resolve stop behavior including `phenomena_triggered` and safety guard.
 8. README does not present unimplemented behavior as shipped.
+9. README states CSS source-of-truth includes `assets/css/war-table-theme.css`, `assets/css/war-table-state-themes.css`, and `assets/css/war-table-help.css` (help page), and notes no inline `<style>` in app HTML.
 
 ## Maintenance Checklist
 
@@ -567,4 +781,3 @@ When features change in code, update this README in the same change:
 5. Key IDs/functions table.
 6. Known mismatches/tech debt list.
 7. Snapshot counts/date.
-

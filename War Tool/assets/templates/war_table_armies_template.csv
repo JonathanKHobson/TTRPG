@@ -1,0 +1,4 @@
+name,classId,size,str,faction,notes,doctrines
+Iron Vanguard,infantry,150,120,Northwatch,"Frontline shield wall",heavy_protection;armor_piercing
+Storm Lances,cavalry,120,100,Northwatch,"Fast flanking cavalry",anti_air
+Arcane Battery,mages,80,140,Starfall Collegium,"Primary caster detachment",battlefield_weavers;elemental_ammunition:fire

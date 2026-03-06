@@ -124,6 +124,12 @@ footer {
   flex-wrap: wrap; border-top: 1px solid rgba(201,162,39,0.12);
 }
 footer code { font-family: var(--mono); color: var(--muted); }
+footer a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+footer a:hover { color: var(--text); }
 
 .pageHead {
   display: flex; align-items: center; justify-content: space-between;
@@ -588,8 +594,9 @@ dialog::backdrop { background: rgba(43,31,22,0.45); }
       grid-template-columns: 1fr;
     }
     @media (min-width: 980px) {
-      .battleGrid { grid-template-columns: 1fr 300px 1fr; align-items: start; }
+      .battleGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 300px) minmax(0, 1fr); align-items: start; }
     }
+    .battleGrid > * { min-width: 0; }
 
     .battleBtn {
       width: 100%; display: inline-flex; align-items: center;
@@ -616,23 +623,144 @@ dialog::backdrop { background: rgba(43,31,22,0.45); }
     .center { position: sticky; top: 12px; }
     @media (max-width: 979px) { .center { position: static; } }
 
-    .vs { display: grid; gap: 12px; padding: 13px; }
+    .card.center {
+      overflow: hidden;
+      min-width: 0;
+      contain: inline-size;
+    }
+    .card.center .vs,
+    .card.center .battleActions,
+    .card.center .result,
+    .card.center .alert,
+    .card.center details,
+    .card.center .row {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .vs { display: grid; gap: 14px; padding: 16px 18px 18px; }
     .vsTop { display: grid; gap: 8px; text-align: center; padding: 6px 0; }
     .vsTop .big {
       font-size: 32px; letter-spacing: 4px;
       font-family: var(--ui); color: #7A4F10; font-weight: 700;
     }
-    .vsTop .small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .vsTop .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
 
     /* ── Result display ───────────────────────────────────────────── */
-    .result { display: grid; gap: 10px; }
+    .result { display: grid; gap: 12px; padding: 0 10px 12px; }
     .result .title { font-size: 12px; color: var(--muted); }
-    .result .who { font-size: 22px; font-weight: 700; font-family: var(--ui); color: var(--ink); letter-spacing: 0.5px; }
+    .result .who {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--ui);
+      color: var(--ink);
+      letter-spacing: 0.45px;
+      line-height: 1.16;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #resultHeadline {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      min-width: 0;
+      width: 100%;
+      padding: 2px 0 0;
+    }
+    #resultArea > .alert,
+    #resultArea > details,
+    #resultArea > .row { margin: 0; }
+    #resultArea > .row:last-child { padding-bottom: 6px; }
+    #validationMsg,
+    #resultSummary {
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+    #resultArea details > div,
+    #resultArea .alert > div {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 1180px) {
+      .result .who { font-size: 20px; letter-spacing: 0.35px; }
+    }
+    @media (max-width: 980px) {
+      .result .who { font-size: 18px; letter-spacing: 0.2px; }
+    }
     .result.att-wins .who { color: var(--att); }
     .result.def-wins .who { color: var(--def); }
 
     /* ── War report modal ─────────────────────────────────────────── */
     #warReportModal { max-width: 760px; }
+    .warReportWeatherStrip {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(43,74,111,0.28);
+      background: rgba(220,232,248,0.45);
+      color: #2B4A6F;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .warReportStagingNotice {
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px dashed rgba(74,55,37,0.26);
+      background: rgba(255,255,255,0.42);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .warReportStagingWrap {
+      display: grid;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .warReportStageGrid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: stretch;
+    }
+    .warReportStageVS {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      border-radius: 10px;
+      border: 1px solid rgba(196,154,58,0.35);
+      background: rgba(196,154,58,0.12);
+      color: #7A4F10;
+      font-family: var(--ui);
+      font-weight: 700;
+      letter-spacing: 1px;
+      font-size: 13px;
+      padding: 0 8px;
+    }
+    .warReportStageCommitRow {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .warReportStageCommitRow label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      gap: 4px;
+    }
+    .warReportStageCommitRow input {
+      padding: 8px 9px;
+      font-size: 12px;
+    }
     .warReportOutcome {
       padding: 10px 12px; border-radius: 12px;
       border: 1px solid rgba(74,55,37,0.2);
@@ -695,12 +823,145 @@ dialog::backdrop { background: rgba(43,31,22,0.45); }
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .warReportActionRow .btn.small {
+      min-height: 30px;
+      align-self: flex-end;
+    }
+    .warReportAutoControls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .warReportRoundLimitWrap {
+      display: grid;
+      gap: 3px;
+      min-width: 130px;
+    }
+    .warReportRoundLimitWrap label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .warReportRoundLimitWrap select {
+      width: 100%;
+      min-width: 0;
+      font-size: 12px;
+      padding: 6px 8px;
+    }
+    .warReportSessionLine {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .warReportSessionSummary {
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.45);
+      padding: 8px 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .warReportSessionSummaryHead {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--ink);
+    }
+    .warReportSessionSummaryGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+    }
+    .warReportRoundList {
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.4);
+      padding: 8px 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .warReportRoundListHead {
+      font-size: 12px;
+      color: var(--ink);
+    }
+    .warReportRoundRows {
+      display: grid;
+      gap: 6px;
+      max-height: 220px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .warReportRoundRow {
+      border: 1px solid rgba(74,55,37,0.16);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.45);
+      padding: 7px 8px;
+      display: grid;
+      gap: 4px;
+    }
+    .warReportRoundRowHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .warReportRoundRowMeta {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    @media (max-width: 760px) {
+      .warReportSessionSummaryGrid { grid-template-columns: 1fr; }
+      .warReportRoundLimitWrap { min-width: 120px; }
     }
     .warReportAutoStatus {
       font-size: 11px;
       color: var(--muted);
       min-height: 16px;
+    }
+    #warReportModal .dlgFoot {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "actions close"
+        "status close";
+      align-items: end;
+      gap: 8px 10px;
+      padding-top: 8px;
+    }
+    #warReportModal .warReportActionRow { grid-area: actions; }
+    #warReportModal .warReportAutoStatus { grid-area: status; }
+    #warReportClosePrimary {
+      grid-area: close;
+      min-width: 108px;
+      justify-self: end;
+      align-self: end;
+    }
+    #warReportClose {
+      min-width: 96px;
+      justify-content: center;
+    }
+    @media (max-width: 760px) {
+      .warReportStageGrid { grid-template-columns: 1fr; }
+      .warReportStageVS { min-height: 34px; }
+      .warReportStageCommitRow { grid-template-columns: 1fr; }
+      #warReportModal .dlgFoot {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "actions"
+          "status"
+          "close";
+      }
+      #warReportClosePrimary { justify-self: stretch; width: 100%; }
     }
 
     /* ── Army row in armies tab ───────────────────────────────────── */
@@ -991,6 +1252,7 @@ dialog::backdrop { background: rgba(43,31,22,0.45); }
       display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
     .battleActions .battleBtn { width: 100%; }
+    .card.center .battleActions { align-items: stretch; }
 
     .turnBtn {
       appearance: none; cursor: pointer; user-select: none;
@@ -1018,4 +1280,15 @@ dialog::backdrop { background: rgba(43,31,22,0.45); }
       color: rgba(180, 40, 40, 0.85);
       border: 1px solid rgba(180, 40, 40, 0.25);
       font-size: 10px; padding: 1px 6px; border-radius: 6px;
+    }
+    .card.center .turnBtn {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    @media (min-width: 980px) and (max-width: 1140px) {
+      .card.center .vs { padding: 14px 14px 16px; gap: 12px; }
+      .card.center .result { padding: 0 6px 10px; gap: 10px; }
+      .card.center .result .who { font-size: 19px; letter-spacing: 0.2px; }
+      .card.center .turnBtn { padding: 7px 10px; }
     }
