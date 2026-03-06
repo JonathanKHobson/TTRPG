@@ -41,185 +41,209 @@
           <span class="badge" id="attackerPoolBadge">—</span>
         </div>
         <div class="content">
-          <!-- Load from saved -->
-          <div class="loadRow">
-            <select id="attLoaderSelect" aria-label="Load saved army into Attacker">
-              <option value="">— Load saved army —</option>
-            </select>
-            <button class="btn small" id="attLoadBtn" type="button">Load</button>
+          <div class="battleSideChooser" id="attChooserWrap">
+            <div class="loadRow">
+              <select id="attLoaderSelect" aria-label="Load saved army into Attacker">
+                <option value="">— Load saved army —</option>
+              </select>
+              <button class="btn small" id="attLoadBtn" type="button">Load</button>
+            </div>
+            <button class="btn small" id="attCreateArmyBtn" type="button">Create new army</button>
+            <div class="help" id="attChooserHelp">Load a saved army or create a new one.</div>
           </div>
 
-          <div class="defeated-banner" id="attDefeatedBanner">
-            ☠ Army Defeated — Size is 0. Restore size or load a saved army to continue.
-          </div>
-
-          <hr class="divider" />
-
-          <div class="row single">
-            <label>Army Class
-              <select id="attackerClass" aria-describedby="attackerClassHelp"></select>
-              <div class="help" id="attackerClassHelp"></div>
-            </label>
-          </div>
-
-          <div class="row" style="margin-top:10px;">
-            <label>Army Size
-              <input id="attackerSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 150" />
-              <div class="help">Every <span class="mono">50</span> Size = <span class="mono">+1 die</span>.</div>
-            </label>
-            <label>STR
-              <input id="attackerStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 120" />
-              <div class="help">Every <span class="mono">10</span> STR = <span class="mono">+1 die</span>.</div>
-            </label>
-          </div>
-          <details class="panelToggle" id="attDoctrineDetails">
-            <summary>Doctrines <span class="summaryRight" id="attDoctrineSummary">0 selected</span></summary>
-            <div class="panelToggleBody">
-              <div class="doctrineSection">
-                <div class="doctrinePickerRow">
-                  <select id="attDoctrineSelect" aria-label="Add doctrine to attacker">
-                    <option value="">— Select doctrine —</option>
-                  </select>
-                  <button class="btn small" id="attDoctrineAddBtn" type="button">Add</button>
-                </div>
-                <div class="doctrineChoiceRow" id="attDoctrineChoiceRow">
-                  <label>Elemental Ammunition damage type
-                    <select id="attDoctrineDamageType">
-                      <option value="">— Select damage type —</option>
-                    </select>
-                  </label>
-                </div>
-                <div id="attDoctrineChips" class="doctrineChipWrap"></div>
-                <div id="attDoctrineRuntime" class="doctrineToggleList"></div>
-                <div id="attDoctrineQueued" class="doctrineQueued"></div>
-              </div>
+          <div class="battleSideSetup" id="attSetupWrap" style="display:none;">
+            <div class="battleSideActions">
+              <button class="btn small ghost" id="attSetupChangeBtn" type="button">Set up another army</button>
             </div>
-          </details>
+            <div class="row single">
+              <label>Army Name
+                <input id="attackerArmyNameDraft" type="text" placeholder="e.g. Iron Vanguard" />
+              </label>
+              <div class="help" id="attSetupHelper">Enter a name, class, size, and STR to prepare this side.</div>
+            </div>
 
-          <details class="panelToggle" id="attNearbyDetails">
-            <summary>Nearby Armies</summary>
-            <div class="panelToggleBody">
-              <div class="nearbySection" id="attNearbyWrap">
-                <div class="nearbyGroup">
-                  <div class="nearbyGroupTitle">Nearby Allies (Assist)</div>
-                  <div class="nearbyPickerRow">
-                    <select id="attAssistSource" aria-label="Add nearby ally for attacker">
-                      <option value="">— Select saved army —</option>
-                    </select>
-                    <button class="btn small" id="attAssistAddBtn" type="button">Add</button>
-                  </div>
-                  <div class="nearbyList" id="attAssistList"></div>
-                </div>
-                <div class="nearbyGroup">
-                  <div class="nearbyGroupTitle">Nearby Enemies (Hinder)</div>
-                  <div class="nearbyPickerRow">
-                    <select id="attHinderSource" aria-label="Add nearby enemy for attacker">
-                      <option value="">— Select saved army —</option>
-                    </select>
-                    <button class="btn small" id="attHinderAddBtn" type="button">Add</button>
-                  </div>
-                  <div class="nearbyList" id="attHinderList"></div>
+            <div class="defeated-banner" id="attDefeatedBanner">
+              ☠ Army Defeated — Size is 0. Restore size or load a saved army to continue.
+            </div>
+
+            <hr class="divider" />
+
+            <div class="row single">
+              <label>Army Class
+                <select id="attackerClass" aria-describedby="attackerClassHelp"></select>
+                <div class="help" id="attackerClassHelp"></div>
+              </label>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <label>Army Size
+                <input id="attackerSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 150" />
+                <div class="help">Every <span class="mono">50</span> Size = <span class="mono">+1 die</span>.</div>
+              </label>
+              <label>STR
+                <input id="attackerStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 120" />
+                <div class="help">Every <span class="mono">10</span> STR = <span class="mono">+1 die</span>.</div>
+              </label>
+            </div>
+
+            <details class="commitDetails">
+              <summary>Dice to commit <span class="summaryRight" id="attackerCommitSummary">—</span></summary>
+              <div class="row single" style="margin-top:10px;">
+                <div>
+                  <div class="commitHint">Leave blank to auto-commit full pool.</div>
+                  <input id="attackerCommit" aria-label="Attacker dice to commit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto (blank)" />
+                  <div class="commitRule" id="attCommitRule">Rule: attacker must commit <span class="mono">≥5</span> dice.</div>
                 </div>
               </div>
-            </div>
-          </details>
+            </details>
 
-          <details class="commitDetails">
-            <summary>Dice to commit <span class="summaryRight" id="attackerCommitSummary">—</span></summary>
-            <div class="row single" style="margin-top:10px;">
-              <div>
-                <div class="commitHint">Leave blank to auto-commit full pool.</div>
-                <input id="attackerCommit" aria-label="Attacker dice to commit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto (blank)" />
-                <div class="commitRule" id="attCommitRule">Rule: attacker must commit <span class="mono">≥5</span> dice.</div>
+            <div class="kpi" aria-label="Attacker dice pool summary">
+              <div class="kpiRow">
+                <div class="label">Final dice pool</div>
+                <div class="value" id="attackerPoolFinal">—</div>
+              </div>
+              <div class="kpiRow">
+                <div class="label">Dice type</div>
+                <div class="value" id="attackerDiceType">—</div>
               </div>
             </div>
-          </details>
 
-          <div class="kpi" aria-label="Attacker dice pool summary">
-            <div class="kpiRow">
-              <div class="label">Final dice pool</div>
-              <div class="value" id="attackerPoolFinal">—</div>
-            </div>
-            <div class="kpiRow">
-              <div class="label">Dice type</div>
-              <div class="value" id="attackerDiceType">—</div>
-            </div>
-          </div>
+            <details class="panelToggle battleAdvancedSetup" id="attAdvancedSetupDetails">
+              <summary>Advanced setup</summary>
+              <div class="panelToggleBody">
+                <div class="help">Optional rules, nearby armies, math details, and manual overrides.</div>
 
-          <details class="breakdownDetails">
-            <summary>Dice math breakdown</summary>
-            <div class="breakdown" id="attackerBreakdown">Enter values to see breakdown.</div>
-          </details>
-          <details class="panelToggle" id="attContextDetails">
-            <summary>Battle Context</summary>
-            <div class="panelToggleBody">
-              <div class="nearbyContext">
-                <label class="autoToggle"><input type="checkbox" id="attCtxHomeTerritory"> Home territory</label>
-                <label class="autoToggle"><input type="checkbox" id="attCtxForestEnvironment"> Forest environment</label>
-                <label class="autoToggle"><input type="checkbox" id="attCtxCityFortChoke"> City / Fort / Choke point</label>
-                <label class="autoToggle"><input type="checkbox" id="attCtxFlankedByTwoEnemies"> Flanked by two enemies</label>
-                <label class="autoToggle"><input type="checkbox" id="attCtxEnemyHasIntelOnHidden"> Enemy has intel on hidden</label>
-                <label class="autoToggle"><input type="checkbox" id="attCtxSelfHiddenOrSurprising"> Hidden / Surprise position</label>
+                <details class="panelToggle" id="attDoctrineDetails">
+                  <summary>Doctrines <span class="summaryRight" id="attDoctrineSummary">0 selected</span></summary>
+                  <div class="panelToggleBody">
+                    <div class="doctrineSection">
+                      <div class="doctrinePickerRow">
+                        <select id="attDoctrineSelect" aria-label="Add doctrine to attacker">
+                          <option value="">— Select doctrine —</option>
+                        </select>
+                        <button class="btn small" id="attDoctrineAddBtn" type="button">Add</button>
+                      </div>
+                      <div class="doctrineChoiceRow" id="attDoctrineChoiceRow">
+                        <label>Elemental Ammunition damage type
+                          <select id="attDoctrineDamageType">
+                            <option value="">— Select damage type —</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div id="attDoctrineChips" class="doctrineChipWrap"></div>
+                      <div id="attDoctrineRuntime" class="doctrineToggleList"></div>
+                      <div id="attDoctrineQueued" class="doctrineQueued"></div>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="panelToggle" id="attNearbyDetails">
+                  <summary>Nearby Armies</summary>
+                  <div class="panelToggleBody">
+                    <div class="nearbySection" id="attNearbyWrap">
+                      <div class="nearbyGroup">
+                        <div class="nearbyGroupTitle">Nearby Allies (Assist)</div>
+                        <div class="nearbyPickerRow">
+                          <select id="attAssistSource" aria-label="Add nearby ally for attacker">
+                            <option value="">— Select saved army —</option>
+                          </select>
+                          <button class="btn small" id="attAssistAddBtn" type="button">Add</button>
+                        </div>
+                        <div class="nearbyList" id="attAssistList"></div>
+                      </div>
+                      <div class="nearbyGroup">
+                        <div class="nearbyGroupTitle">Nearby Enemies (Hinder)</div>
+                        <div class="nearbyPickerRow">
+                          <select id="attHinderSource" aria-label="Add nearby enemy for attacker">
+                            <option value="">— Select saved army —</option>
+                          </select>
+                          <button class="btn small" id="attHinderAddBtn" type="button">Add</button>
+                        </div>
+                        <div class="nearbyList" id="attHinderList"></div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="breakdownDetails" id="attBreakdownDetails">
+                  <summary>Dice math breakdown</summary>
+                  <div class="breakdown" id="attackerBreakdown">Enter values to see breakdown.</div>
+                </details>
+
+                <details class="panelToggle" id="attContextDetails">
+                  <summary>Battle Context</summary>
+                  <div class="panelToggleBody">
+                    <div class="nearbyContext">
+                      <label class="autoToggle"><input type="checkbox" id="attCtxHomeTerritory"> Home territory</label>
+                      <label class="autoToggle"><input type="checkbox" id="attCtxForestEnvironment"> Forest environment</label>
+                      <label class="autoToggle"><input type="checkbox" id="attCtxCityFortChoke"> City / Fort / Choke point</label>
+                      <label class="autoToggle"><input type="checkbox" id="attCtxFlankedByTwoEnemies"> Flanked by two enemies</label>
+                      <label class="autoToggle"><input type="checkbox" id="attCtxEnemyHasIntelOnHidden"> Enemy has intel on hidden</label>
+                      <label class="autoToggle"><input type="checkbox" id="attCtxSelfHiddenOrSurprising"> Hidden / Surprise position</label>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="panelToggle" id="attManualOverrideDetails">
+                  <summary>Manual override</summary>
+                  <div class="panelToggleBody">
+                    <div class="controls" aria-label="Manual overrides">
+                      <div class="stepper">
+                        <div class="left">
+                          <div class="t">Manual dice adjustment</div>
+                          <div class="n"><span id="attackerManualDelta">0</span> dice</div>
+                        </div>
+                        <div class="btnRow">
+                          <button class="btn small" id="attackerMinus" type="button">−</button>
+                          <button class="btn small" id="attackerPlus" type="button">+</button>
+                          <button class="btn small ghost" id="attackerManualReset" type="button">Reset</button>
+                        </div>
+                      </div>
+
+                      <label>Dice type override (optional)
+                        <select id="attackerDiceOverride">
+                          <option value="auto">Auto (by class)</option>
+                          <option value="4">d4</option>
+                          <option value="6">d6</option>
+                          <option value="8">d8</option>
+                          <option value="10">d10</option>
+                          <option value="12">d12</option>
+                        </select>
+                      </label>
+                      <label class="autoToggle">
+                        <input id="attackerCapOverride" type="checkbox" />
+                        Dice cap override (ignore cap/commit limits)
+                      </label>
+                      <div class="stepper">
+                        <div class="left">
+                          <div class="t">Advantages</div>
+                          <div class="n"><span id="attackerAdv">0</span></div>
+                        </div>
+                        <div class="btnRow">
+                          <button class="btn small" id="attackerAdvMinus" type="button">−</button>
+                          <button class="btn small" id="attackerAdvPlus" type="button">+</button>
+                        </div>
+                      </div>
+                      <div class="stepper">
+                        <div class="left">
+                          <div class="t">Disadvantages</div>
+                          <div class="n"><span id="attackerDisadv">0</span></div>
+                        </div>
+                        <div class="btnRow">
+                          <button class="btn small" id="attackerDisadvMinus" type="button">−</button>
+                          <button class="btn small" id="attackerDisadvPlus" type="button">+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
               </div>
+            </details>
+
+            <div style="margin-top:10px;">
+              <button class="btn small" id="openSaveAttModal" type="button"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Save as Army</button>
             </div>
-          </details>
-
-          <details class="panelToggle" id="attManualOverrideDetails">
-            <summary>Manual override</summary>
-            <div class="panelToggleBody">
-              <div class="controls" aria-label="Manual overrides">
-                <div class="stepper">
-                  <div class="left">
-                    <div class="t">Manual dice adjustment</div>
-                    <div class="n"><span id="attackerManualDelta">0</span> dice</div>
-                  </div>
-                  <div class="btnRow">
-                    <button class="btn small" id="attackerMinus" type="button">−</button>
-                    <button class="btn small" id="attackerPlus" type="button">+</button>
-                    <button class="btn small ghost" id="attackerManualReset" type="button">Reset</button>
-                  </div>
-                </div>
-
-                <label>Dice type override (optional)
-                  <select id="attackerDiceOverride">
-                    <option value="auto">Auto (by class)</option>
-                    <option value="4">d4</option>
-                    <option value="6">d6</option>
-                    <option value="8">d8</option>
-                    <option value="10">d10</option>
-                    <option value="12">d12</option>
-                  </select>
-                </label>
-                <label class="autoToggle">
-                  <input id="attackerCapOverride" type="checkbox" />
-                  Dice cap override (ignore cap/commit limits)
-                </label>
-                <div class="stepper">
-                  <div class="left">
-                    <div class="t">Advantages</div>
-                    <div class="n"><span id="attackerAdv">0</span></div>
-                  </div>
-                  <div class="btnRow">
-                    <button class="btn small" id="attackerAdvMinus" type="button">−</button>
-                    <button class="btn small" id="attackerAdvPlus" type="button">+</button>
-                  </div>
-                </div>
-                <div class="stepper">
-                  <div class="left">
-                    <div class="t">Disadvantages</div>
-                    <div class="n"><span id="attackerDisadv">0</span></div>
-                  </div>
-                  <div class="btnRow">
-                    <button class="btn small" id="attackerDisadvMinus" type="button">−</button>
-                    <button class="btn small" id="attackerDisadvPlus" type="button">+</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </details>
-
-          <div style="margin-top:10px;">
-            <button class="btn small" id="openSaveAttModal" type="button"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Save as Army</button>
           </div>
         </div>
       </section>
@@ -309,191 +333,215 @@
           <span class="badge" id="defenderPoolBadge">—</span>
         </div>
         <div class="content">
-          <!-- Load from saved -->
-          <div class="loadRow">
-            <select id="defLoaderSelect" aria-label="Load saved army into Defender">
-              <option value="">— Load saved army —</option>
-            </select>
-            <button class="btn small" id="defLoadBtn" type="button">Load</button>
+          <div class="battleSideChooser" id="defChooserWrap">
+            <div class="loadRow">
+              <select id="defLoaderSelect" aria-label="Load saved army into Defender">
+                <option value="">— Load saved army —</option>
+              </select>
+              <button class="btn small" id="defLoadBtn" type="button">Load</button>
+            </div>
+            <button class="btn small" id="defCreateArmyBtn" type="button">Create new army</button>
+            <div class="help" id="defChooserHelp">Load a saved army or create a new one.</div>
           </div>
 
-          <div class="defeated-banner" id="defDefeatedBanner">
-            ☠ Army Defeated — Size is 0. Restore size or load a saved army to continue.
-          </div>
-
-          <hr class="divider" />
-
-          <div class="row single">
-            <label>Army Class
-              <select id="defenderClass" aria-describedby="defenderClassHelp"></select>
-              <div class="help" id="defenderClassHelp"></div>
-            </label>
-          </div>
-
-          <div class="row" style="margin-top:10px;">
-            <label>Army Size
-              <input id="defenderSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 100" />
-              <div class="help">Every <span class="mono">50</span> Size = <span class="mono">+1 die</span>.</div>
-            </label>
-            <label>STR
-              <input id="defenderStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 80" />
-              <div class="help">Every <span class="mono">10</span> STR = <span class="mono">+1 die</span>.</div>
-            </label>
-          </div>
-          <details class="panelToggle" id="defDoctrineDetails">
-            <summary>Doctrines <span class="summaryRight" id="defDoctrineSummary">0 selected</span></summary>
-            <div class="panelToggleBody">
-              <div class="doctrineSection">
-                <div class="doctrinePickerRow">
-                  <select id="defDoctrineSelect" aria-label="Add doctrine to defender">
-                    <option value="">— Select doctrine —</option>
-                  </select>
-                  <button class="btn small" id="defDoctrineAddBtn" type="button">Add</button>
-                </div>
-                <div class="doctrineChoiceRow" id="defDoctrineChoiceRow">
-                  <label>Elemental Ammunition damage type
-                    <select id="defDoctrineDamageType">
-                      <option value="">— Select damage type —</option>
-                    </select>
-                  </label>
-                </div>
-                <div id="defDoctrineChips" class="doctrineChipWrap"></div>
-                <div id="defDoctrineRuntime" class="doctrineToggleList"></div>
-                <div id="defDoctrineQueued" class="doctrineQueued"></div>
-              </div>
+          <div class="battleSideSetup" id="defSetupWrap" style="display:none;">
+            <div class="battleSideActions">
+              <button class="btn small ghost" id="defSetupChangeBtn" type="button">Set up another army</button>
             </div>
-          </details>
-
-          <details class="panelToggle" id="defNearbyDetails">
-            <summary>Nearby Armies</summary>
-            <div class="panelToggleBody">
-              <div class="nearbySection" id="defNearbyWrap">
-                <div class="nearbyGroup">
-                  <div class="nearbyGroupTitle">Nearby Allies (Assist)</div>
-                  <div class="nearbyPickerRow">
-                    <select id="defAssistSource" aria-label="Add nearby ally for defender">
-                      <option value="">— Select saved army —</option>
-                    </select>
-                    <button class="btn small" id="defAssistAddBtn" type="button">Add</button>
-                  </div>
-                  <div class="nearbyList" id="defAssistList"></div>
-                </div>
-                <div class="nearbyGroup">
-                  <div class="nearbyGroupTitle">Nearby Enemies (Hinder)</div>
-                  <div class="nearbyPickerRow">
-                    <select id="defHinderSource" aria-label="Add nearby enemy for defender">
-                      <option value="">— Select saved army —</option>
-                    </select>
-                    <button class="btn small" id="defHinderAddBtn" type="button">Add</button>
-                  </div>
-                  <div class="nearbyList" id="defHinderList"></div>
-                </div>
-              </div>
+            <div class="row single">
+              <label>Army Name
+                <input id="defenderArmyNameDraft" type="text" placeholder="e.g. Stoneward Guard" />
+              </label>
+              <div class="help" id="defSetupHelper">Enter a name, class, size, and STR to prepare this side.</div>
             </div>
-          </details>
 
-          <details class="commitDetails">
-            <summary>Dice to commit <span class="summaryRight" id="defenderCommitSummary">—</span></summary>
-            <div class="row single" style="margin-top:10px;">
-              <div>
-                <div class="commitHint">Leave blank to auto-commit full pool.</div>
-                <input id="defenderCommit" aria-label="Defender dice to commit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto (blank)" />
-                <div class="commitRule" id="defCommitRule">Rule: defender min 1 die. Pool ≤0 = auto-loss.</div>
-              </div>
+            <div class="defeated-banner" id="defDefeatedBanner">
+              ☠ Army Defeated — Size is 0. Restore size or load a saved army to continue.
             </div>
-          </details>
 
-          <div class="kpi" aria-label="Defender dice pool summary">
-            <div class="kpiRow">
-              <div class="label">Final dice pool</div>
-              <div class="value" id="defenderPoolFinal">—</div>
-            </div>
-            <div class="kpiRow">
-              <div class="label">Dice type</div>
-              <div class="value" id="defenderDiceType">—</div>
-            </div>
-          </div>
+            <hr class="divider" />
 
-          <details class="breakdownDetails">
-            <summary>Dice math breakdown</summary>
-            <div class="breakdown" id="defenderBreakdown">Enter values to see breakdown.</div>
-          </details>
-          <details class="panelToggle" id="defContextDetails">
-            <summary>Battle Context</summary>
-            <div class="panelToggleBody">
-              <div class="nearbyContext">
-                <label class="autoToggle"><input type="checkbox" id="defCtxHomeTerritory"> Home territory</label>
-                <label class="autoToggle"><input type="checkbox" id="defCtxForestEnvironment"> Forest environment</label>
-                <label class="autoToggle"><input type="checkbox" id="defCtxCityFortChoke"> City / Fort / Choke point</label>
-                <label class="autoToggle"><input type="checkbox" id="defCtxFlankedByTwoEnemies"> Flanked by two enemies</label>
-                <label class="autoToggle"><input type="checkbox" id="defCtxEnemyHasIntelOnHidden"> Enemy has intel on hidden</label>
-                <label class="autoToggle"><input type="checkbox" id="defCtxSelfHiddenOrSurprising"> Hidden / Surprise position</label>
-              </div>
-              <label>Defender has structures?
-                <select id="defenderStructures">
-                  <option value="no">No (open field)</option>
-                  <option value="yes">Yes (walls / towers)</option>
-                </select>
+            <div class="row single">
+              <label>Army Class
+                <select id="defenderClass" aria-describedby="defenderClassHelp"></select>
+                <div class="help" id="defenderClassHelp"></div>
               </label>
             </div>
-          </details>
 
-          <details class="panelToggle" id="defManualOverrideDetails">
-            <summary>Manual override</summary>
-            <div class="panelToggleBody">
-              <div class="controls" aria-label="Manual overrides">
-                <div class="stepper">
-                  <div class="left">
-                    <div class="t">Manual dice adjustment</div>
-                    <div class="n"><span id="defenderManualDelta">0</span> dice</div>
-                  </div>
-                  <div class="btnRow">
-                    <button class="btn small" id="defenderMinus" type="button">−</button>
-                    <button class="btn small" id="defenderPlus" type="button">+</button>
-                    <button class="btn small ghost" id="defenderManualReset" type="button">Reset</button>
-                  </div>
-                </div>
+            <div class="row" style="margin-top:10px;">
+              <label>Army Size
+                <input id="defenderSize" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 100" />
+                <div class="help">Every <span class="mono">50</span> Size = <span class="mono">+1 die</span>.</div>
+              </label>
+              <label>STR
+                <input id="defenderStr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 80" />
+                <div class="help">Every <span class="mono">10</span> STR = <span class="mono">+1 die</span>.</div>
+              </label>
+            </div>
 
-                <label>Dice type override (optional)
-                  <select id="defenderDiceOverride">
-                    <option value="auto">Auto (by class)</option>
-                    <option value="4">d4</option>
-                    <option value="6">d6</option>
-                    <option value="8">d8</option>
-                    <option value="10">d10</option>
-                    <option value="12">d12</option>
-                  </select>
-                </label>
-                <label class="autoToggle">
-                  <input id="defenderCapOverride" type="checkbox" />
-                  Dice cap override (ignore cap/commit limits)
-                </label>
-                <div class="stepper">
-                  <div class="left">
-                    <div class="t">Advantages</div>
-                    <div class="n"><span id="defenderAdv">0</span></div>
-                  </div>
-                  <div class="btnRow">
-                    <button class="btn small" id="defenderAdvMinus" type="button">−</button>
-                    <button class="btn small" id="defenderAdvPlus" type="button">+</button>
-                  </div>
-                </div>
-                <div class="stepper">
-                  <div class="left">
-                    <div class="t">Disadvantages</div>
-                    <div class="n"><span id="defenderDisadv">0</span></div>
-                  </div>
-                  <div class="btnRow">
-                    <button class="btn small" id="defenderDisadvMinus" type="button">−</button>
-                    <button class="btn small" id="defenderDisadvPlus" type="button">+</button>
-                  </div>
+            <details class="commitDetails">
+              <summary>Dice to commit <span class="summaryRight" id="defenderCommitSummary">—</span></summary>
+              <div class="row single" style="margin-top:10px;">
+                <div>
+                  <div class="commitHint">Leave blank to auto-commit full pool.</div>
+                  <input id="defenderCommit" aria-label="Defender dice to commit" type="number" min="0" step="1" inputmode="numeric" placeholder="auto (blank)" />
+                  <div class="commitRule" id="defCommitRule">Rule: defender min 1 die. Pool ≤0 = auto-loss.</div>
                 </div>
               </div>
-            </div>
-          </details>
+            </details>
 
-          <div style="margin-top:10px;">
-            <button class="btn small" id="openSaveDefModal" type="button"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Save as Army</button>
+            <div class="kpi" aria-label="Defender dice pool summary">
+              <div class="kpiRow">
+                <div class="label">Final dice pool</div>
+                <div class="value" id="defenderPoolFinal">—</div>
+              </div>
+              <div class="kpiRow">
+                <div class="label">Dice type</div>
+                <div class="value" id="defenderDiceType">—</div>
+              </div>
+            </div>
+
+            <details class="panelToggle battleAdvancedSetup" id="defAdvancedSetupDetails">
+              <summary>Advanced setup</summary>
+              <div class="panelToggleBody">
+                <div class="help">Optional rules, nearby armies, math details, and manual overrides.</div>
+
+                <details class="panelToggle" id="defDoctrineDetails">
+                  <summary>Doctrines <span class="summaryRight" id="defDoctrineSummary">0 selected</span></summary>
+                  <div class="panelToggleBody">
+                    <div class="doctrineSection">
+                      <div class="doctrinePickerRow">
+                        <select id="defDoctrineSelect" aria-label="Add doctrine to defender">
+                          <option value="">— Select doctrine —</option>
+                        </select>
+                        <button class="btn small" id="defDoctrineAddBtn" type="button">Add</button>
+                      </div>
+                      <div class="doctrineChoiceRow" id="defDoctrineChoiceRow">
+                        <label>Elemental Ammunition damage type
+                          <select id="defDoctrineDamageType">
+                            <option value="">— Select damage type —</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div id="defDoctrineChips" class="doctrineChipWrap"></div>
+                      <div id="defDoctrineRuntime" class="doctrineToggleList"></div>
+                      <div id="defDoctrineQueued" class="doctrineQueued"></div>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="panelToggle" id="defNearbyDetails">
+                  <summary>Nearby Armies</summary>
+                  <div class="panelToggleBody">
+                    <div class="nearbySection" id="defNearbyWrap">
+                      <div class="nearbyGroup">
+                        <div class="nearbyGroupTitle">Nearby Allies (Assist)</div>
+                        <div class="nearbyPickerRow">
+                          <select id="defAssistSource" aria-label="Add nearby ally for defender">
+                            <option value="">— Select saved army —</option>
+                          </select>
+                          <button class="btn small" id="defAssistAddBtn" type="button">Add</button>
+                        </div>
+                        <div class="nearbyList" id="defAssistList"></div>
+                      </div>
+                      <div class="nearbyGroup">
+                        <div class="nearbyGroupTitle">Nearby Enemies (Hinder)</div>
+                        <div class="nearbyPickerRow">
+                          <select id="defHinderSource" aria-label="Add nearby enemy for defender">
+                            <option value="">— Select saved army —</option>
+                          </select>
+                          <button class="btn small" id="defHinderAddBtn" type="button">Add</button>
+                        </div>
+                        <div class="nearbyList" id="defHinderList"></div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="breakdownDetails" id="defBreakdownDetails">
+                  <summary>Dice math breakdown</summary>
+                  <div class="breakdown" id="defenderBreakdown">Enter values to see breakdown.</div>
+                </details>
+
+                <details class="panelToggle" id="defContextDetails">
+                  <summary>Battle Context</summary>
+                  <div class="panelToggleBody">
+                    <div class="nearbyContext">
+                      <label class="autoToggle"><input type="checkbox" id="defCtxHomeTerritory"> Home territory</label>
+                      <label class="autoToggle"><input type="checkbox" id="defCtxForestEnvironment"> Forest environment</label>
+                      <label class="autoToggle"><input type="checkbox" id="defCtxCityFortChoke"> City / Fort / Choke point</label>
+                      <label class="autoToggle"><input type="checkbox" id="defCtxFlankedByTwoEnemies"> Flanked by two enemies</label>
+                      <label class="autoToggle"><input type="checkbox" id="defCtxEnemyHasIntelOnHidden"> Enemy has intel on hidden</label>
+                      <label class="autoToggle"><input type="checkbox" id="defCtxSelfHiddenOrSurprising"> Hidden / Surprise position</label>
+                    </div>
+                    <label>Defender has structures?
+                      <select id="defenderStructures">
+                        <option value="no">No (open field)</option>
+                        <option value="yes">Yes (walls / towers)</option>
+                      </select>
+                    </label>
+                  </div>
+                </details>
+
+                <details class="panelToggle" id="defManualOverrideDetails">
+                  <summary>Manual override</summary>
+                  <div class="panelToggleBody">
+                    <div class="controls" aria-label="Manual overrides">
+                      <div class="stepper">
+                        <div class="left">
+                          <div class="t">Manual dice adjustment</div>
+                          <div class="n"><span id="defenderManualDelta">0</span> dice</div>
+                        </div>
+                        <div class="btnRow">
+                          <button class="btn small" id="defenderMinus" type="button">−</button>
+                          <button class="btn small" id="defenderPlus" type="button">+</button>
+                          <button class="btn small ghost" id="defenderManualReset" type="button">Reset</button>
+                        </div>
+                      </div>
+
+                      <label>Dice type override (optional)
+                        <select id="defenderDiceOverride">
+                          <option value="auto">Auto (by class)</option>
+                          <option value="4">d4</option>
+                          <option value="6">d6</option>
+                          <option value="8">d8</option>
+                          <option value="10">d10</option>
+                          <option value="12">d12</option>
+                        </select>
+                      </label>
+                      <label class="autoToggle">
+                        <input id="defenderCapOverride" type="checkbox" />
+                        Dice cap override (ignore cap/commit limits)
+                      </label>
+                      <div class="stepper">
+                        <div class="left">
+                          <div class="t">Advantages</div>
+                          <div class="n"><span id="defenderAdv">0</span></div>
+                        </div>
+                        <div class="btnRow">
+                          <button class="btn small" id="defenderAdvMinus" type="button">−</button>
+                          <button class="btn small" id="defenderAdvPlus" type="button">+</button>
+                        </div>
+                      </div>
+                      <div class="stepper">
+                        <div class="left">
+                          <div class="t">Disadvantages</div>
+                          <div class="n"><span id="defenderDisadv">0</span></div>
+                        </div>
+                        <div class="btnRow">
+                          <button class="btn small" id="defenderDisadvMinus" type="button">−</button>
+                          <button class="btn small" id="defenderDisadvPlus" type="button">+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </details>
+
+            <div style="margin-top:10px;">
+              <button class="btn small" id="openSaveDefModal" type="button"><svg class="tabIcon" viewBox="0 0 24 24" fill="none"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Save as Army</button>
+            </div>
           </div>
         </div>
       </section>
@@ -4205,11 +4253,13 @@ buildWeatherTagIndex(); // normalize all raw weather strings to canonical tags
 const state = {
   attacker: {
     classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true, capOverride: false, adv: 0, disadv: 0, loadedArmyId: null,
+    setupMode: "chooser", armyNameDraft: "",
     doctrines: [], doctrineRuntime: defaultDoctrineRuntime(),
     assistNearby: [], hinderNearby: [], assistContext: defaultAssistContext(), assistRuntime: defaultAssistRuntime()
   },
   defender: {
     classId: null, size: null, str: null, manualDiceDelta: 0, diceOverride: "auto", autoCommit: true, capOverride: false, adv: 0, disadv: 0, loadedArmyId: null,
+    setupMode: "chooser", armyNameDraft: "",
     doctrines: [], doctrineRuntime: defaultDoctrineRuntime(),
     assistNearby: [], hinderNearby: [], assistContext: defaultAssistContext(), assistRuntime: defaultAssistRuntime()
   },
@@ -5152,6 +5202,111 @@ function addDoctrineToArmyModal() {
   renderArmyModalDoctrineChips();
 }
 
+function normalizeSideSetupMode(mode) {
+  const v = String(mode || "").trim().toLowerCase();
+  return (v === "chooser" || v === "creating" || v === "loaded") ? v : "chooser";
+}
+
+function sideSetupPrefix(sideKey) {
+  return sideKey === "attacker" ? "att" : "def";
+}
+
+function collapseSideAdvancedSetup(sideKey) {
+  const pfx = sideSetupPrefix(sideKey);
+  const ids = [
+    `${pfx}AdvancedSetupDetails`,
+    `${pfx}DoctrineDetails`,
+    `${pfx}NearbyDetails`,
+    `${pfx}BreakdownDetails`,
+    `${pfx}ContextDetails`,
+    `${pfx}ManualOverrideDetails`
+  ];
+  for (const id of ids) {
+    const el = $(id);
+    if (el && typeof el.open === "boolean") el.open = false;
+  }
+}
+
+function setSideSetupMode(sideKey, mode) {
+  state[sideKey].setupMode = normalizeSideSetupMode(mode);
+  collapseSideAdvancedSetup(sideKey);
+}
+
+function syncSideSetupVisibility(sideKey) {
+  const pfx = sideSetupPrefix(sideKey);
+  const mode = normalizeSideSetupMode(state[sideKey].setupMode);
+  state[sideKey].setupMode = mode;
+  const isChooser = mode === "chooser";
+  const isLoaded = mode === "loaded";
+  const chooserWrap = $(`${pfx}ChooserWrap`);
+  const setupWrap = $(`${pfx}SetupWrap`);
+  const helperEl = $(`${pfx}SetupHelper`);
+  const changeBtn = $(`${pfx}SetupChangeBtn`);
+  const nameInput = $(`${sideKey}ArmyNameDraft`);
+
+  if (chooserWrap) chooserWrap.style.display = isChooser ? "" : "none";
+  if (setupWrap) setupWrap.style.display = isChooser ? "none" : "";
+
+  if (helperEl) {
+    helperEl.textContent = isLoaded
+      ? "Review this army and adjust commit or advanced options if needed."
+      : "Enter a name, class, size, and STR to prepare this side.";
+  }
+  if (changeBtn) {
+    changeBtn.textContent = isLoaded ? "Set up another army" : "Cancel setup";
+  }
+
+  if (isLoaded && !String(state[sideKey].armyNameDraft || "").trim()) {
+    state[sideKey].armyNameDraft = findArmyById(state[sideKey].loadedArmyId)?.name || "";
+  }
+  if (nameInput && document.activeElement !== nameInput) {
+    nameInput.value = String(state[sideKey].armyNameDraft || "");
+  }
+}
+
+function resetSideToChooser(sideKey, options) {
+  const opts = options || {};
+  const skipRender = !!opts.skipRender;
+  clearWarReportLastBattlePreview();
+  state[sideKey].loadedArmyId = null;
+  state[sideKey].setupMode = "chooser";
+  state[sideKey].armyNameDraft = "";
+  state[sideKey].classId = null;
+  state[sideKey].size = null;
+  state[sideKey].str = null;
+  state[sideKey].manualDiceDelta = 0;
+  state[sideKey].diceOverride = "auto";
+  state[sideKey].autoCommit = true;
+  state[sideKey].capOverride = false;
+  state[sideKey].adv = 0;
+  state[sideKey].disadv = 0;
+  state[sideKey].doctrines = [];
+  state[sideKey].doctrineRuntime = defaultDoctrineRuntime();
+  state[sideKey].assistNearby = [];
+  state[sideKey].hinderNearby = [];
+  state[sideKey].assistContext = defaultAssistContext();
+  state[sideKey].assistRuntime = defaultAssistRuntime();
+
+  const classEl = $(`${sideKey}Class`);
+  const sizeEl = $(`${sideKey}Size`);
+  const strEl = $(`${sideKey}Str`);
+  const overrideEl = $(`${sideKey}DiceOverride`);
+  const commitEl = $(`${sideKey}Commit`);
+  const capEl = $(`${sideKey}CapOverride`);
+  const nameEl = $(`${sideKey}ArmyNameDraft`);
+  if (classEl) classEl.value = "";
+  if (sizeEl) sizeEl.value = "";
+  if (strEl) strEl.value = "";
+  if (overrideEl) overrideEl.value = "auto";
+  if (commitEl) commitEl.value = "";
+  if (capEl) capEl.checked = false;
+  if (nameEl) nameEl.value = "";
+  collapseSideAdvancedSetup(sideKey);
+  persistAssistDraft();
+
+  if (!skipRender) render();
+}
+
 function loadArmyIntoSide(sideKey, army) {
   if (!army) return;
   clearWarReportLastBattlePreview();
@@ -5166,8 +5321,11 @@ function loadArmyIntoSide(sideKey, army) {
     state[sideKey].classId = army.classId;
   }
   state[sideKey].loadedArmyId = army.id;
+  state[sideKey].armyNameDraft = String(army.name || "").trim();
+  setSideSetupMode(sideKey, "loaded");
   state[sideKey].doctrines = cloneDoctrineList(army.doctrines);
   state[sideKey].doctrineRuntime = defaultDoctrineRuntime();
+  if ($(pfx+"Commit")) $(pfx+"Commit").value = "";
   render();
   showToast(`Loaded "${escHtml(army.name)}" into ${sideKey==="attacker"?"Attacker":"Defender"}.`);
 }
@@ -6276,6 +6434,8 @@ function render() {
   $("rulesFooter").textContent = RULES.rulesetVersion;
   if ($("settingsRulesetVer")) $("settingsRulesetVer").textContent = RULES.rulesetVersion;
   for (const side of ["attacker","defender"]) {
+    state[side].setupMode = normalizeSideSetupMode(state[side].setupMode);
+    state[side].armyNameDraft = String(state[side].armyNameDraft || "");
     state[side].doctrines = normalizeDoctrineList(state[side].doctrines);
     state[side].doctrineRuntime = normalizeDoctrineRuntime(state[side].doctrineRuntime);
     state[side].assistNearby = normalizeNearbyEntryList(state[side].assistNearby);
@@ -6323,6 +6483,8 @@ function render() {
   };
   setSaveLabel("openSaveAttModal", "attacker");
   setSaveLabel("openSaveDefModal", "defender");
+  syncSideSetupVisibility("attacker");
+  syncSideSetupVisibility("defender");
   renderSideDoctrinePicker("attacker");
   renderSideDoctrinePicker("defender");
   renderSideDoctrineChips("attacker");
@@ -6358,8 +6520,10 @@ function render() {
   const defCard = document.querySelector('[aria-label="Defender panel"]');
   const attSize = toInt($("attackerSize").value);
   const defSize = toInt($("defenderSize").value);
-  if (attCard) attCard.classList.toggle("defeated", attSize === 0);
-  if (defCard) defCard.classList.toggle("defeated", defSize === 0);
+  const attShowDefeated = state.attacker.setupMode !== "chooser" && attSize === 0;
+  const defShowDefeated = state.defender.setupMode !== "chooser" && defSize === 0;
+  if (attCard) attCard.classList.toggle("defeated", attShowDefeated);
+  if (defCard) defCard.classList.toggle("defeated", defShowDefeated);
 
   if ($("warReportModal")?.open && _warReportViewState.mode === "staging" && !_warReportAutoRunning) {
     openWarReportModal({ mode: "staging" });
@@ -7836,6 +8000,8 @@ function resetAll() {
     state[side].manualDiceDelta=0; state[side].diceOverride="auto"; state[side].autoCommit=true;
     state[side].capOverride=false; state[side].adv=0; state[side].disadv=0;
     state[side].loadedArmyId=null;
+    state[side].setupMode="chooser";
+    state[side].armyNameDraft="";
     state[side].doctrines=[];
     state[side].doctrineRuntime=defaultDoctrineRuntime();
     state[side].assistNearby=[];
@@ -7844,8 +8010,10 @@ function resetAll() {
     state[side].assistRuntime=defaultAssistRuntime();
     $(side+"Size").value=""; $(side+"Str").value="";
     $(side+"DiceOverride").value="auto"; $(side+"Commit").value="";
+    if ($(side+"ArmyNameDraft")) $(side+"ArmyNameDraft").value = "";
     const capToggle = $(side+"CapOverride");
     if (capToggle) capToggle.checked = false;
+    collapseSideAdvancedSetup(side);
   }
   state.settings.resolutionMode="risk"; state.settings.quickLossPreset="standard"; state.settings.allowOverCap=false;
   state.settings.overrideDoctrineEligibility=false;
@@ -7889,6 +8057,8 @@ function prefillExample() {
   state.attacker.adv=0; state.defender.adv=0;
   state.attacker.disadv=0; state.defender.disadv=0;
   state.attacker.loadedArmyId=null; state.defender.loadedArmyId=null;
+  state.attacker.setupMode="creating"; state.defender.setupMode="creating";
+  state.attacker.armyNameDraft=""; state.defender.armyNameDraft="";
   state.attacker.doctrines=[]; state.defender.doctrines=[];
   state.attacker.doctrineRuntime=defaultDoctrineRuntime();
   state.defender.doctrineRuntime=defaultDoctrineRuntime();
@@ -7898,8 +8068,12 @@ function prefillExample() {
   state.attacker.assistRuntime=defaultAssistRuntime(); state.defender.assistRuntime=defaultAssistRuntime();
   if ($("attackerCommit")) $("attackerCommit").value="";
   if ($("defenderCommit")) $("defenderCommit").value="";
+  if ($("attackerArmyNameDraft")) $("attackerArmyNameDraft").value="";
+  if ($("defenderArmyNameDraft")) $("defenderArmyNameDraft").value="";
   if ($("attackerCapOverride")) $("attackerCapOverride").checked=false;
   if ($("defenderCapOverride")) $("defenderCapOverride").checked=false;
+  collapseSideAdvancedSetup("attacker");
+  collapseSideAdvancedSetup("defender");
   persistAssistDraft();
   $("resultArea").style.display="none"; state.lastResult=null;
   clearWarReportLastBattlePreview();
@@ -7912,7 +8086,7 @@ function swapSides() {
   state.attacker=d; state.defender=a;
   const map = [["attackerClass","defenderClass"],["attackerSize","defenderSize"],
     ["attackerStr","defenderStr"],["attackerDiceOverride","defenderDiceOverride"],
-    ["attackerCommit","defenderCommit"]];
+    ["attackerCommit","defenderCommit"],["attackerArmyNameDraft","defenderArmyNameDraft"]];
   for (const [aId,dId] of map) {
     const tmp=$( aId).value; $(aId).value=$(dId).value; $(dId).value=tmp;
   }
@@ -7940,6 +8114,12 @@ function bind() {
   for (const side of ["attacker","defender"]) {
     $(side+"Size").addEventListener("input",()=>{ state[side].size=toInt($(side+"Size").value); clearWarReportLastBattlePreview(); render(); });
     $(side+"Str").addEventListener("input",()=>{  state[side].str=toInt($(side+"Str").value); clearWarReportLastBattlePreview(); render(); });
+    const nameDraftEl = $(side+"ArmyNameDraft");
+    if (nameDraftEl) {
+      nameDraftEl.addEventListener("input", () => {
+        state[side].armyNameDraft = String(nameDraftEl.value || "");
+      });
+    }
     $(side+"DiceOverride").addEventListener("change",()=>{ state[side].diceOverride=$(side+"DiceOverride").value; render(); });
     $(side+"Plus").addEventListener("click",()=>{ state[side].manualDiceDelta=(state[side].manualDiceDelta||0)+1; render(); });
     $(side+"Minus").addEventListener("click",()=>{ state[side].manualDiceDelta=(state[side].manualDiceDelta||0)-1; render(); });
@@ -8041,6 +8221,22 @@ function bind() {
   $("defLoadBtn").addEventListener("click",()=>{
     const id=$("defLoaderSelect").value;
     if (id) loadArmyIntoSide("defender", findArmyById(id));
+  });
+  if ($("attCreateArmyBtn")) $("attCreateArmyBtn").addEventListener("click", () => {
+    resetSideToChooser("attacker", { skipRender: true });
+    setSideSetupMode("attacker", "creating");
+    render();
+  });
+  if ($("defCreateArmyBtn")) $("defCreateArmyBtn").addEventListener("click", () => {
+    resetSideToChooser("defender", { skipRender: true });
+    setSideSetupMode("defender", "creating");
+    render();
+  });
+  if ($("attSetupChangeBtn")) $("attSetupChangeBtn").addEventListener("click", () => {
+    resetSideToChooser("attacker");
+  });
+  if ($("defSetupChangeBtn")) $("defSetupChangeBtn").addEventListener("click", () => {
+    resetSideToChooser("defender");
   });
 
   // Save army from battle panel
@@ -8319,6 +8515,17 @@ Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | T
       state.settings = Object.assign({}, DEFAULT_APP_SETTINGS);
       state.weather = normalizeWeatherV2(DEFAULT_WEATHER);
       for (const side of ["attacker","defender"]) {
+        state[side].classId = null;
+        state[side].size = null;
+        state[side].str = null;
+        state[side].manualDiceDelta = 0;
+        state[side].diceOverride = "auto";
+        state[side].autoCommit = true;
+        state[side].capOverride = false;
+        state[side].adv = 0;
+        state[side].disadv = 0;
+        state[side].setupMode = "chooser";
+        state[side].armyNameDraft = "";
         state[side].loadedArmyId = null;
         state[side].doctrines = [];
         state[side].doctrineRuntime = defaultDoctrineRuntime();
@@ -8326,6 +8533,14 @@ Defender rolls: ${defRoll.rolls.map(r=>`${r.roll}(d${r.sides})`).join(", ")} | T
         state[side].hinderNearby = [];
         state[side].assistContext = defaultAssistContext();
         state[side].assistRuntime = defaultAssistRuntime();
+        if ($(side+"Class")) $(side+"Class").value = "";
+        if ($(side+"Size")) $(side+"Size").value = "";
+        if ($(side+"Str")) $(side+"Str").value = "";
+        if ($(side+"DiceOverride")) $(side+"DiceOverride").value = "auto";
+        if ($(side+"Commit")) $(side+"Commit").value = "";
+        if ($(side+"ArmyNameDraft")) $(side+"ArmyNameDraft").value = "";
+        if ($(side+"CapOverride")) $(side+"CapOverride").checked = false;
+        collapseSideAdvancedSetup(side);
       }
       persist(state.saved);
       clearWarReportLastBattlePreview();
