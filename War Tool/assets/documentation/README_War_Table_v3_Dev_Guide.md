@@ -5,100 +5,138 @@ This document is the implementation truth for:
 
 Policy:
 - Document implemented behavior only.
-- Do not document planned/unshipped behavior as if it exists.
+- Do not document planned or unshipped behavior as implemented.
 - If code and this README diverge, update this README in the same change.
 
-## Current Snapshot (as of March 5, 2026)
+Companion docs:
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/ARCHITECTURE_INDEX_War_Table_v3.md`
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/documentation/BACKEND_CLEANUP_PARITY_CHECKLIST.md`
+
+## Current Snapshot (refreshed March 5, 2026)
 
 - App file: `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html`
-- Lines: `5,252`
-- Developer guide file: `319` lines before this rewrite (stale), now refreshed
-- Persistence schema: `SCHEMA_VERSION = 5`
+- App lines: `7,878`
+- Dev guide lines before this refresh: `543`
+- Persistence schema: `SCHEMA_VERSION = 6`
 - Storage key: `warTableState`
-- HTML IDs in app: `183`
-- JS functions: `129`
-- Architecture: single-file HTML app (HTML + CSS + JS + embedded rules data), no build system
+- Architecture: single-file local-first app (HTML + CSS + JS + embedded rules data)
 
 ## Major Implemented Changes Since Baseline
 
-1. Light parchment UI pass with center-column restructure and refined controls.
-2. P0 polish:
-- Battle icon replaced with clean crossing swords SVG.
-- Advance Turn demoted to neutral secondary button (`.turnBtn`) and grouped under Battle CTA.
-- Form control right padding updated for select chevron breathing room.
-- Bottom utility row and bottom-card details padding corrected.
-3. P1 cleanup:
-- Results panel restructured: headline + summary first; Rolls and Risk comparisons collapsed.
-- Battle history is auto-saved after each roll; manual history save button removed.
-- Factions tab parity pass (header actions, search, import/export).
-- History heading icon switched to SVG.
-- Army modal helper text reduced and spacing tightened.
-- Commit-rule hints now conditional (`.commitRule.visible` only when invalid).
-4. Add-ons:
-- Unified Save Settings row moved below Battle Rules card.
-- Save/Update Army context flow via `loadedArmyId`.
-- Armies tab defeated styling for size `0`.
-5. Factions UX parity + dedicated faction creation modal:
-- Armies/Factions header style parity and count badges.
-- Dedicated `#factionModal` with faction name + existing-army assignment chips.
-- Empty factions supported as explicit saved entities.
-6. Doctrines integration (Augment):
-- Doctrine data model, selectors, chips, persistence, eligibility rules, GM override.
-- Battle-side doctrine runtime toggles and next-phase penalty handling.
-- Doctrine effects integrated into dice math (`computeDoctrineEffects` + `computePool`).
-- Doctrine snapshots included in history and copy result payload.
-7. Desktop textured background layer:
-- Non-blocking map texture overlay on desktop only (`min-width: 1024px`) with reduced-data fallback.
+1. Core UI polish and readability passes
+- Light parchment theme and structural cleanup across Battle, Armies, Factions, History, and Settings.
+- Results area restructured with headline-first summary and collapsible details.
+- Turn and utility control hierarchy normalized.
 
-## File Structure (Top-Level)
+2. Armies/Factions workflow upgrades
+- Save vs Update Army behavior via `loadedArmyId`.
+- Dedicated faction creation modal (`#factionModal`) with army assignment chips.
+- Explicit factions model retained and merged with army-derived factions.
+- Armies defeated styling (`size = 0`).
 
-1. `<style>` contains all CSS, including:
-- tokens (`:root`)
-- base parchment gradients
-- grain overlay (`body::before`)
-- desktop map texture overlay (`body::after`)
-- component classes for all tabs/modals/doctrines/factions
-2. `<body>` contains:
-- app shell (`.app`)
-- tabs: battle, armies, factions, history, settings
-- dialogs: `#armyModal`, `#factionModal`, `#renameFactionModal`, `#confirmModal`
-3. `<script>` contains:
-- rules/weather data and utility functions
-- doctrine constants + normalizers
-- persistence/migration layer (schema v5)
-- battle engine
-- CRUD and modal flows
-- render functions
-- event wiring in `bind()`
+3. Doctrines (Augment) integration
+- Doctrine registry, normalization, eligibility filtering, GM override setting.
+- Battle-side and army-modal doctrine chip management.
+- Doctrine runtime toggles and phase penalties.
+- Doctrine math integrated in compute path.
 
-## Public Data Contracts
+4. Assist/Hinder integration
+- Nearby allies/enemies per side, action/range/hidden controls.
+- Context toggles and per-side runtime handling.
+- Assist/hinder effects integrated into battle math and roll operations.
+- Assist/hinder draft persisted in `battleDraft`.
 
-### Persisted App State (`warTableState`)
+5. Result and War Report upgrades
+- War Report modal added and settings-toggleable.
+- Battle-time weather snapshot used for details/readouts.
+- Result wording cleanup (`Compare-style`, `Roll Details`, `Dice Comparisons`).
+- Outcome precedence standardized through shared resolver.
+
+6. CSV productivity features
+- Armies CSV import/export (upsert by case-insensitive name).
+- Factions CSV import/export.
+- All-content CSV bundle ZIP import/export (`armies.csv`, `factions.csv`, `manifest.json`).
+
+7. Recent transparency/speed pass
+- Dice math breakdown now includes Advantage/Disadvantage + net reroll display.
+- Commit Dice expanded microcopy simplified (single-input model, blank = auto).
+- History cards upgraded to mini war reports with expandable full context.
+- Shared `runBattleRound(options)` execution path introduced.
+- War Report now supports `Battle Again` and `Auto-Resolve Until Stop`.
+
+## Top-Level Architecture
+
+Single file layout in `War_Table_v3.html`:
+
+1. CSS layer
+- Tokens, component styles, modal styles, history/report styles.
+- Base parchment gradient + grain.
+- Desktop-only texture overlay (`body::after`) for map tile.
+
+2. HTML app shell
+- Tabs: battle, armies, factions, history, settings.
+- Modals: army, faction, rename faction, confirm, import report, war report.
+
+3. JavaScript sections
+- Rules/data constants.
+- Weather models and helpers.
+- Utilities and normalizers.
+- Persistence and migration (`schema v6`).
+- Engines:
+  - doctrine effects
+  - assist/hinder effects
+  - pool computation
+  - resolution functions
+- Domain actions (army/faction/history mutations).
+- Renderers (battle/history/settings/etc).
+- Modal handlers.
+- Import/export adapters.
+- Event binding in `bind()`.
+
+Section/index markers exist in code via `// [SECTION] ...` and `// [INDEX] ...` comments for fast navigation.
+
+## Persistence Contracts
+
+### Storage
+
+- Key: `warTableState`
+- Schema: `6`
+
+### Persisted state shape
 
 ```json
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "updatedAt": "ISO timestamp",
   "armies": [],
   "factions": [],
   "battleHistory": [],
   "weather": {},
-  "settings": {}
+  "settings": {},
+  "battleDraft": {
+    "assistHinder": {
+      "attacker": { "assistNearby": [], "hinderNearby": [], "context": {}, "runtime": {} },
+      "defender": { "assistNearby": [], "hinderNearby": [], "context": {}, "runtime": {} }
+    }
+  }
 }
 ```
 
-### Settings Contract
+### Settings contract (current)
 
 ```json
 {
   "resolutionMode": "risk | quick",
   "quickLossPreset": "standard | flat10 | flat20",
   "allowOverCap": false,
-  "overrideDoctrineEligibility": false
+  "overrideDoctrineEligibility": false,
+  "assistHinderEnabled": true,
+  "assistHinderDiceCap": 6,
+  "showWarReportModal": true
 }
 ```
 
-### Saved Army Contract
+### Saved army contract
 
 ```json
 {
@@ -115,7 +153,7 @@ Policy:
 }
 ```
 
-### Doctrine Instance Contract
+### Doctrine instance contract
 
 ```json
 {
@@ -125,11 +163,13 @@ Policy:
 ```
 
 Rules:
-- `doctrineId` must normalize to a known doctrine.
-- Duplicates are removed by `doctrineId`.
-- `elemental_ammunition` requires a valid `choice.damageType`.
+- Doctrine IDs normalize via doctrine alias map.
+- Duplicate doctrine IDs per list are removed.
+- `elemental_ammunition` requires valid `choice.damageType`.
 
-### Runtime Side State Contract (Battle)
+### Runtime side state (battle)
+
+Each side (`attacker`, `defender`) includes:
 
 ```json
 {
@@ -139,40 +179,203 @@ Rules:
   "manualDiceDelta": 0,
   "diceOverride": "auto",
   "autoCommit": true,
+  "capOverride": false,
+  "adv": 0,
+  "disadv": 0,
   "loadedArmyId": null,
   "doctrines": [],
-  "doctrineRuntime": {
-    "useArmorPiercing": false,
-    "useBattlefieldWeavers": false,
-    "useWardSmiths": false,
-    "useWildSurge": false,
-    "phasePenalty": 0,
-    "nextPhasePenalty": 0
-  }
+  "doctrineRuntime": {},
+  "assistNearby": [],
+  "hinderNearby": [],
+  "assistContext": {},
+  "assistRuntime": {}
 }
 ```
 
-## Persistence and Migration (Schema v5)
+Notes:
+- `autoCommit` remains in runtime state for compatibility but commit UX is now single-input (blank = auto).
 
-Core functions:
+## Core Persistence Functions
+
 - `emptyState()`
 - `loadPersisted()`
 - `persist(saved)`
 - `persistWeather(ws)`
-- `sanitizeArmyRecord(rawArmy)`
 - `normalizeSettings(settings)`
+- `sanitizeArmyRecord(rawArmy)`
+- `normalizeBattleDraft(draft)`
 
 Behavior:
-1. `loadPersisted()` reads localStorage, sanitizes armies, normalizes settings, and migrates older data into v5 shape.
-2. `persist(saved)` writes full state payload with schema version and normalized settings.
-3. `persistWeather(ws)` updates weather in stored payload while preserving other saved fields.
-4. Armies are sanitized on load/import/write; invalid class IDs are dropped.
-5. Missing doctrines on legacy armies normalize to `[]`.
+1. `loadPersisted()` always returns schema v6 shape and normalizes army/settings/draft payloads.
+2. `persist(saved)` writes full canonical payload, and snapshots assist/hinder draft when writing live state.
+3. `persistWeather(ws)` updates weather in storage while preserving other fields.
+4. Import paths sanitize and normalize before mutation.
 
-## Doctrine System
+## Battle Execution Contract
 
-### Canonical Doctrine IDs
+## `runBattleRound(options)` (shared execution path)
 
+`runBattleRound` now centralizes a single battle round and is used by:
+- Battle button click
+- War Report `Battle Again`
+- War Report `Auto-Resolve Until Stop`
+
+Returned payload (success):
+
+```json
+{
+  "ok": true,
+  "source": "battle-btn | war-report-single | war-report-auto",
+  "stopReason": "null | attacker_defeated | defender_defeated | mutual_destruction | phenomena_triggered | safety_limit",
+  "weatherAdvance": { "advanced": true, "phenomenaTriggered": false },
+  "result": {},
+  "attRoll": {},
+  "defRoll": {},
+  "attComp": {},
+  "defComp": {},
+  "ahBattle": {},
+  "rollOpLogs": [],
+  "weatherUsed": {}
+}
+```
+
+Failure returns `{ ok: false, issues: [...] }`.
+
+## Battle flow order (implemented)
+
+1. Snapshot current weather into `weatherUsed`.
+2. Resolve assist/hinder for battle mode.
+3. Compute attacker/defender pools.
+4. Validate readiness and commit constraints.
+5. Roll committed dice.
+6. Apply assist roll ops (remove lowest/highest as configured).
+7. Apply advantage/disadvantage rerolls.
+8. Resolve outcome (`risk` or `quick`).
+9. Apply doctrine and assist runtime boundaries.
+10. Persist draft + render base UI.
+11. Store `state.lastResult`.
+12. Render inline result.
+13. Append history entry.
+14. Auto-advance weather for next battle (if enabled).
+15. Open War Report modal if setting enabled.
+
+## Stop reason semantics
+
+- `attacker_defeated`: attacker size <= 0 after resolution.
+- `defender_defeated`: defender size <= 0 after resolution.
+- `mutual_destruction`: both sizes <= 0 after resolution.
+- `phenomena_triggered`: post-battle weather advance generated `PHENOMENA`.
+- `safety_limit`: auto-resolve guardrail reached max rounds.
+
+## Math / Transparency Contracts
+
+## `computePool(sideKey, st, opts)`
+
+Still the primary battle pool pipeline. Breakdown includes:
+- base dice from size/str
+- matchup
+- weather
+- class specials
+- doctrine effects
+- assist/hinder effects
+- roll modifiers block:
+  - Advantage count
+  - Disadvantage count
+  - Net reroll direction/magnitude
+- pre-cap/cap/manual lines
+
+Important:
+- Advantage/Disadvantage lines are transparency-only in breakdown; rerolls are applied later in roll phase.
+
+## Commit Dice UX contract
+
+- Single commit input per side.
+- Blank input means auto-commit full computed pool.
+- Numeric input means manual commit count, clamped to pool size.
+- Commit summary in section header shows `auto: N` or `manual: N`.
+- Expanded helper text: `Leave blank to auto-commit full pool.`
+
+## War Report Modal Contract
+
+Modal ID: `warReportModal`
+
+Key controls:
+- `warReportClose`
+- `warReportClosePrimary`
+- `warReportDetails`
+- `warReportBattleAgainBtn`
+- `warReportAutoResolveBtn`
+- `warReportAutoStatus`
+
+Behavior:
+1. Shows outcome banner + losses + updated sizes.
+2. `View Details` contains weather used, roll details, dice comparisons, and dice math breakdown.
+3. `Battle Again` runs one round through `runBattleRound` and refreshes modal content in place.
+4. `Auto-Resolve Until Stop` loops rounds via `runBattleRound` until stop condition.
+5. During auto loop, action buttons are disabled/hidden based on state.
+6. On stop, status text shows stop reason.
+7. Esc/cancel and close buttons stop auto mode and close modal safely.
+
+## Auto-resolve stop behavior
+
+Auto-resolve stops when:
+- defeat occurs (`attacker_defeated`, `defender_defeated`, `mutual_destruction`), or
+- newly triggered `PHENOMENA` occurs on post-battle weather advance (`phenomena_triggered`), or
+- safety guardrail triggers (`safety_limit`, 500 rounds).
+
+## History Contract (Enriched)
+
+`appendHistory(...)` now writes both legacy fields and enriched summary/detail fields.
+
+Additive fields include:
+- `outcomeHeadline`
+- `losses`
+- `updatedSizes`
+- `commitUsed`
+- `diceTypeUsed`
+- `manualOverrides`
+- `advDis`
+- `rolls`
+- `comparisons`
+- `stopReason`
+- `weatherUsed`, `weatherUsedLabel`
+
+Plus existing snapshots:
+- attacker/defender class/size/str/pool/doctrines
+- doctrine summaries
+- assist/hinder summaries
+- nearby entry snapshots
+- roll operation logs
+- transfer rolls
+
+Backward compatibility:
+- `renderHistoryList()` is null-safe for older records missing new fields.
+
+## History UI Contract
+
+`renderHistoryList()` now renders each item as:
+1. Mini summary (always visible)
+- outcome
+- losses
+- updated sizes
+- stop badge (when present)
+- timestamp
+
+2. Expandable full context
+- weather/mode summary
+- side-by-side attacker/defender context cards
+- doctrines
+- nearby summaries + selected nearby entries
+- commit and die type
+- manual overrides + cap overrides
+- adv/dis counts
+- roll ops + transfer rolls
+- roll details
+- dice comparisons (risk mode)
+
+## Doctrines Contract (Current)
+
+Canonical doctrine IDs:
 - `anti_air`
 - `anti_magic`
 - `heavy_artillery`
@@ -188,295 +391,180 @@ Behavior:
 - `soul_binders`
 - `spellthief_detachment`
 
-### Normalization and Eligibility
-
-Core helpers:
+Core doctrine helpers:
 - `normalizeDoctrineId`
-- `normalizeDoctrineChoice`
 - `normalizeDoctrineInstance`
 - `normalizeDoctrineList`
-- `isDoctrineEligibleForClass`
-- `parseDeadlyDoctrineIds`
+- `computeDoctrineEffects`
 
-Behavior:
-1. Doctrine labels/aliases normalize to stable IDs.
-2. Side/modal doctrine lists are unique by doctrine ID.
-3. Eligibility filtering is enforced in pickers when `overrideDoctrineEligibility = false`.
-4. GM override ON shows all doctrines.
-5. Grandfather behavior is visible:
-- ineligible existing chips remain attached when override is turned off
-- these chips are rendered with `.chip.ineligible` + `Grandfathered` flag
+Runtime behavior:
+- doctrine runtime toggles apply phase-based effects.
+- `applyDoctrinePhaseBoundary` consumes and queues penalties per rules.
 
-### Doctrine UI Surfaces
+## Assist/Hinder Contract (Current)
 
-Battle side panels:
-- Attacker IDs: `attDoctrineSelect`, `attDoctrineAddBtn`, `attDoctrineDamageType`, `attDoctrineChips`, `attDoctrineRuntime`, `attDoctrineQueued`
-- Defender IDs: `defDoctrineSelect`, `defDoctrineAddBtn`, `defDoctrineDamageType`, `defDoctrineChips`, `defDoctrineRuntime`, `defDoctrineQueued`
+Data-driven action catalog:
+- `AH_ACTIONS`
+- `AH_ACTION_BY_ID`
 
-Army modal:
-- `armyDoctrineSelect`, `armyDoctrineAddBtn`, `armyDoctrineDamageType`, `armyDoctrineChips`
+Core helpers:
+- `sanitizeNearbyEntry`
+- `normalizeNearbyEntryList`
+- `normalizeAssistContext`
+- `normalizeAssistRuntime`
+- `normalizeAssistHinderDraft`
+- `resolveAssistHinderEffects`
 
-Faction modal does not edit doctrines directly.
+Settings hooks:
+- `assistHinderEnabled`
+- `assistHinderDiceCap`
 
-### Doctrine Runtime (Per-Phase)
+Draft persistence:
+- stored under `saved.battleDraft.assistHinder`
+- restored into runtime side state on load.
 
-- Toggles are shown only if doctrine is present.
-- A battle click is a phase boundary.
-- `applyDoctrinePhaseBoundary(attRoll, defRoll)`:
-1. converts used toggles into next-phase penalty where applicable
-2. transfers `nextPhasePenalty` to `phasePenalty`
-3. clears per-phase usage toggles
-4. applies Wild Surge min-roll complication (`roll === 1`) as additional queued penalty
+## Tab-by-Tab UI Contracts
 
-### Doctrine Effects in Battle Math
+## Battle tab
 
-`computeDoctrineEffects(sideKey, st, selfCls, oppCls, ws)` contributes:
-- `dice` delta
-- `dieStep` delta
-- `forcedAutoSides` override
-- detailed breakdown lines (`lines`, `plainLines`)
+- Side panels include class, size/str, doctrines, nearby, commit, KPI, breakdown, context, manual override.
+- Commit section uses single-input model.
+- Breakdown includes adv/dis/net transparency lines.
+- Inline result remains present and auto-updated.
 
-Implemented interactions include:
-1. Deadly Doctrine trigger:
-- Parses class `raw.deadlyDoctrines`
-- If opponent has matching doctrine ID, applies `RULES.modifierShorthand.deadly` (typically `-3`) per trigger
-2. `heavy_artillery`:
-- `+1` die step
-3. `anti_air` vs `aerial-cavalry`:
-- `+3` dice
-4. `anti_magic` vs enemy `mages`:
-- `+3` dice
-5. Enemy `anti_magic` vs self `mages`:
-- forces auto dice to `d4` before manual override
-6. `armor_piercing` vs enemy `heavy_protection`:
-- if used this phase: negate + `+1` die
-- else enemy protection applies `-1` die
-7. `elemental_ammunition`:
-- requires damage type
-- applies immunity/resistance/vulnerability/deadly token checks from opponent raw class text
-- applies affinity checks against opponent preferred/undesired weather text
-- applies drawback `-1` die if resisted/immune
-8. `fire_artillery`:
-- adds fire pressure bonus based on opponent fire vulnerability/deadly token matches
-- applies cold/wet weather self-penalty `-1` in rain/downpour/cold/snow/blizzard/thunderstorm
-9. `wild_surge_license` when used this phase:
-- `+1` die step
+## Armies tab
 
-## Battle Math Execution Order
+- CRUD + search.
+- CSV import/export buttons.
+- `armyCount` badge updated by renderer.
+- Save/Update from battle uses `loadedArmyId`.
 
-In `computePool()` (exact order):
-1. Resolve class and opponent class.
-2. Apply class weather specials (including STR penalties) first.
-3. Compute base dice from effective size/STR.
-4. Apply matchup modifier totals.
-5. Apply preferred/undesired weather modifier totals.
-6. Apply doctrine dice modifier totals (`computeDoctrineEffects`).
-7. Apply role cap (attacker cap 10, defender cap 8).
-8. Apply manual dice delta.
-9. Enforce cap again unless `allowOverCap`.
-10. Resolve auto die type.
-11. Apply doctrine auto die force (`forcedAutoSides`).
-12. Apply doctrine die-step adjustments.
-13. Apply manual dice override if not `auto` (manual wins last).
-14. Build dice list and render breakdown.
+## Factions tab
 
-## Battle, Result, and History Contracts
+- Dedicated `New Faction` modal flow.
+- Search, JSON import/export, CSV import/export.
+- `factionCount` badge maintained.
+- Empty factions supported.
 
-1. Result UI (`#resultArea`) shows headline/summary immediately.
-2. `#rollsDetails` defaults closed each render.
-3. `#riskDetails` only displays for risk-mode results.
-4. Copy button is `Copy` and temporary `Copied!` state resets to `Copy`.
-5. History is auto-appended in battle handler immediately after `renderResult(...)`.
-6. History entries include:
-- attacker/defender doctrine snapshots
-- doctrine summary lines
-7. History list empty state explicitly says battles are auto-saved.
+## History tab
 
-## Armies and Factions Systems
+- Auto-saved entries only (no manual save button path).
+- Mini war report cards with expandable details.
 
-### Armies Tab
+## Settings tab
 
-- Header includes `+ New Army` and `#armyCount` badge.
-- Search (`#armySearch`) filters by army name, faction name, and class name.
-- `renderArmyList()` always sets total `armyCount` from full saved armies length (not filtered).
-- Armies with size `0` render with `army-defeated` styling and `Defeated` badge.
+- Unified save path via `saveWeatherSettings`.
+- Saves weather + battle rules + doctrine eligibility + assist/hinder controls + war report modal setting.
 
-### Factions Tab
+## Import / Export Contracts
 
-- Header includes `#factionCount`, `+ New Faction`, import/export actions.
-- Search (`#factionSearch`) filters faction names.
-- `renderFactionList(filter)` shows army count per faction.
+## JSON
+- Full export/import via `doExportAll` / `doImportAll`.
+- Includes armies/factions/history/weather/settings and battleDraft.
 
-### Explicit Faction Model
+## CSV
+- Armies CSV:
+  - upsert by case-insensitive name.
+  - fail-fast validation.
+- Factions CSV:
+  - explicit factions merge behavior.
+- ZIP bundle:
+  - `armies.csv`
+  - `factions.csv`
+  - `manifest.json`
 
-- `state.saved.factions` is first-class persisted data.
-- `recomputeFactions(saved)` preserves explicit faction names and also includes army-discovered factions (case-insensitive dedupe, first canonical casing retained).
+## History export
+- Exports `battleHistory` as currently persisted objects.
 
-### Dedicated Faction Modal (`#factionModal`)
+## Visual Layer Contract
 
-Modal IDs:
-- `factionName`
-- `factionArmySelect`
-- `factionArmyAddBtn`
-- `factionArmyChips`
-- `factionModalError`
-- `factionModalSave`
+Base background:
+- gradient + subtle grain overlay.
 
-Flow:
-1. Open via `newFactionModal()` -> `openFactionModal()`.
-2. Enter faction name (required).
-3. Optional: load existing armies via dropdown + chips.
-4. Duplicate draft chips prevented.
-5. Save validates unique faction name case-insensitively.
-6. Empty faction save is allowed.
-7. Selected armies are authoritatively assigned to the new faction (reassignment allowed).
+Desktop texture enhancement:
+- map texture overlay on desktop breakpoints.
+- fallback remains base background.
 
-### Rename/Delete Semantics
+Primary asset path:
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/backgrounds/bg-map-parchment-tile.webp`
 
-- `renameFaction(oldName, newName)` updates explicit faction entry and linked armies.
-- `deleteFaction(name)` removes explicit faction entry and clears faction labels on linked armies (armies remain).
+Optional retina:
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/assets/backgrounds/bg-map-parchment-tile@2x.webp`
 
-## Save/Update Army Flow
+## Key IDs and Function Anchors
 
-Core behavior:
-1. `loadArmyIntoSide()` sets side `loadedArmyId`, clones saved doctrines, resets doctrine runtime.
-2. Render updates side button labels:
-- `Save as Army` when no loaded army
-- `Update Army` when `loadedArmyId` exists
-3. `openUpdateArmyModalFromSide(side)`:
-- opens edit modal when loaded ID exists
-- overlays live side `size`, `str`, and side doctrines
-4. `commitArmyModal()` validates elemental doctrine choices and persists doctrine list.
-5. If updated army is currently loaded on a side, side doctrines refresh from saved record.
-
-## Settings Tab Contracts
-
-Unified Save Settings button: `#saveWeatherSettings`
-
-Click handler saves all of:
-1. Weather/season config
-2. Battle rules:
-- `resolutionMode`
-- `quickLossPreset`
-- `allowOverCap`
-- `overrideDoctrineEligibility`
-3. Persists `state.saved.settings` and `state.saved.weather`
-4. Calls `persistWeather` and `persist`
-5. Shows toast and inline saved message
-
-Sync helper:
-- `document._weatherSettingsSync` mirrors runtime state to settings controls on settings tab open.
-
-## Import/Export Contracts
-
-### Full State
-
-- Export: `doExportAll()` -> includes schemaVersion + full `state.saved`.
-- Import: `doImportAll(data)` updates armies/factions/history/weather/settings; normalizes settings and sanitizes armies.
-
-### Armies Import
-
-- Reads `data.armies`.
-- Sanitizes each army with `sanitizeArmyRecord`.
-- Dedupes by army ID.
-
-### Factions Export/Import
-
-- Export groups armies by faction name into `{ factions: [{ name, armies[] }] }`.
-- Import accepts names + grouped armies.
-- Adds new factions case-insensitively.
-- Adds armies when ID is new and class is valid.
-- Doctrines on imported armies are normalized.
-
-### History Export
-
-- Exports `battleHistory` array only.
-
-## Visual Layer and Background Texture
-
-Base layers:
-1. `body` parchment gradient background.
-2. `body::before` grain overlay.
-3. `body::after` map texture overlay on desktop only.
-
-Texture contract:
-- Enabled only at `@media (min-width: 1024px)`.
-- Disabled under `@media (prefers-reduced-data: reduce)`.
-- Uses:
-  - `assets/backgrounds/bg-map-parchment-tile.webp`
-  - optional high-density `assets/backgrounds/bg-map-parchment-tile@2x.webp` via `image-set`.
-- Progressive enhancement: if image fails, gradient still renders.
-
-## Key IDs and Functions (High-Use Contracts)
-
-IDs used heavily by JS (do not rename without code updates):
-- Battle core: `battleBtn`, `turnBtn`, `resultArea`, `rollsDetails`, `riskDetails`, `copyResult`
-- Side doctrine UI: `attDoctrine*`, `defDoctrine*`
-- Army modal doctrine UI: `armyDoctrine*`
+High-use IDs:
+- Battle controls: `battleBtn`, `copyResult`, `attackerCommit`, `defenderCommit`
+- War Report: `warReportModal`, `warReportBattleAgainBtn`, `warReportAutoResolveBtn`, `warReportAutoStatus`
+- Settings: `showWarReportModal`, `assistHinderEnabled`, `assistHinderDiceCap`, `overrideDoctrineEligibility`
 - Faction modal: `factionModal`, `factionName`, `factionArmySelect`, `factionArmyChips`, `factionModalSave`
-- Counts/search: `armyCount`, `factionCount`, `armySearch`, `factionSearch`
-- Settings: `saveWeatherSettings`, `overrideDoctrineEligibility`
 
-High-sensitivity functions:
+High-risk functions:
+- `runBattleRound`
 - `computePool`
 - `computeDoctrineEffects`
-- `applyDoctrinePhaseBoundary`
-- `render`
-- `bind`
-- `loadPersisted`
+- `resolveAssistHinderEffects`
+- `appendHistory`
+- `renderHistoryList`
+- `openWarReportModal`
+- `setWarReportActionState`
 - `persist`
 - `persistWeather`
-- `sanitizeArmyRecord`
-- `renderArmyList`
-- `renderFactionList`
-- `openUpdateArmyModalFromSide`
-- `commitArmyModal`
-- `commitFactionModal`
 
 ## Fragile Areas / Safe Change Rules
 
-1. ID Contract:
-- Do not rename/remove IDs without updating all `$()` references.
-2. `bind()` Listener Safety:
-- Null element + direct `addEventListener` can break all listeners below it.
-3. Battle Math:
-- `computePool` and `computeDoctrineEffects` changes can alter gameplay and UI breakdown simultaneously.
-4. Persistence Writes:
-- Keep `persist`/`persistWeather` out of render loops.
-5. Dialog Placement:
-- Keep `<dialog>` elements top-level in body; do not nest inside scroll containers.
-6. Doctrine Validation:
-- Preserve required elemental damage-type checks on add and save paths.
-7. Faction Semantics:
-- Keep explicit `saved.factions` behavior and recompute merge behavior aligned.
+1. `runBattleRound` ordering
+- Avoid changing operation order unless intentionally changing mechanics.
+- Weather snapshot and post-battle auto-advance timing are critical.
+
+2. History payload compatibility
+- `appendHistory` and `renderHistoryList` must remain backward-compatible.
+- New history fields must be additive and null-safe in renderer.
+
+3. Breakdown transparency lines
+- `computePool` display lines should not accidentally alter math values.
+
+4. Modal loop lifecycle
+- `_warReportAutoRunning` and `_warReportAutoToken` guard against stale loops and close races.
+
+5. Persistence boundaries
+- `persist` should remain canonical for full-state writes.
+- `persistWeather` should remain weather-focused and non-destructive.
 
 ## Known Mismatches / Technical Debt
 
-1. Settings About card still displays `Phase 3.1 (Weather System)` despite additional implemented systems (doctrines, faction modal, texture layer).
-2. Some UI copy/icons remain mixed emoji/SVG across tabs by design history.
-3. Faction import/export format is names/group-based, not faction-ID-based.
-4. Weather persistence uses both `persistWeather` and full `persist`; this is intentional but duplicated write paths require care.
+1. About card version string is stale:
+- Settings About currently shows `Phase 3.1 (Weather System)` despite much broader implemented scope.
+
+2. Legacy runtime key retained:
+- `autoCommit` remains in side runtime state though current commit UX is single-input auto/manual by blank/value.
+
+3. Mixed icon language:
+- Some UI surfaces still use mixed emoji/SVG patterns from historical passes.
+
+4. Auto-resolve safety stop:
+- `safety_limit` exists as protective stop reason and is expected behavior.
 
 ## Documentation QA Checklist
 
-1. Schema version in docs matches code (`5`).
-2. Settings contract includes `overrideDoctrineEligibility`.
-3. Army contract includes doctrines.
-4. Doctrine instance contract includes elemental `choice.damageType` requirement.
-5. Battle math order matches `computePool` implementation.
-6. Dedicated faction modal flow is documented (not army modal reuse).
-7. History auto-save behavior is documented.
-8. Save/Update Army contextual behavior via `loadedArmyId` is documented.
-9. Desktop texture overlay contract and fallbacks are documented.
-10. README avoids documenting unimplemented roadmap behavior.
+1. README states schema v6 and `battleDraft.assistHinder`.
+2. README reflects current settings keys including `showWarReportModal`.
+3. README documents `runBattleRound` and war report chain controls.
+4. README documents enriched history fields and null-safe rendering behavior.
+5. README documents single-input commit behavior and microcopy.
+6. README documents adv/dis transparency in breakdown.
+7. README documents auto-resolve stop behavior including `phenomena_triggered` and safety guard.
+8. README does not present unimplemented behavior as shipped.
 
-## Maintenance Checklist (Required on Feature Changes)
+## Maintenance Checklist
 
-When behavior changes, update this file in the same PR:
-1. Update schema/state contracts if any persisted keys changed.
-2. Update doctrine catalog/eligibility tables if doctrine logic changed.
-3. Update tab contracts and key IDs if UI IDs changed.
-4. Update key function list if core functions were added/renamed.
-5. Update major-changes section with shipped behavior.
-6. Re-run quick doc QA checklist before merge.
+When features change in code, update this README in the same change:
+
+1. Schema/state contract section.
+2. Settings keys/defaults.
+3. Runtime side shape.
+4. History payload contract.
+5. Key IDs/functions table.
+6. Known mismatches/tech debt list.
+7. Snapshot counts/date.
 
