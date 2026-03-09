@@ -1,0 +1,12 @@
+{
+  "name": "war-table-v3",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Regression harness for War Table v3 stabilization.",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

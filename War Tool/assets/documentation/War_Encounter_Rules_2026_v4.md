@@ -43,15 +43,15 @@ Prepared for table use: fast, cinematic, and GM-flexible.
 
 [Unique Combat Actions	13](#unique-combat-actions)
 
-[**Chapter 3: Unit Classifications (Cinematic Layer)	14**](#chapter-3:-unit-classifications-\(cinematic-layer\))
+[**Chapter 3: Size Classifications (Cinematic Layer)	14**](#chapter-3:-size-classifications-\(cinematic-layer\))
 
-[Minion Units	14](#minion-units)
+[Minion Sizes	14](#minion-sizes)
 
-[Horde Units	14](#horde-units)
+[Horde Sizes	14](#horde-sizes)
 
-[Commander Units	14](#commander-units)
+[Commander Sizes	14](#commander-sizes)
 
-[Special Units	15](#special-units)
+[Special Sizes	15](#special-sizes)
 
 [**Chapter 4: Strategic Wargame Sequences	16**](#chapter-4:-strategic-wargame-sequences)
 
@@ -213,7 +213,7 @@ Prepared for table use: fast, cinematic, and GM-flexible.
 
 [Step 3: Commit Dice	50](#step-3:-commit-dice)
 
-[Step 4: Roll and Compare (Compare-style Face-Off)	51](#step-4:-roll-and-compare-\(compare-style-face-off\))
+[Step 4: Roll and Compare (Risk-Style Face-Off)	51](#step-4:-roll-and-compare-\(compare-style-face-off\))
 
 [Step 5: Resolve Outcomes and Continue	51](#step-5:-resolve-outcomes-and-continue)
 
@@ -331,7 +331,7 @@ Prepared for table use: fast, cinematic, and GM-flexible.
 
 [Fire Artillery	77](#fire-artillery)
 
-[Elemental Ammunition	77](#elemental-ammunition)
+[Elemental AmmSizeion	77](#elemental-ammsizeion)
 
 [Armor-Piercing	78](#armor-piercing)
 
@@ -551,7 +551,7 @@ Full procedure \+ caps/minimums live in the Strategic chapters and the Appendix�
 
 ## **Key Terms** {#key-terms}
 
-* **Space:** An abstract map unit. In this document, **1 space is usually 5 miles**.  
+* **Space:** An abstract map Size. In this document, **1 space is usually 5 miles**.  
 * **Army Size:** How many troops are in an army (abstracted scale).  
 * **STR (Army Strength):** Training/equipment quality \+ readiness (abstracted). **STR drives dice pools.**
 
@@ -631,7 +631,7 @@ That’s the promise: **fast war, real stakes, hero agency.**
 Use this checklist before each Battle Phase. If two or more answers are "yes," call a Cinematic Sequence before the battle resolves.
 
 1. **Are one or more PCs physically present near this battle?**  
-2. **Is there a high-value target in this battle the PCs could realistically affect?** *(a boss, a special unit, a structure, a captive, a key objective)*  
+2. **Is there a high-value target in this battle the PCs could realistically affect?** *(a boss, a special Size, a structure, a captive, a key objective)*  
 3. **Would the battle outcome feel arbitrary or unearned without the heroes involved?**
 
 If yes to two or more — zoom in. Run the Cinematic Sequence first, apply its results to the dice pools, then resolve the Strategic battle.
@@ -642,7 +642,7 @@ The PCs are not fighting the whole war. They are a small, surgically important p
 
 Their objective in that slice of the battle might be:
 
-* **Kill or neutralize a special unit or commander** whose presence is boosting the enemy's dice pool  
+* **Kill or neutralize a special Size or commander** whose presence is boosting the enemy's dice pool  
 * **Destroy a structure** (dam, bridge, siege engine, supply depot) that would collapse or cripple the enemy army  
 * **Rescue a captured PC, NPC, or commander** whose absence is penalizing allied armies  
 * **Sabotage the enemy** (poison the supply line, destroy the war machine, break the gate from the inside)  
@@ -650,7 +650,7 @@ Their objective in that slice of the battle might be:
 
 Whatever they accomplish — or fail to accomplish — translates directly into the Strategic layer as dice additions, subtractions, or upgrades before the battle rolls happen. In exceptional cases, a Cinematic Sequence can decide a battle entirely, rendering the dice roll unnecessary.
 
-A GM running a war arc should pre-plan **two to three Cinematic Sequence opportunities per war**, placed at battles where PC influence would be most dramatically meaningful. Players cannot be everywhere — travel time and resources limit where they can go — so the choices of *which* battles to personally enter are themselves strategic decisions.
+A GM running a war arc should pre-plan **two to three Cinematic Sequence opportSizeies per war**, placed at battles where PC influence would be most dramatically meaningful. Players cannot be everywhere — travel time and resources limit where they can go — so the choices of *which* battles to personally enter are themselves strategic decisions.
 
 # **Chapter 2: Cinematic Sequences** {#chapter-2:-cinematic-sequences}
 
@@ -666,33 +666,33 @@ Players can take the following special actions during Cinematic Sequences:
 
 | Action | Type / Frequency | Roll | Effect |
 | :---- | :---- | :---- | :---- |
-| Rally | Bonus Action (After Killing an Enemy NPC) | Make a Charisma or Wisdom-based Performance or Persuasion Check. DC 15\. | Upon success, all allied NPC units in a 20-foot radius gain advantage on their next attack roll and damage roll. |
+| Rally | Bonus Action (After Killing an Enemy NPC) | Make a Charisma or Wisdom-based Performance or Persuasion Check. DC 15\. | Upon success, all allied NPC Sizes in a 20-foot radius gain advantage on their next attack roll and damage roll. |
 | Scene | Free Action (Once per a Cinematic Sequence) | — | You focus on a singular, significant NPC(s). (A Boss, Commander(s), or important enemy NPC(s)). This may be an NPC the PC has a history with. You and the chosen NPC(s) are locked in a one-on-one fight. All those around you become blurred in the background. Others cannot and will not intervene. including other PCs. |
 | Cinematic Moment | Free Action (The Last Resort Action that is once per a war encounter) | — | When you are about to die, another PC has died or is close to death, or the main foe NPC is about to win. You become the writer of your own fate. You take control of the narrative and using solely clever roleplay that makes sense for the story, you roleplay your character performing an incredible, beyond impressive heroic feat. A feat that deals an unexpected deadly blow, turns the tide of war, or brings a thought to be gone PC from the brink of death. (Before using this action you will consult with the GM on what you want the ending result to be. If agreed upon then you act out your moment in the spotlight.) |
 
-# **Chapter 3: Unit Classifications (Cinematic Layer)** {#chapter-3:-unit-classifications-(cinematic-layer)}
+# **Chapter 3: Size Classifications (Cinematic Layer)** {#chapter-3:-size-classifications-(cinematic-layer)}
 
-You have four types of Unit Classifications. In some cases, PCs present in the battle may give direct orders to these classifications and may sometimes directly control them if they wish (w/ GM discretion). Though the fourth classification of NPC units may sometimes act independently of the PC's control/orders.
+You have four types of Size Classifications. In some cases, PCs present in the battle may give direct orders to these classifications and may sometimes directly control them if they wish (w/ GM discretion). Though the fourth classification of NPC Sizes may sometimes act independently of the PC's control/orders.
 
-## **Minion Units** {#minion-units}
+## **Minion Sizes** {#minion-sizes}
 
-These are the second most common and weakest type of unit.
+These are the second most common and weakest type of Size.
 
 They are canon fodder. (The characters in the movie are introduced just to be killed in a badass way). They may have personalities and roleplay scenes. They are all or none. Ran using Stargate RPG Extra rules.
 
 They may share INIT or have different INIT. Default AC of 10\. Each time they are hit, a 1d6 is rolled higher than 3 and they die immediately. 3 or lower and they are injured. A second hit will kill them. (At the GM's discretion. Story Reasons, NAT 20, or Significant Damage may kill them right away)
 
-## **Horde Units** {#horde-units}
+## **Horde Sizes** {#horde-sizes}
 
-These are the most common and second weakest type of unit.
+These are the most common and second weakest type of Size.
 
-They are the background characters. (The filler background extras are designed to fill the empty space) Every X(10) number of horde units is treated as a group of units. That means they share a single HP Pool & token. They are run using D\&D's Mob & Swarm rules.
+They are the background characters. (The filler background extras are designed to fill the empty space) Every X(10) number of horde Sizes is treated as a group of Sizes. That means they share a single HP Pool & token. They are run using D\&D's Mob & Swarm rules.
 
-Enemy Horde Units will sometimes be treated just as difficult terrain for the PCs.
+Enemy Horde Sizes will sometimes be treated just as difficult terrain for the PCs.
 
 They all share the same INIT. They will have a unique stat block depending on their creature type. When they have taken half damage, all their stats are cut in half.
 
-## **Commander Units** {#commander-units}
+## **Commander Sizes** {#commander-sizes}
 
 These are very uncommon and powerful.
 
@@ -706,13 +706,13 @@ These NPCs can use the Rally action (indicated above) as a free action with no r
 Guard   
 These NPCs once per  Cinematic Sequence as a reaction can move themselves triple their speed or otherwise get in between an enemy and a location or NPC they are defending. Blocking an oncoming attack on that NPC or location. They instead will be hit by the full attack if it hits their AC or they fail whatever check(s)/save(s) may be needed. (Going so far as coming back from a Banishment spell.)
 
-## **Special Units** {#special-units}
+## **Special Sizes** {#special-sizes}
 
 These are very rare and very powerful.
 
 They are unique NPCs. They have significance to the overall battle and usually to the story as well. They are often times bosses and major NPCs. They have their own stats and oftentimes may have a unique set of legendary actions. (Examples are a lich king or a giant dragon)
 
-The opposing (in some cases neutral) sides will have similar Unit Classifications obviously completely controlled by the GM.
+The opposing (in some cases neutral) sides will have similar Size Classifications obviously completely controlled by the GM.
 
 # **Chapter 4: Strategic Wargame Sequences** {#chapter-4:-strategic-wargame-sequences}
 
@@ -750,7 +750,7 @@ These terms help the GM keep a large conflict organized without turning it into 
 | **War** | A defined conflict between factions within the Sondering | Keeps boundaries clear (“this is the war we’re actually in”) |
 | **Theater** | The slice of the war the PCs truly care about (their main objective zone) | Focuses attention where play happens |
 | **Campaign** | A major goal inside the theater (take the city, hold the river, break the siege) | Turns “war” into playable arcs |
-| **Battle** | A single engagement between two forces | The unit of resolution for the Strategic system |
+| **Battle** | A single engagement between two forces | The Size of resolution for the Strategic system |
 
 You can run a tiny war with none of this vocabulary.  
 You use this vocabulary when the war is big enough that you need *folders* for reality.
@@ -768,7 +768,7 @@ It is intentionally **relative**. An Army Size of **20** might represent **200 s
 **STR (Army Strength)** is an abstract number representing *quality and readiness*: training, equipment, leadership, logistics, morale, and overall capability compared to the opposition.
 
 Army Size answers: “How much force is here?”  
-STR answers: “How dangerous is that force per unit?”
+STR answers: “How dangerous is that force per Size?”
 
 ## **Dice Pools (High-Level Only)** {#dice-pools-(high-level-only)}
 
@@ -778,7 +778,7 @@ This chapter gives the “shape” of it. The full procedure lives in **Chapter 
 
 | Input | Rough contribution | Notes |
 | :---- | :---- | :---- |
-| **Army Size** | about **1d6 per \~50 troops**, rounded down | The “50” is a baseline unit of scale; the war’s scope determines what “troops” means at your table |
+| **Army Size** | about **1d6 per \~50 troops**, rounded down | The “50” is a baseline Size of scale; the war’s scope determines what “troops” means at your table |
 | **STR** | about **1d6 per \~10 STR**, rounded up | STR is the quality engine; it should matter even when numbers are smaller |
 | **Matchup / traits** | adds or removes dice | Immunities/resistances/vulnerabilities/deadly matchups can swing fights fast |
 | **Dice type shifts** | d4 / d6 / d8 / d10 | Used to represent advantage/disadvantage in a way that feels chunky and warlike |
@@ -859,12 +859,12 @@ Advantage and Disadvantage are rated by a number (1, 2, 3, etc.). That number te
 
 # **Chapter 5: Army Classifications & Factions** {#chapter-5:-army-classifications-&-factions}
 
-Each Army Classification (or Army Class/Army Type) possesses distinct mechanics, which may include unique feats, attributes, or actions. Additionally, every army has specific immunities, resistances, vulnerabilities, and certain army factions that are considered deadly to them.
+Each Army Classification (or Army Class/Army Type) possesses distinct mechanics, which may include unique feats, attributes, or actions. Additionally, every army has specific Immunities, resistances, vulnerabilities, and certain army factions that are considered deadly to them.
 
 Army classes fall into two main categories: **Non-Special** and **Special**.
 
 * **Non-Special** armies are typically composed of ordinary mortals who may have specialized training in certain weapons or tactics.  
-* **Special** armies are primarily built from unique units. These units might possess special training, unique species traits, or belong to unique factions whose troops have special blessings or attributes.
+* **Special** armies are primarily built from unique Sizes. These Sizes might possess special training, unique species traits, or belong to unique factions whose troops have special blessings or attributes.
 
 **Combining Army Classes**
 
@@ -902,7 +902,7 @@ Each army entry uses the following fields when applicable:
 
 **Special:** Abilities, behaviors, boons, or banes unique to the Army class.
 
-**Upkeep Cost:** Xgp per X Units per a Day  
+**Upkeep Cost:** Xgp per X Sizes per a Day  
 **Immunities:** \+3dX  
 **Resistances:** \+1dX  
 **Vulnerabilities:** \-1dX  
@@ -924,15 +924,15 @@ All Factions and Armies are or may be active in the war are listed here. [War Tr
 
 ### **Archers** {#archers}
 
-A unique class of unit designed to combat at a distance.  
-When attacking an opposing army that is 2 spaces away that army (if not archers) will suffer \-2d6 to their defense. (Cavalry only suffer \-1d6)  
+A unique class of Size designed to combat at a distance.  
+When attacking an opposing army that is 2 spaces away that army (if not archers) will suffer \-2 die to their defense. (Cavalry only suffer \-1 die)  
 In addition, Archers can add \+2d6 to a defending ally army who is defending against an opposing army that is within 2 spaces of the archers.
 
 **Special:** 
 
 Archers gain 10 miles (2 space) reach.
 
-* **Upkeep Cost:** 5gp per 10 Units  
+* **Upkeep Cost:** 5gp per 10 Sizes  
 * **Resistances:** Pikes  
 * **Vulnerabilities:** Swords, Cavalry, Shield-Brethren  
 * **Deadly:** Undead, Gunners
@@ -942,16 +942,16 @@ Archers gain 10 miles (2 space) reach.
 
 ### **Assassins** {#assassins}
 
-Special class of unit designed to weaken or take out the enemy before they even know it.
+Special class of Size designed to weaken or take out the enemy before they even know it.
 
 **Special:** 
 
-Assassin Armies that are unseen can use an action during a Battle Phase to remove an adjacent defending or attacking opposing army's highest rolled d6 from play when they are battling another army in the same Battle Phase. This Action will not reveal Assassin's location.  
-Assassin Armies that are unseen can also use an action during an Battle Phase to make an adjacent opposing army lose 1 unit per the number of Assassins in the Assassin Army. This Action will not reveal their location.
+Assassin Armies that are unseen can use an action during a Battle Phase to remove an adjacent defending or attacking opposing army's highest rolled die from play when they are battling another army in the same Battle Phase. This Action will not reveal Assassin's location.  
+Assassin Armies that are unseen can also use an action during an Battle Phase to make an adjacent opposing army lose 1 size per the number of Assassins in the Assassin Army. This Action will not reveal their location.
 
 The location of Assassins can be seen by spies that are within 5 miles (1 space) radius.
 
-* **Upkeep Cost:** 5gp per 1 Unit  
+* **Upkeep Cost:** 5gp per 1 Size  
 * **Resistances:** Assassins  
 * **Vulnerabilities:** Spies
 
@@ -964,13 +964,13 @@ Bandits cover the landscape of Heartland. And become aggressive in the time of w
 
 **Special:** 
 
-A Bandit Army will gain a \+1d6 when attacking an opposing army while hidden. Attacking will unhide them and reveal their location.
+A Bandit Army will gain a \+1 die when attacking an opposing army while hidden. Attacking will unhide them and reveal their location.
 
 If a Bandit Army does not move or take any type of Move Action or Attack Action for two (2) Move Phases and Battle Phases they can become hidden again. (Nearby Spies within 5 miles (1 space) will see their location.) After they are hidden they can move and stay hidden.
 
 The location of Bandits can be seen by spies that are within 5 miles (1 space) radius. Otherwise Bandits remain hidden until they take an Attack Action in which their position is revealed and they can ONLY rehide when moving to a new location and passing 2 Move Phases and Battle Phases without Moving or Attacking.
 
-* **Upkeep Cost:** 1gp per 10 Units  
+* **Upkeep Cost:** 1gp per 10 Sizes  
 * **Vulnerabilities:** Spies  
 * **Deadly:** Undead
 
@@ -979,7 +979,7 @@ The location of Bandits can be seen by spies that are within 5 miles (1 space) r
 
 ### **Builders** {#builders}
 
-A support class of units designed to construct siege engines, fortifications, roads, bridges, field barracks, and rapid supply infrastructure—weak in battle, terrifying in what they enable.
+A support class of Sizes designed to construct siege engines, fortifications, roads, bridges, field barracks, and rapid supply infrastructure—weak in battle, terrifying in what they enable.
 
 **Special:** 
 
@@ -999,7 +999,7 @@ Builders are not hidden while building.
 
 List of what they can build is provided in another chapter. 
 
-* **Upkeep Cost:** 2gp per 10 Units  
+* **Upkeep Cost:** 2gp per 10 Sizes  
 * **Immunities:**  
 * **Resistances:** Siege, Pikes  
 * **Vulnerabilities:** Bandits, Thieves, Spies  
@@ -1012,18 +1012,18 @@ List of what they can build is provided in another chapter.
 
 ### **Cavalry** {#cavalry}
 
-Unique class of unit designed to move faster and combat swords/archers.
+Unique class of Size designed to move faster and combat swords/archers.
 
 **Special:** 
 
 Cavalry move faster.
 
-If a Cavalry Army is attacked by archers that are 10 miles (2 spaces) away they are granted free movement at no cost and can move 5 miles (1 space) closer to the Archers therefore reducing the normal \-2d6 penalty Archers induce to a \-1d6 penalty.  
+If a Cavalry Army is attacked by archers that are 10 miles (2 spaces) away they are granted free movement at no cost and can move 5 miles (1 space) closer to the Archers therefore reducing the normal \-2 dice penalty Archers induce to a \-1 die penalty.  
 A Cavalry Army can use a retreat action before a battle occurs at no cost to them. Retreat Action rules can be found here: [War\_Encounter\_Rules\_Reformatted\_v2](https://docs.google.com/document/d/1JdvVXquY4xGtnXhcEEVLRwUfMd1Ftn6UAMihUc7zxFQ/edit?tab=t.0#heading=h.a6u9e1esfg36)
 
 If a Cavalry Army is attacked by an army (even a surprise hidden army) looking to initiate a battle they may roll a 1d6 as the attack occurs and BEFORE the battle plays out. On a 6 they can retreat and escape for FREE at NO cost. Gaining 2 spaces of additional movement at NO cost to move away. (The special Attack Actions taken by Thieves and Assassins for example don't count. It is only if a battle would be initiated from the encounter.)
 
-* **Upkeep Cost:** 6gp per 10 Units  
+* **Upkeep Cost:** 6gp per 10 Sizes  
 * **Immunities:**  
 * **Resistances:** Swords, Archers  
 * **Vulnerabilities:** Pikes, Undead  
@@ -1036,13 +1036,13 @@ If a Cavalry Army is attacked by an army (even a surprise hidden army) looking t
 
 ### **Gunners** {#gunners}
 
-A crew of unit soldiers that carry muskets or another type of gun.
+A crew of Size soldiers that carry muskets or another type of gun.
 
 **Special:** 
 
-For every 10 units of Gunners they may switch out 1 of their d6s for a d10 in their first battle of a war sequence either when defending or attacking.
+For every 10 Sizes of Gunners they may switch out 1 of their d6s for a d10 in their first battle of a war sequence either when defending or attacking.
 
-* **Upkeep Cost:** 5gp per 10 Units  
+* **Upkeep Cost:** 5gp per 10 Sizes  
 * **Immunities:** Swords  
 * **Vulnerabilities:** Cavalry, Undead  
 * **Deadly:** Vampires  
@@ -1053,21 +1053,21 @@ For every 10 units of Gunners they may switch out 1 of their d6s for a d10 in th
 
 ### **Mages** {#mages}
 
-A rare class of unit designed to weaponize spellcraft, wards, and arcane logistics, devastating in the right conditions, fragile when caught unprepared.
+A rare class of Size designed to weaponize spellcraft, wards, and arcane logistics, devastating in the right conditions, fragile when caught unprepared.
 
 **Special:** 
 
 Mages can "shape the battlefield" once per Battle Phase. Choose one option:
 
-\* **Ward Screen (Defense):** A defending allied army within 5 miles (1 space) gains \+2d6 to their dice pool for that battle. Does not work if the attacking army has Anti-Magic doctrine. 
+\* **Ward Screen (Defense):** A defending allied army within 5 miles (1 space) gains \+2 dice to their dice pool for that battle. Does not work if the attacking army has Anti-Magic doctrine. 
 
-\* **Arcane Volley (Attack):** When attacking, Mages can force the defending opposing army to suffer \-2d6 to their dice pool unless that opposing army is Spies or Assassins (they only suffer \-1d6). Does not work if the defending army has Anti-Magic doctrine. 
+\* **Arcane Volley (Attack):** When attacking, Mages can force the defending opposing army to suffer \-2 dice to their dice pool unless that opposing army is Spies or Assassins (they only suffer \-1d6). Does not work if the defending army has Anti-Magic doctrine. 
 
 \* **Ritual Logistics (Move):** During a Move Phase, Mages may "blink" an allied army 1 space (5 miles) if that allied army is adjacent to the Mages at the start of the Move Phase. This does not allow blinking into or through a location blocked by impassable terrain at GM discretion.
 
 Mages’ abilities do not work if an enemy army with Anti-Magic doctrine is within 5 miles (1 space). Mages’ roll d4s for their dice pool when attacking or defending an army with the Anti-Magic doctrine.
 
-* **Upkeep Cost:** 10gp per 1 Unit  
+* **Upkeep Cost:** 10gp per 1 Size  
 * **Immunities:** Rebels  
 * **Resistances:** Arches  
 * **Vulnerabilities:** Assassins, Spies  
@@ -1080,13 +1080,13 @@ Mages’ abilities do not work if an enemy army with Anti-Magic doctrine is with
 
 ### **Pikes** {#pikes}
 
-Unique class of unit designed to combat cavalry and keep opposing armies at a distance.
+Unique class of Size designed to combat cavalry and keep opposing armies at a distance.
 
 **Special:** 
 
-Pike Armies that are flanked by two opposing armies suffer \-1d6 to their dice pool. Pike Armies count as double difficult terrain for opposing armies that travel through them (This will give armies forced to travel through them Exhaustion). Every 10 Units in a Pike Army at a location that has a defense score will increase that score by 0.1.
+Pike Armies that are flanked by two opposing armies suffer \-1 dice to their dice pool. Pike Armies count as double difficult terrain for opposing armies that travel through them (This will give armies forced to travel through them Exhaustion). Every 10 Sizes in a Pike Army at a location that has a defense score will increase that score by 0.1.
 
-* **Upkeep Cost:** 5gp per 10 Units  
+* **Upkeep Cost:** 5gp per 10 Sizes  
 * **Immunities:** Cavalry  
 * **Vulnerabilities:** Archers, Undead  
 * **Deadly:** Vampires  
@@ -1100,9 +1100,9 @@ Farmers and able bodied civilians that join a fight to help the cause.
 
 **Special:** 
 
-Rebels have a home advantage and gain \+1d6 when defending within 5 miles (1 space) of their home location.
+Rebels have a home advantage and gain \+1 die when defending within 5 miles (1 space) of their home location.
 
-* **Upkeep Cost:** 1gp per 10 Units  
+* **Upkeep Cost:** 1gp per 10 Sizes  
 * **Resistances:** (Home Bonus)  
 * **Vulnerabilities:** All  
 * **Deadly:** Undead  
@@ -1112,13 +1112,13 @@ Rebels have a home advantage and gain \+1d6 when defending within 5 miles (1 spa
 
 ### **Siege** {#siege}
 
-Special class of unit designed to take down walls and buildings.
+Special class of Size designed to take down walls and buildings.
 
 **Special:** 
 
-The size and STR of siege units adds d8s (instead of d6s) to the dice pool when only dealing with an defending army with no defense score from structures and d10s (instead of d6s) to the dice pool when the defending army has a defense score provided by structures such as walls or guard towers.
+The size and STR of siege Sizes adds d8s (instead of d6s) to the dice pool when only dealing with an defending army with no defense score from structures and d10s (instead of d6s) to the dice pool when the defending army has a defense score provided by structures such as walls or guard towers.
 
-* **Upkeep Cost:** 20gp per 1 Unit  
+* **Upkeep Cost:** 20gp per 1 Size  
 * **Vulnerabilities:** Cavalry, Pikes  
 * **Deadly:** Swords, Assassins  
 * **Deadly Doctrines:** Fire-Artillery
@@ -1129,7 +1129,7 @@ The size and STR of siege units adds d8s (instead of d6s) to the dice pool when 
 
 ### **Spies** {#spies}
 
-A special class of units designed to gather intel.
+A special class of Sizes designed to gather intel.
 
 **Special:** 
 
@@ -1140,7 +1140,7 @@ Spy Armies that are unseen can also use an action during an Battle Phase to allo
 
 The location of Spies can be seen by other spies that are within 5 miles (1 space) radius otherwise they are automatically always hidden.
 
-* **Upkeep Cost:** 5gp per 1 Unit  
+* **Upkeep Cost:** 5gp per 1 Size  
 * **Resistances:** Assassins  
 * **Vulnerabilities:** Spies
 
@@ -1149,13 +1149,13 @@ The location of Spies can be seen by other spies that are within 5 miles (1 spac
 
 ### **Swords** {#swords}
 
-Basic soldier units have nothing special about them.
+Basic soldier Sizes have nothing special about them.
 
 **Special:** 
 
 Sword armies can use a Move Action to fortify a location instead of moving. Making that location a fortified area. Adding 5 defense to a location up to a MAX defense of 10 added this way.
 
-* **Upkeep Cost:** 3gp per 10 Units  
+* **Upkeep Cost:** 3gp per 10 Sizes  
 * **Resistances:** Archers  
 * **Vulnerabilities:** Cavalry  
 * **Deadly:** Undead, Gunners  
@@ -1169,12 +1169,12 @@ Thieves cover the landscape of Heartland.
 
 **Special:** 
 
-A thief's army can use an Attack Action on their Battle Phase to steal resources, and/or gold from an opposing army within 5 miles (1 space). When doing so they reduce the STR of the opposing army by 1d4 and increase their STR by that same amount. This reveals the location of the thieves.  
+A thief's army can use an Attack Action on their Battle Phase to steal resources, and/or gold (CP from an opposing army within 5 miles (1 space). When doing so they reduce the STR of the opposing army by 1d4 and increase their STR by that same amount. This reveals the location of the thieves.  
 Thieves can rehide by moving to an unknown new location and not moving or taking any move actions on their move phase.
 
 The location of Thieves can be seen by spies that are within 5 miles (1 space) radius.
 
-* **Upkeep Cost:** 1gp per 10 Units  
+* **Upkeep Cost:** 1gp per 10 Sizes  
 * **Vulnerabilities:** Spies  
 * **Deadly:** Undead  
     
@@ -1187,11 +1187,11 @@ Hunters are a collection of members of the Hunter's Guild that may be willing to
 
 **Special:** 
 
-A Hunter Army of 10 or more may use a Move Action on their Move Phase and an Attack Action on their Battle Phase to place hidden traps in a 5 mile space. Not only does this space become difficult terrain to any non-hunter army but any non-hunter army will also be forced to roll a 1d10 and will lose that many units when traveling through the location with hidden traps. Undead armies will lose double the number of units. After non-hunter army travels through the hidden traps they will go away.
+A Hunter Army of 10 or more may use a Move Action on their Move Phase and an Attack Action on their Battle Phase to place hidden traps in a 5 mile space. Not only does this space become difficult terrain to any non-hunter army but any non-hunter army will also be forced to roll a 1d10 and will lose that many Sizes when traveling through the location with hidden traps. Undead armies will lose double the number of Sizes. After non-hunter army travels through the hidden traps they will go away.
 
 Swampy Hunters gain \+3d6 when defending in any swamp environment.
 
-* **Upkeep Cost:** 5gp per 10 Units  
+* **Upkeep Cost:** 5gp per 10 Sizes  
 * **Immunities:** Beasts  
 * **Resistances:** LizardFolk, Vampires, Supernatural (Monsters)  
 * **Vulnerabilities:** Swords  
@@ -1208,7 +1208,7 @@ Fiends are mix demons and devils in the Heartland region that work for Lich King
 
 **Special:** 
 
-Fiends can roll a 1d6 at the end of a battle if they lost any units. On a 6 they can convert 10 of opposing armies units to their army (as long as the opposing army does not have resistance or immunity to Fiends)
+Fiends can roll a 1d6 at the end of a battle if they lost any Sizes. On a 6 they can convert 10 of opposing armies Sizes to their army (as long as the opposing army does not have resistance or Immunity to Fiends)
 
 * **Upkeep Cost:** None  
 * **Immunities:** Fire Cult  
@@ -1225,7 +1225,7 @@ Undead includes zombies, skeletons, and vampires. Other undead types could theor
 
 **Special:** 
 
-On a battle victory any Sword, Archer, Cavalry, Pike, or Rebel (Non-Special) Units that an Undead Army defeats (kills) is added to the amount of Units in the Undead army making the undead army larger with every victory. Undead army may also use Move Action on their Move Phase and Attack Action on their Battle Phase to regain 50 units that they have lost.
+On a battle victory any Sword, Archer, Cavalry, Pike, or Rebel (Non-Special) Sizes that an Undead Army defeats (kills) is added to the amount of Sizes in the Undead army making the undead army larger with every victory. Undead army may also use Move Action on their Move Phase and Attack Action on their Battle Phase to regain 50 Sizes that they have lost.
 
 * **Upkeep Cost:** None  
 * **Immunities:** Swords, Rebels, Bandits  
@@ -1266,7 +1266,7 @@ When a Vampires Army wins a Battle against a Non-Special army (Rebels, Bandits, 
 
 After a victory, choose ONE:
 
-\* **Drink the Field:** Gain 10 Units and regain 10 STR that was lost.  
+\* **Drink the Field:** Gain 10 Sizes and regain 10 STR that was lost.  
 \* **Crimson Surge:** Gain \+50 STR until the end of the next Battle Phase (this bonus STR does not stack; if chosen again later, it refreshes instead).
 
 **Limits:**  
@@ -1296,11 +1296,11 @@ When the Shield-Brethren enter a Battle as defenders, they may declare Shield (B
 \* They are treated as a mobile fortress rather than soft infantry for any positive benefits. Siege attacks targeting them do not gain structural bonus damage.  
 \* They ignore all flanking, surprise positioning, and cavalry charge bonuses.  
 \* Enemy movement effects that attempt to reposition or bypass them within 1 space fail unless the enemy is Aerial or Teleportation-based.  
-\* If the Shield-Brethren are defending a city, fort, or choke point, the opposing army suffers a \-2d6 penalty.  
-\* Any allied units 1 space (5 miles) away gain \+1d6 bonus when defending.  
+\* If the Shield-Brethren are defending a city, fort, or choke point, the opposing army suffers a \-2 dice penalty.  
+\* Any allied Sizes 1 space (5 miles) away gain \+1 die bonus when defending.  
 Bulwark remains active until the army loses 25% of its starting STR. Once below that threshold, they lose their structural cohesion and revert to standard infantry behavior.
 
-* **Upkeep Cost:** 8gp per 10 Units  
+* **Upkeep Cost:** 8gp per 10 Sizes  
 * **Immunities:** Archers  
 * **Resistances:** Swords, Rebels, Bandits, Cavalry  
 * **Vulnerabilities:** Mages, Aerial Cavalry  
@@ -1320,13 +1320,13 @@ Artificial war machines: golems, steam-titans, arcane automata, clockwork infant
 
 If Warforged are **Resistant or Immune** to the opposing army type, their dice pool increases to **D10s**.
 
-If Warforged are **Vulnerable**, their dice pool decreases to **D6s**.
+If Warforged are **Vulnerable** to the opposing , their dice pool decreases to **D6s**.
 
-If Warforged are **Deadly to** the opposing army type, their dice pool decreases further to **D4s**.
+If Warforged’s opposing army type is **Deadly** them, their dice pool decreases further to **D4s**.
 
-If a Warforged army does **not Move and does not initiate a Battle Phase** (they may still defend), they may instead perform Repairs. Roll a number of dice equal to their current Strength d6 pool. For every 4+ rolled, they regain 10 Units (or 1 Army Size step if that’s how you’re tracking). This cannot exceed their original Army Size.
+If a Warforged army does **not Move and does not initiate a Battle Phase** (they may still defend), they may instead perform Repairs. Roll a number of dice equal to their current Strength d6 pool. For every 4+ rolled, they regain 10 Sizes (or 1 Army Size step if that’s how you’re tracking). This cannot exceed their original Army Size.
 
-* **Upkeep Cost:** 12gp per 10 Units (fuel, parts, engineers)  
+* **Upkeep Cost:** 12gp per 10 Sizes (fuel, parts, engineers)  
 * **Immunities**: Rebels, Bandits, Vampires, Fire Cult, (Any Fire)  
 * **Resistances:** Swords, Archers  
 * **Vulnerabilities:** Mages, Siege, Gunners, Builders, Cavalry  
@@ -1347,20 +1347,20 @@ Unstable bio-enhanced creatures altered by arcane stones, emotional catalysts, e
 
 If no enemy army is within range for the final stand attack, the ability is lost. Alternatively, the Game Master (GM) may rule that the Mutants destroy the surrounding terrain, which could result in making the area difficult terrain and/or destroying buildings.
 
-If Mutants do **not Move and do not initiate a Battle Phase**, they may Regenerate. Roll 1d6. On a 4+, regain 10 Units. On a 6, regain 20 Units instead. Cannot exceed original Army Size.
+If Mutants do **not Move and do not initiate a Battle Phase**, they may Regenerate. Roll 1d6. On a 4+, regain 10 Sizes. On a 6, regain 20 Sizes instead. Cannot exceed original Army Size.
 
 At the start of each Battle Phase (before dice pools are rolled), roll **1d100** on the Mutation Event Table. This effect applies for that battle only.
 
 Suggested Mutation Event Table (example framework):
 
-01–10: Mutation Backlash – Mutants lose 10 Units.  
+01–10: Mutation Backlash – Mutants lose 10 Sizes.  
  11–25: Minor Surge – \+1d6 this battle.  
  26–40: Hardened Flesh – Resistant to Swords, Gunners, Siege, and Archers this battle and their dice pools this battle is rolled twice with higher result being taken (standard D\&D advantage).  
  41–55: Spiked Growth – The surrounding terrain becomes permanently Deadly to Cavalry.  
- 56–70: Frenzy – Gain \+10 STR this battle but lose 10 Units afterward.  
- 71–85: Elemental Burst – Opposing army immediately loses 10 Units.  
- 86–95: Hulking Form – Treated as Siege, resistant to all non-Special units and dice pool becomes all d10s, for this battle only.  
- 96–100: Cataclysm – Both armies lose 20 Units immediately before combat resolution.
+ 56–70: Frenzy – Gain \+10 STR this battle but lose 10 Sizes afterward.  
+ 71–85: Elemental Burst – Opposing army immediately loses 10 Sizes.  
+ 86–95: Hulking Form – Treated as Siege, resistant to all non-Special Sizes and dice pool becomes all d10s, for this battle only.  
+ 96–100: Cataclysm – Both armies lose 20 Sizes immediately before combat resolution.
 
 Based on the Game Master (GM) discretion the result could affect the surrounding terrain and buildings. 
 
@@ -1382,9 +1382,11 @@ Snow Elves may be the masterminds behind most of the evils in heartland. They cl
 
 **Special:** 
 
-Snow Elves can use their Move Action during Move Phase to change the weather of a location to snow storm weather. Having effects in Cinematic Sequences and making opposing armies (like rebels) lose any home advantage they may have. Snow Elves will also gain \+1d6 while Fey and Treeants will also suffer \-1d6.  (Snow Elves are unable to use this if the Fire Cult is within 5 miles (1 space).
+Snow Elves can use their Move Action during Move Phase to change the weather of a location to snow storm weather. Having effects in Cinematic Sequences and making opposing armies (like rebels) lose any home advantage they may have. 
 
-* **Upkeep Cost:** 10gp per 10 Units  
+Snow Elves will also gain \+1d6 while Fey and Treeants will also suffer \-1d6.  (Snow Elves are unable to use this if the Fire Cult is within 5 miles (1 space).
+
+* **Upkeep Cost:** 10gp per 10 Sizes  
 * **Resistances:** Fey, Drow, Treeants  
 * **Vulnerabilities:**   
 * **Deadly:** Fire Cult  
@@ -1399,9 +1401,9 @@ Fire Cult is a third party whose reason for being in Heartland is unknown. They 
 
 **Special:** 
 
-Weather around 5 miles (1 space) radius of the Fire Cult army can not be changed from a Sunny Day. Fire Cult can also use their Move Action during Move Phase to change the weather of a location to Scorching Heat weather. Having effects in Cinematic Sequences and making opposing armies (like rebels) lose any home advantage they may have. Fire Cult will also gain \+1d6 while the Snow Elves will suffer \-1d6.
+Weather around 5 miles (1 space) radius of the Fire Cult army can not be changed from a Clear, Scorching Heat, or Dry/Arid. If it not one of these already it changes to Clear Fire Cult can also use their Move Action during Move Phase to change the weather of a location to Scorching Heat weather. Having effects in Cinematic Sequences and making opposing armies (like rebels) lose any home advantage they may have. Fire Cult will also gain \+1d6 while the Snow Elves will suffer \-1d6.
 
-* **Upkeep Cost:** 3gp per 10 Units  
+* **Upkeep Cost:** 3gp per 10 Sizes  
 * **Immunities:** Treeants, Fiends  
 * **Resistances:** Snow Elves  
 * **Deadly:** (Any Ice/Extreme Cold Weather)  
@@ -1416,9 +1418,9 @@ Grail is a religious capitalist corporation that claims to work for a one true g
 
 **Special:** 
 
-Grail army has 1 charge per an army of 30 or more. They can spend a charge to call a massive divine smite on an opposing army (as long as the opposing army does not have resistances or immunities to the Grail) using a Move or Attack Action. The opposing army will instantly lose 10 units. Army that have Vulnerabilities to the Grail will lose 20 units and if the Grail Army is deadly to them they will lose 30 units. A Grail Army can recharge their 1 charge by spending a Move Action on their Move Phase.
+Grail army has 1 charge per an army of 30 or more. They can spend a charge to call a massive divine smite on an opposing army (as long as the opposing army does not have resistances or Immunities to the Grail) using a Move or Attack Action. The opposing army will instantly lose 10 Sizes. Army that have Vulnerabilities to the Grail will lose 20 Sizes and if the Grail Army is deadly to them they will lose 30 Sizes. A Grail Army can recharge their 1 charge by spending a Move Action on their Move Phase.
 
-* **Upkeep Cost:** 20gp per 10 Units  
+* **Upkeep Cost:** 20gp per 10 Sizes  
 * **Immunities:** Undead  
 * **Resistances:** Fiends, Vampires  
 * **Vulnerabilities:** Drow, Artemis  
@@ -1435,7 +1437,7 @@ Arrio Sisters are three highly skilled Bounty Hunters that are sisters. They use
 
 Arrio Sisters have both the properties of Assassins, Spies, and Thieves. Due to their addiction to Roshna every Battle Phase that passes where the Arrio Sisters don't use a thief action on a Monarchy control army they will lose 1 STR. When they do use a thief action on a Monarchy controlled army they will gain 1 STR (MAX STR \= their original Army Strength Ratio.)
 
-* **Upkeep Cost:** 15gp per 3 Units  
+* **Upkeep Cost:** 15gp per 3 Sizes  
 * **Immunities:** Assassins, Spys  
 * **Resistances:** Monarchy  
 * **Vulnerabilities:** Invaders  
@@ -1446,13 +1448,13 @@ Arrio Sisters have both the properties of Assassins, Spies, and Thieves. Due to 
 
 ### **Drow (Underdark)** {#drow-(underdark)}
 
-Drow refers to the people of the Upper/Middledark city of ChauSin. A united group of Drow, Gray Dwarfs, Myconid, and other humanoid/sentient creatures that have formed a peaceful coalition.
+Drow refers to the people of the Upper/Middledark city of ChauSin. A groups of Drow, Gray Dwarfs, Myconid, and other humanoid/sentient creatures that have formed a peaceful coalition.
 
 **Special:** 
 
 The Drow armies suffer \-3d6 when battling in daylight under direct sun. Penalty may be reduced in cloudy or foggy weather conditions. At night the Drow armies will gain \+2d6 (as long as their opposing army do not prefer night themselves. i.e. Undead)
 
-* **Upkeep Cost:** 5gp per 10 Units  
+* **Upkeep Cost:** 5gp per 10 Sizes  
 * **Immunities:** Supernatural (Monsters)  
 * **Resistances:** Snow Elves, Fiends  
 * **Vulnerabilities:** Grail  
@@ -1468,7 +1470,7 @@ Fey in particular the Forest Fey of Heartland Forest. Have a not yet fully under
 
 **Special:** 
 
-Forest Fey gain \+3d6 when defending in any heartland forest environment. A Forest Fey Army of 50 or more may use a Move Action on their Move Phase and an Attack Action on their Battle Phase to restore 10 units of an ally Sword, Archer, Cavalry, Pike, or Rebel (Non-Special) army during the Battle Phase as long as that army is within 5 miles (1 Space) of the Forest Fey Army during both Phases.
+Forest Fey gain \+3d6 when defending in any heartland forest environment. A Forest Fey Army of 50 or more may use a Move Action on their Move Phase and an Attack Action on their Battle Phase to restore 10 Sizes of an ally Sword, Archer, Cavalry, Pike, or Rebel (Non-Special) army during the Battle Phase as long as that army is within 5 miles (1 Space) of the Forest Fey Army during both Phases.
 
 * **Upkeep Cost:** None  
 * **Immunities:** Summer Fey  
@@ -1492,7 +1494,7 @@ A Mel Army larger than 5 can use a Move Action on their Move Phase to steal info
 
 Mel's Army gains the spy abilities when they are split into a smaller group of 5 or less.
 
-* **Upkeep Cost:** 3gp per 10 Units  
+* **Upkeep Cost:** 3gp per 10 Sizes  
 * **Immunities:** Thieves/Bandits  
 * **Resistances:** Pikes  
 * **Vulnerabilities:** Swords  
@@ -1531,7 +1533,7 @@ Moonbound Suppression \+ Waning Blessing. While the Artemis Moonbound Legion is 
 Additionally, the Legion's blessing burns out over time: at the end of each Battle Phase, reduce the Legion's STR by 10\. This continues until it bottoms out at your minimum "mortal remainder" baseline of 20 STR.
 
 * **Upkeep Cost:** None (divine provision; the "cost" is the decay timer)  
-* **Immunities:** Swords (while the blessing remains above the minimum baseline; once they hit baseline, remove this immunity)  
+* **Immunities:** Swords (while the blessing remains above the minimum baseline; once they hit baseline, remove this Immunity)  
 * **Resistances:** Undead, Fiends  
 * **Vulnerabilities:** Grail, Gunners  
 * **Deadly:** Cult of War (Cult of Kratos),   
@@ -1542,7 +1544,7 @@ Additionally, the Legion's blessing burns out over time: at the end of each Batt
 
 ### **Hel’s Legion** {#hel’s-legion}
 
-Hel’s Legion are Duke Portilo’s execution forces—industrial-scale slaughter units deployed to erase resistance entirely. Where they march, populations vanish, rivers redden, and no one escapes to tell the story.
+Hel’s Legion are Duke Portilo’s execution forces—industrial-scale slaughter Sizes deployed to erase resistance entirely. Where they march, populations vanish, rivers redden, and no one escapes to tell the story.
 
 **Special:**
 
@@ -1550,7 +1552,7 @@ When Hel’s Legion win/ties a battle, the losing army loses double the size the
 If Hel’s Legion reduces an army to **0 Size**, that army produces **no survivors**. No recovery rolls, no salvage roll, no prisoners, no rescues, no liberated remnants. The army is completely destroyed.  
 Armies fighting Hel’s Legion **cannot Retreat**. This overrides Cavalry retreat abilities and any “escape on a 6” mechanics. If retreat would trigger, it automatically fails.
 
-* **Upkeep Cost:** 3gp per 10 Units  
+* **Upkeep Cost:** 3gp per 10 Sizes  
 * **Immunities:** Rebels, Bandits, Thieves, Spies  
 * **Resistances:** Swords, Pikes, Cavalry  
 * **Vulnerabilities:** Mages, Siege, Undead  
@@ -1611,9 +1613,9 @@ Resolve battles in an order that supports clarity and drama. Recommended priorit
 
 ### **Army Size Is Relative (Choose Your Scale)** {#army-size-is-relative-(choose-your-scale)}
 
-Decide what “1 Unit” roughly represents in your campaign’s war.
+Decide what “1 Size” roughly represents in your campaign’s war.
 
-| War scope | What 1 Unit might represent (example) | Notes |
+| War scope | What 1 Size might represent (example) | Notes |
 | :---- | :---- | :---- |
 | Small regional conflict | \~10 to 50 troops | Army Size changes feel granular and personal |
 | Mid-scale war | \~50 to 200 troops | Good default for most campaigns |
@@ -1713,8 +1715,8 @@ STR should usually correlate with quality, but it does not need to match a ratio
 * **Math Option (optional):** derive STR from Army Size using the ratio.
 
 **Ratio meaning:**  
-A ratio of **1/2** means each 1 Unit contributes **0.5 STR**.  
-A ratio of **2/1** means each 1 Unit contributes **2 STR**.
+A ratio of **1/2** means each 1 Size contributes **0.5 STR**.  
+A ratio of **2/1** means each 1 Size contributes **2 STR**.
 
 **Optional formula (if you want it):**  
 Estimated STR \= Army Size × (Ratio Numerator / Ratio Denominator)  
@@ -1875,7 +1877,7 @@ Before rolling, both sides declare how many dice from their pool they will use.
 * **Defender minimum: none.** Defenders roll however many dice remain in their pool, including as few as 1\.  
 * **If the defender's pool is 0 or below:** They automatically lose this battle without rolling. Apply the standard battle loss (–10 Army Size). The attacker may choose to press and attack again.
 
-### **Step 4: Roll and Compare (Compare-style Face-Off)** {#step-4:-roll-and-compare-(compare-style-face-off)}
+### **Step 4: Roll and Compare (Compare-Style Face-Off)** {#step-4:-roll-and-compare-(compare-style-face-off)}
 
 Roll the committed dice pools. Sort dice from highest to lowest.
 
@@ -1888,7 +1890,7 @@ Loss rules per comparison:
 * If Defender’s die is higher: Attacker loses **10 Army Size**  
 * If Defender’s die is higher by **3+**: Attacker loses **20 Army Size**  
 * If the dice tie: both sides lose **5 (or fewer) Army Size**  
-  *Tie counts as a defender-favored standoff. Defender cannot be reduced to 0 by a tie; minimum 1 Unit remains.*
+  *Tie counts as a defender-favored standoff. Defender cannot be reduced to 0 by a tie; minimum 1 Size remains.*
 
 ### **Step 5: Resolve Outcomes and Continue** {#step-5:-resolve-outcomes-and-continue}
 
@@ -2009,7 +2011,7 @@ When an army is defeated, the victor chooses **one** outcome. These options are 
 
 **Defeated** here means the army has been broken as a fighting force for this engagement (even if it wasn’t literally reduced to 0 on the sheet).
 
-**Important:** these outcomes ignore “how many units were left at the end” and instead use the army’s **Army Size at the start of the Battle Phase** for the survivor math.
+**Important:** these outcomes ignore “how many Sizes were left at the end” and instead use the army’s **Army Size at the start of the Battle Phase** for the survivor math.
 
 ### **Currency Note: Gold vs. Command Points** {#currency-note:-gold-vs.-command-points}
 
@@ -2027,7 +2029,7 @@ When an outcome calls for survivors:
 
 * Roll a die equal to the defeated army’s **Army Size at the start of the Battle Phase**.  
   *Example: Army Size 25 → roll **1d25**.*  
-* The number rolled is how many units survived (or will survive their injuries).
+* The number rolled is how many Sizes survived (or will survive their injuries).
 
 If you don’t have a die that matches the Army Size exactly, use whatever method your table uses to simulate it (digital roller, or GM approximation). Keep it fast.
 
@@ -2048,13 +2050,13 @@ The victor attempts to bring survivors into their faction as usable troops.
 
 **Cost:**
 
-* Currency game: the victor pays **10 gp × (number of units converted)** immediately.  
-* Command Point game (CP alternative): the victor pays **1 CP per 10 units converted** (minimum 1 CP, maximum 3 CP per conversion).  
+* Currency game: the victor pays **10 gp × (number of Sizes converted)** immediately.  
+* Command Point game (CP alternative): the victor pays **1 CP per 10 Sizes converted** (minimum 1 CP, maximum 3 CP per conversion).  
   *If you want a faster rule: pay **1 CP** for a “small conversion,” **2 CP** for a “large conversion,” GM discretion.*
 
 **Availability:**
 
-* Converted units are not available for **1 Move Phase \+ 1 Battle Phase** (retraining, integration, re-arming).  
+* Converted Sizes are not available for **1 Move Phase \+ 1 Battle Phase** (retraining, integration, re-arming).  
 * They either merge into an **existing** army or become a new army—GM discretion.
 
 ### **Outcome 2: Capture Army** {#outcome-2:-capture-army}
@@ -2079,10 +2081,10 @@ The victor takes survivors as prisoners.
 
 **Upkeep:**
 
-* Currency game: the victor pays **1 gp per 10 imprisoned units per week** (round as makes sense).  
+* Currency game: the victor pays **1 gp per 10 imprisoned Sizes per week** (round as makes sense).  
 * Command Point game (CP alternative): prisoners cost **0 CP** by default, but create **pressure**. Choose one:  
   * **Simple pressure rule:** holding prisoners imposes **\-1 CP to your next Strategic income/gain** (once), representing logistical strain.  
-  * **Ongoing strain rule:** if you hold **more than 20 units** of prisoners, you must spend **1 CP per Strategic turn** to maintain them, or release/transfer them.
+  * **Ongoing strain rule:** if you hold **more than 20 Sizes** of prisoners, you must spend **1 CP per Strategic turn** to maintain them, or release/transfer them.
 
 (Use whichever keeps CP in the 0–10 range at your table.)
 
@@ -2123,12 +2125,12 @@ The victor releases survivors and allows them to return to their original factio
 
 **Availability:**
 
-* Liberated units are not available for **2 Move Phases \+ 1 Battle Phase** (recovery, reorganization, re-supply).  
+* Liberated Sizes are not available for **2 Move Phases \+ 1 Battle Phase** (recovery, reorganization, re-supply).  
   *Note: the exact real-world time depends on your phase length; the intent is “a longer recovery window.”*
 
 **Reward:**
 
-* Currency game: the victor gains **1 gp per unit liberated**. *This gold comes from the defeated faction’s treasury even if it forces them negative.*  
+* Currency game: the victor gains **1 gp per Size liberated**. *This gold comes from the defeated faction’s treasury even if it forces them negative.*  
 * Command Point game (CP alternative): the victor gains **\+1 CP** for liberating a defeated force.  
   Add **\+1 CP** (maximum \+2 CP total) if the liberation is especially meaningful (civilians, a famous regiment, political prisoners, or a major moral victory).
 
@@ -2201,7 +2203,7 @@ You may split any army during a Move Phase into smaller armies as long as each a
 
 ### **Flanking**  {#flanking}
 
-Two ally armies that are Flanking an enemy army will be able to add 1d6 to both of their dice pools when both defending or attacking.
+Two ally armies that are Flanking an enemy army will be able to add 1 die to both of their dice pools when both defending or attacking.
 
 ### **Rest**  {#rest}
 
@@ -2213,11 +2215,11 @@ Each town/city or fort (fortified area) will have a defense score based on its s
 
 ### **Fallen Commander or Special**  {#fallen-commander-or-special}
 
-An army that has lost a commander or special units will suffer a drop to their STR and in return their dice pool.
+An army that has lost a commander or special Sizes will suffer a drop to their STR and in return their dice pool.
 
 ### **Medals** {#medals}
 
-Every 3 victories an army has rewards them a medal. You can exchange these medals for 1000 Gold (or 3 CP), use them to heal all of that Army's exhaustion, recover 10 units that were defeated (killed or injured) or use them to enact the improved training quality policy at half the cost above the policy's limit of two increasing the STR ratio of an army by 1 Level. (Some Army Classifications are limited on high they can increase their level)
+Every 3 victories an army has rewards them a medal. You can exchange these medals for 1000 Gold (or 3 CP), use them to heal all of that Army's exhaustion, recover 10 Sizes that were defeated (killed or injured) or use them to enact the improved training quality policy at half the cost above the policy's limit of two increasing the STR ratio of an army by 1 Level. (Some Army Classifications are limited on high they can increase their level)
 
 ### **Financial** {#financial}
 
@@ -2371,7 +2373,7 @@ Morale can increase or decrease based on:
 | **Neutral** | 0 | Stable/Normal. | Standard operation. |
 | **Shaken** | \-1 to \-2 | Imposes friction. (Ex: \-1d6 on one battle per phase, slower recovery from exhaustion, higher chance of disorder after moving.) | All armies suffer –1d6 when attacking. |
 | **Fractured** | \-3 to \-4 | Dangerous cracking. (Ex: \-1d6 to all allied armies in one chosen front this phase, retreat attempts become harder, deserters reduce effective STR.) | All armies suffer –1d6 to all battles. If an army loses a battle, roll 1d6. On a 1, that army retreats automatically. |
-| **Broken** | \-5 | Collapse. (Ex: One army routs on a bad roll, loses units outright, or refuses an attack order unless CP is spent to force cohesion.) | All armies suffer –2d6 to all battles. After every lost battle, roll 1d6. On a 1–2, that army loses 1 additional unit per 10 Units in the army due to desertion and collapse. |
+| **Broken** | \-5 | Collapse. (Ex: One army routs on a bad roll, loses Sizes outright, or refuses an attack order unless CP is spent to force cohesion.) | All armies suffer –2d6 to all battles. After every lost battle, roll 1d6. On a 1–2, that army loses 1 additional Size per 10 Sizes in the army due to desertion and collapse. |
 
 *(Morale generally rises with victories, rescue missions, charismatic leadership, good supply, and clear objectives; it falls with slaughter, repeated defeats, scandals, starvation, fear-events, and "we don't know why we're here.")*
 
@@ -2387,7 +2389,7 @@ Here is the reformatted section:
 
 **Supply System**
 
-Supply reflects an army’s logistical strength—food, medicine, ammunition, armor repair, boots, wagons, roads, scouting routes, secure couriers, and the quiet infrastructure that actually wins wars. Supply is not glamour; it is endurance.
+Supply reflects an army’s logistical strength—food, medicine, ammSizeion, armor repair, boots, wagons, roads, scouting routes, secure couriers, and the quiet infrastructure that actually wins wars. Supply is not glamour; it is endurance.
 
 Supply is tracked on a scale from **–5 to \+5**, where **0** is stable/normal. Positive scores (+1 to \+5) represent surplus, efficiency, and operational momentum, while negative scores (–1 to –5) indicate strain, attrition, and systemic breakdown. Supply cannot exceed **\+5** or drop below **–5**.
 
@@ -2415,9 +2417,9 @@ Supply can increase or decrease based on:
 | **Well Supplied** | \+3 to \+4 | Force multiplication. (Ex: One front gains temporary fortification benefits, one army increases effective size for calculations for one phase, or training completes faster.) | No exhaustion is gained from extended movement. |
 | **Stable** | \+1 to \+2 | Operational flexibility. (Ex: Reduce travel/exhaustion consequences, restore 1 exhaustion level for one army for free, or grant \+1d6 to one battle due to preparedness.) | Standard operation. |
 | **Neutral** | 0 | Functioning war machine. | Standard operation. |
-| **Strained** | –1 to –2 | Logistical drag. (Ex: –1d6 on one battle per phase, slower movement, exhaustion lingers longer, minor unit losses after hard marches.) | Armies suffer –1d6 if more than 2 spaces from friendly controlled territory. |
-| **Failing** | –3 to –4 | Supply crisis. (Ex: Multiple armies gain exhaustion automatically, engineers are forced into repair duty instead of expansion, Army Size degrades over time.) | All armies suffer –1d6 in all battles. After each Battle Phase, roll 1d6 for each army more than 2 spaces from controlled territory. On a 1, that army loses 1 Unit per 20 Units due to attrition. |
-| **Collapsing** | –5 | Logistical breakdown. (Ex: Armies begin losing units directly, fortifications degrade, and extended campaigns risk collapse unless CP is spent or an emergency supply objective is completed.) | All armies suffer –2d6 in all battles. After every Battle Phase, each army loses 1 Unit per 10 Units due to starvation, disease, or systemic breakdown. |
+| **Strained** | –1 to –2 | Logistical drag. (Ex: –1d6 on one battle per phase, slower movement, exhaustion lingers longer, minor Size losses after hard marches.) | Armies suffer –1d6 if more than 2 spaces from friendly controlled territory. |
+| **Failing** | –3 to –4 | Supply crisis. (Ex: Multiple armies gain exhaustion automatically, engineers are forced into repair duty instead of expansion, Army Size degrades over time.) | All armies suffer –1d6 in all battles. After each Battle Phase, roll 1d6 for each army more than 2 spaces from controlled territory. On a 1, that army loses 1 Size per 20 Sizes due to attrition. |
+| **Collapsing** | –5 | Logistical breakdown. (Ex: Armies begin losing Sizes directly, fortifications degrade, and extended campaigns risk collapse unless CP is spent or an emergency supply objective is completed.) | All armies suffer –2d6 in all battles. After every Battle Phase, each army loses 1 Size per 10 Sizes due to starvation, disease, or systemic breakdown. |
 
 *(Supply generally rises with secured routes, infrastructure investment, port control, disciplined quartermasters, and protected couriers; it falls with raids, piracy, scorched earth tactics, winter campaigns, corruption, sabotage, and overextension.)*
 
@@ -2481,7 +2483,7 @@ Decisions on the cinematic sequence level not only are able to change the dice s
 
 Weather conditions are set at the start of every **Battle Phase**. The GM may predetermine weather based on the environment, season, or dramatic need — or roll **1d100**, modified by the current season, to generate it randomly.
 
-**If a 100 is rolled:** A major weather event occurs — either a strange phenomenon or a massive multi-week storm (GM's choice). Each army rolls 1–3d10 depending on its vulnerability to that storm type, losing that many units. All preferred and undesired weather bonuses and penalties are **doubled** for that Battle Phase.
+**If a 100 is rolled:** A major weather event occurs — either a strange phenomenon or a massive multi-week storm (GM's choice). Each army rolls 1–3d10 depending on its vulnerability to that storm type, losing that many Sizes. All preferred and undesired weather bonuses and penalties are **doubled** for that Battle Phase.
 
 Weather generally falls into two visibility classifications that affect army performance:
 
@@ -2569,7 +2571,7 @@ General Augment Doctrines are doctrines that can be applied to more than one arm
 | **Anti-Magic** | Any **non-magic** army | 1 | **Deadly vs Magic**; removes Magic vulnerability | — | \-2 | — | — |
 | **Heavy Artillery** | Siege (plus GM-approved) | 1 | Damage die **\+1 step**; **Deadly vs Fortifications/Defensive** | \-1 zone move; **Vulnerable if flanked by Fast Cav** | \-1 | — | \+1 |
 | **Fire Artillery** | Archers, Siege, GM-approved ranged | 1 | **Deadly vs Fire-vulnerable**; extra penalty stacking (max \-6dX); weather prefs | Undesired weather: **Cold/Wet \= \-1 die** | \-1 | \+1 | — |
-| **Elemental Ammunition** | Gunners, Archers, Siege, Mages, GM ranged | 1 | Choose damage type; applies vuln/deadly matchups by that type | If enemy resists/immune: **\-1 die** that phase | \-1 | — | — |
+| **Elemental AmmSizeion** | Gunners, Archers, Siege, Mages, GM ranged | 1 | Choose damage type; applies vuln/deadly matchups by that type | If enemy resists/immune: **\-1 die** that phase | \-1 | — | — |
 | **Armor-Piercing** | Gunners, Archers, Siege, Mages, GM ranged | 1 | 1/phase ignore an armor/fort penalty; may gain **\+1 die** vs “heavy protection” | After using: **\-1 die next phase** | \-1 | — | — |
 | **Heavy-Protection** | Any GM-approved (except Rebels/Bandits) | 2 | Broad “resistance” vs non-special classes; attackers suffer **\-1 die 1/phase** | **\-1 space** speed; negated by Armor-Piercing | \-1 | — | — |
 
@@ -2582,7 +2584,7 @@ Specialized anti-aerial training and equipment designed to counter airborne thre
 **Baseline Cost:** 1 CP
 
 **Effect:** This army counts as **Deadly vs Aerial Cavalry and Flying-class armies**.  
- If the army was previously Vulnerable to Aerial units, that vulnerability is removed.
+ If the army was previously Vulnerable to Aerial Sizes, that vulnerability is removed.
 
 **Drawback:** —
 
@@ -2643,7 +2645,7 @@ Reinforced siege platforms with enhanced destructive capability at the cost of m
 
 ### **Fire Artillery** {#fire-artillery}
 
-Incorporates incendiary ammunition and flame-based assault tactics.
+Incorporates incendiary ammSizeion and flame-based assault tactics.
 
 **Eligible:** Archers, Siege, and other ranged army classes at GM discretion.
 
@@ -2666,7 +2668,7 @@ Gains
 
 *"Let it burn. Let them remember who lit the sky."*
 
-### **Elemental Ammunition** {#elemental-ammunition}
+### **Elemental AmmSizeion** {#elemental-ammsizeion}
 
 S to specialized rounds that deliver a chosen damage type.
 
@@ -2674,7 +2676,7 @@ S to specialized rounds that deliver a chosen damage type.
 
 **Baseline Cost:** 1 CP
 
-**Effect**: Choose **one damage type** when purchased (cold, fire, lightning, acid, poison, psychic, radiant, necrotic, thunder, force). This army is treated as also dealing that damage type for matchup purposes: if an enemy army is **Vulnerable**/**Deadly** to that damage type, apply those matchup results even if the army’s class normally wouldn’t trigger them. Essentially when calculating immunities/resistancatances and vulnerabilities/deadly the new damage type takes priority. (GM discretion for edge cases.)
+**Effect**: Choose **one damage type** when purchased (cold, fire, lightning, acid, poison, psychic, radiant, necrotic, thunder, force). This army is treated as also dealing that damage type for matchup purposes: if an enemy army is **Vulnerable**/**Deadly** to that damage type, apply those matchup results even if the army’s class normally wouldn’t trigger them. Essentially when calculating Immunities/resistancatances and vulnerabilities/deadly the new damage type takes priority. (GM discretion for edge cases.)
 
 **Drawback:** If the chosen damage type is **resisted or immune** by the enemy army, this army takes an additional **\-1 die** to its dice pool for that battle phase.
 
@@ -2734,7 +2736,7 @@ Heavy protected armor.
 | **Counterspell Cadre** | Mage | 1 | 1/phase reduce an enemy Mage/Divinity effect **one tier** (or remove 1 die bonus) | *(not specified)* | — | — | \+1 |
 | **Wild Surge License** | Mage | 1 | 1/phase increase **die size \+1 step** for the roll | If any die hits lowest value → **Wild Complication**; then **\-1 die next phase** | — | \+1 on success / \-1 on complication | — |
 | **Ritual Artillery** | Mage | 2 | If no move: next attack reaches **10 miles (2 spaces)**; treated as ranged w/ benefits | Forced move breaks ritual; effect lost | \-1 | — | — |
-| **Ward-Smiths** | Mage | 1 | 1/phase grant ally in zone **immunity vs Mage/Divinity** effects or negate 1 Deadly instance | After use: **\-1 die next phase** | — | \+1 | — |
+| **Ward-Smiths** | Mage | 1 | 1/phase grant ally in zone **Immunity vs Mage/Divinity** effects or negate 1 Deadly instance | After use: **\-1 die next phase** | — | \+1 | — |
 | **Soul-Binders** | Mage | 1 | If win battle in zone: **\+1 CP** | After trigger: **Morale \-1** immediately | — | \-1 | \+1 |
 | **Spellthief Detachment** | Mage | 2 | 1/phase copy an enemy Augment Tag within 5 miles (GM-approved) | Next phase: you become **Vulnerable to it** (or it becomes Deadly vs you) | — | — | \+1 |
 
@@ -2836,7 +2838,7 @@ Battlefield enchanters who reinforce allied formations with protective wards.
 
 **Baseline Cost:** 1 CP
 
-**Effect**: Once per battle phase, grant one allied army in the same zone immunity to Mages or Divinity-based (Grail, Artemis, Fiend) effects for that phase, or if they are deadly to that army class negate one instance of Deadly against them.
+**Effect**: Once per battle phase, grant one allied army in the same zone Immunity to Mages or Divinity-based (Grail, Artemis, Fiend) effects for that phase, or if they are deadly to that army class negate one instance of Deadly against them.
 
 **Drawback:** After using this ability, this Mage army’s dice pool is reduced by 1 next phase.
 
@@ -3483,13 +3485,13 @@ Not deep forest—**transition zones**: treeline, brush, broken cover. This is w
 
 Altitude gives vision, projectile advantage, and defensive leverage. Also: falling.
 
-**Effect:** Defenders gain advantage on spotting and ranged targeting. Attackers moving uphill treat terrain as difficult. Flying units can maintain altitude easier here (if that matters in your system).
+**Effect:** Defenders gain advantage on spotting and ranged targeting. Attackers moving uphill treat terrain as difficult. Flying Sizes can maintain altitude easier here (if that matters in your system).
 
 #### ***Ruins*** {#ruins}
 
-Collapsed streets, broken towers, hiding places everywhere. Ruins reward small-unit tactics and punish clean formations.
+Collapsed streets, broken towers, hiding places everywhere. Ruins reward small-Size tactics and punish clean formations.
 
-**Effect:** Movement is difficult for large units. Skirmishers gain advantage on stealth/ambush checks. Siege targeting is harder (–2 to attack rolls if you’re using tactical attacks).
+**Effect:** Movement is difficult for large Sizes. Skirmishers gain advantage on stealth/ambush checks. Siege targeting is harder (–2 to attack rolls if you’re using tactical attacks).
 
 #### ***Cities (Urban Terrain)*** {#cities-(urban-terrain)}
 
@@ -3577,7 +3579,7 @@ Use these during Cinematic Sequences to keep war scenes punchy.
 
 | Action | Type / Frequency | Roll | Effect |
 | :---- | :---- | :---- | :---- |
-| Rally | Bonus Action (After Killing an Enemy NPC) | Make a Charisma or Wisdom-based Performance or Persuasion Check. DC 15\. | Upon success, all allied NPC units in a 20-foot radius gain advantage on their next attack roll and damage roll. |
+| Rally | Bonus Action (After Killing an Enemy NPC) | Make a Charisma or Wisdom-based Performance or Persuasion Check. DC 15\. | Upon success, all allied NPC Sizes in a 20-foot radius gain advantage on their next attack roll and damage roll. |
 | Scene | Free Action (Once per a Cinematic Sequence) | — | You focus on a singular, significant NPC(s). (A Boss, Commander(s), or important enemy NPC(s)). This may be an NPC the PC has a history with. You and the chosen NPC(s) are locked in a one-on-one fight. All those around you become blurred in the background. Others cannot and will not intervene. including other PCs. |
 | Cinematic Moment | Free Action (The Last Resort Action that is once per a war encounter) | — | When you are about to die, another PC has died or is close to death, or the main foe NPC is about to win. You become the writer of your own fate. You take control of the narrative and using solely clever roleplay that makes sense for the story, you roleplay your character performing an incredible, beyond impressive heroic feat. A feat that deals an unexpected deadly blow, turns the tide of war, or brings a thought to be gone PC from the brink of death. (Before using this action you will consult with the GM on what you want the ending result to be. If agreed upon then you act out your moment in the spotlight.) |
 

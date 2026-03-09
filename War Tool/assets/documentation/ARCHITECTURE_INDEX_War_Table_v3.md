@@ -1,63 +1,64 @@
-# War Table v3 — Architecture Index (Single-File Navigation)
+# Fantasy War Sim — Architecture Index (Single-File Navigation)
 
 Primary code file:
-- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html`
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/fantasy-war-sim.html`
 
 Notes:
 - Line numbers are approximate and should be refreshed after major edits.
 - Fast navigation in code is via markers: `// [SECTION] ...` and `// [INDEX] ...`.
+- `/Users/jonathanhobson/Downloads/War Tool ChatGPT/War_Table_v3.html` is a redirect shim only and should not be treated as the canonical app shell.
 
 ## Section Markers
 
-- `DATA_RULES` around line `1594`
-- `DATA_WEATHER` around line `2596`
-- `UTILS_CORE` around line `2992`
-- `DATA_DOCTRINES` around line `3021`
-- `PERSISTENCE_STORAGE` around line `3213`
-- `ENGINE_INDEX` around line `3318`
-- `ENGINE_MATH` around line `3355`
-- `STATE_RUNTIME` around line `3663`
-- `DOMAIN_ACTIONS` around lines `3694`, `3776`
-- `ENGINE_RESOLUTION` around line `3812`
-- `UI_RENDER` around lines `3915`, `4355`, `4440`, `4493`, `4523`
-- `UI_MODALS` around lines `4554`, `4654`, `4789`
-- `IMPORT_EXPORT` around line `4826`
-- `UI_HANDLERS` around lines `5607`, `5625`, `5683`
+- `DATA_RULES` around line `1223`
+- `DATA_WEATHER` around line `2225`
+- `UTILS_CORE` around line `3293`
+- `DATA_DOCTRINES` around line `3323`
+- `PERSISTENCE_STORAGE` around line `3689`
+- `ENGINE_INDEX` around line `3829`
+- `ENGINE_MATH` around line `3883`
+- `STATE_RUNTIME` around line `4613`
+- `DOMAIN_ACTIONS` around lines `4780`, `4862`
+- `ENGINE_RESOLUTION` around line `4997`
+- `UI_RENDER` around lines `5203`, `7277`, `7387`, `7450`, `7480`
+- `UI_MODALS` around lines `7810`, `7943`, `8078`
+- `IMPORT_EXPORT` around line `8190`
+- `UI_HANDLERS` around lines `8999`, `9252`, `9331`
 
 ## Function Index (High-Traffic)
 
 Persistence:
-- `persistWeather(ws)` around line `2983`
-- `loadPersisted()` around line `3265`
-- `persist(saved)` around line `3286`
+- `persistWeather(ws)` around line `3286`
+- `loadPersisted()` around line `3772`
+- `persist(saved)` around line `3794`
 
 Engine:
-- `computeDoctrineEffects(...)` around line `3423`
-- `computePool(...)` around line `3583`
+- `computeDoctrineEffects(...)` around line `4033`
+- `computePool(...)` around line `4485`
 
 Rendering:
-- `render()` around line `4282`
-- `refreshArmyAndFactionLists()` around line `3922`
-- `syncAllSettingsControlsFromState()` around line `3956`
+- `render()` around line `7172`
+- `refreshArmyAndFactionLists()` around line `5210`
+- `syncAllSettingsControlsFromState()` around line `5253`
 
 CSV:
-- `parseCsv(text)` around line `4900`
-- `serializeCsv(rows, headers)` around line `4891`
-- `validateArmiesCsv(rows)` around line `5081`
-- `upsertArmiesFromCsv(rows)` around line `5152`
-- `exportArmiesCsv()` around line `5204`
-- `importArmiesCsv(file)` around line `5218`
-- `exportFactionsCsv()` around line `5291`
-- `importFactionsCsv(file)` around line `5297`
-- `exportAllCsvBundle()` around line `5443`
-- `importAllCsvBundle(file)` around line `5462`
+- `parseCsv(text)` around line `8264`
+- `serializeCsv(rows, headers)` around line `8255`
+- `validateArmiesCsv(rows)` around line `8447`
+- `upsertArmiesFromCsv(rows)` around line `8518`
+- `exportArmiesCsv()` around line `8570`
+- `importArmiesCsv(file)` around line `8584`
+- `exportFactionsCsv()` around line `8658`
+- `importFactionsCsv(file)` around line `8664`
+- `exportAllCsvBundle()` around line `8811`
+- `importAllCsvBundle(file)` around line `8830`
 
 Import/export:
-- `doImportAll(data)` around line `5516`
-- `importFactions(file)` (JSON) around line `5554`
+- `doImportAll(data)` around line `8886`
+- `importFactions(file)` (JSON) around line `8947`
 
 Event wiring:
-- `bind()` around line `5687`
+- `bind()` around line `9336`
 
 ## Dependency Hotspots
 

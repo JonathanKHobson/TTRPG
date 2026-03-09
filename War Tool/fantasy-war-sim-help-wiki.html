@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fantasy War Sim Help Wiki — Field Manual</title>
+  <link rel="stylesheet" href="assets/css/war-table-theme.css" />
+  <link rel="stylesheet" href="assets/css/war-table-state-themes.css" />
+  <link rel="stylesheet" href="assets/css/war-table-help.css" />
+</head>
+<body data-season="spring" data-weather="clear" data-phenomena="none" data-intensity="1" data-state="normal" data-defeat-side="none" data-theme-weather-enabled="yes" data-theme-phenomena-enabled="yes" data-theme-defeat-enabled="yes" data-theme-strength="subtle">
+<a class="skipLink btn small" href="#helpMain">Skip to main help content</a>
+<div class="app" id="helpTop">
+  <header>
+    <div class="brand">
+      <h1>📚 Fantasy War Sim Help Wiki</h1>
+      <div class="sub">Field Manual — Quick Rules + Help Guides</div>
+    </div>
+    <nav aria-label="Help actions">
+      <a class="btn" href="fantasy-war-sim.html">← Back to Fantasy War Sim</a>
+      <a class="btn ghost" href="#start-here">Start Here</a>
+    </nav>
+  </header>
+
+  <main class="helpShell" id="helpMain">
+    <aside class="helpNavCol" aria-label="Help navigation">
+      <section class="card helpNavCard">
+        <div class="cardHead"><div class="sideTitle"><h2>Find Help</h2></div></div>
+        <div class="content">
+          <div class="helpSearchWrap">
+            <label for="helpSearchInput">Search this wiki</label>
+            <input id="helpSearchInput" type="text" placeholder="Search doctrines, weather, command points, csv, settings..." autocomplete="off" />
+            <div class="helpSearchStatus" id="helpSearchStatus" role="status" aria-live="polite">Type to search sections, FAQs, and glossary terms.</div>
+            <ul class="helpSearchResults" id="helpSearchResults" aria-label="Search results"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card helpNavCard">
+        <div class="cardHead"><div class="sideTitle"><h2>Sections</h2></div></div>
+        <div class="content helpQuickLinks">
+          <a href="#start-here">Start Here</a>
+          <a href="#battle-guide">Battle Guide</a>
+          <a href="#armies-factions">Armies &amp; Factions</a>
+          <a href="#import-export">Import / Export</a>
+          <a href="#settings-reference">Settings Reference</a>
+          <a href="#war-report-history">War Report &amp; History</a>
+          <a href="#faq">FAQ / Troubleshooting</a>
+          <a href="#glossary">Glossary</a>
+          <a class="rulesLink" href="#game-rules-placeholder">Game Rules Landing</a>
+          <a class="rulesLink" href="#rules-quick-start">Rules: Quick Start</a>
+          <a class="rulesLink" href="#rules-strategic-core">Rules: Strategic Core</a>
+          <a class="rulesLink" href="#rules-army-classes">Rules: Army Classes</a>
+          <a class="rulesLink" href="#rules-doctrines">Rules: Doctrines</a>
+          <a class="rulesLink" href="#rules-weather-terrain">Rules: Weather &amp; Terrain</a>
+          <a class="rulesLink" href="#rules-command-meters">Rules: Command Meters</a>
+          <a class="rulesLink" href="#rules-optional-mechanics">Rules: Optional Mechanics</a>
+          <a class="rulesLink" href="#rules-appendix">Rules: Quick Reference</a>
+        </div>
+      </section>
+
+      <section class="card helpNavCard">
+        <div class="cardHead"><div class="sideTitle"><h2>Quick Actions</h2></div></div>
+        <div class="content">
+          <div class="helpSectionActions">
+            <a class="btn small" href="assets/templates/war_table_armies_template.csv" download>Download armies.csv template</a>
+            <a class="btn small" href="assets/templates/war_table_factions_template.csv" download>Download factions.csv template</a>
+          </div>
+          <div class="helpNote">Templates are starter files. If a file has errors, fix them and re-import.</div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="helpMain helpContent" aria-label="Help content">
+      <article class="card helpIntro" id="start-here" data-search-title="Start Here" data-search-keywords="overview quick start tabs onboarding">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Start Here</h2>
+            <span class="helpUpdated">Quick overview</span>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">Fantasy War Sim is a fantasy battle simulator built for fast setup, clear battle outcomes, and quick table reference.</p>
+          <div class="helpGrid3">
+            <div class="alert"><b>Battle</b><br/>Run engagements with full transparency: pool math, roll details, comparisons, war report, and auto-resolve.</div>
+            <div class="alert"><b>Armies / Factions</b><br/>Manage reusable army records and faction groups, then load them directly into battle panels.</div>
+            <div class="alert"><b>History / Settings</b><br/>Audit outcomes, export/import data, and configure weather, battle rules, and UI behavior.</div>
+          </div>
+          <details data-search-title="First battle quick start" data-search-keywords="quick start class size str battle button">
+            <summary>Quick Start: run your first battle in under 1 minute</summary>
+            <ol>
+              <li>Set Attacker and Defender <b>Army Class</b>.</li>
+              <li>Enter <b>Army Size</b> and <b>STR</b> for each side.</li>
+              <li>Leave <b>Dice to roll</b> blank to auto-select the default dice to roll, or enter a number manually.</li>
+              <li>Click <b>Battle</b>. Review summary, then open <b>Roll Details</b> / <b>Dice Comparisons</b> for full audit.</li>
+            </ol>
+          </details>
+          <details data-search-title="Data safety and wipe behavior" data-search-keywords="wipe clear local data reset storage">
+            <summary>Data safety and wipe behavior</summary>
+            <ul>
+              <li><b>Reset</b> on Battle tab resets panel runtime values, but does not erase saved armies/factions/history.</li>
+              <li><b>Wipe all local data</b> in Settings permanently clears saved records, history, and settings on this device.</li>
+              <li>Use <b>Export full state (JSON)</b> before major edits to keep a recoverable backup.</li>
+            </ul>
+          </details>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="battle-guide" data-search-title="Battle Guide" data-search-keywords="commit dice breakdown war report compare quick stop reasons">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Battle Guide</h2>
+            <span class="helpUpdated">Battle flow</span>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">This section shows how to read each battle result quickly and confidently.</p>
+
+          <details data-search-title="Dice to roll behavior" data-search-keywords="dice to roll auto manual minimum attacker defender">
+            <summary>Dice to roll behavior (single-input model)</summary>
+            <ul>
+              <li>Each side has one <b>Dice to roll</b> input.</li>
+              <li>Blank input = auto-select the default dice to roll for the current rules mode.</li>
+              <li>Numeric input = manual dice to roll, clamped to the allowed maximum.</li>
+              <li>In compare mode, attacker needs at least 5 dice to roll unless cap override is active.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="Dice Math Breakdown" data-search-keywords="breakdown weather doctrine assist hinder advantage disadvantage">
+            <summary>How to read Dice Math Breakdown</summary>
+            <ul>
+              <li>Shows pool contributors line-by-line, including <b>Total dice</b>, <b>Usable dice</b>, <b>Dice to roll</b>, and the modifiers that move those numbers.</li>
+              <li>Advantage/disadvantage are shown as roll modifiers in breakdown and applied at roll stage.</li>
+              <li>Breakdown is for transparency; it does not introduce hidden modifiers outside displayed lines.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="Battle scale and quality tags" data-search-keywords="battle scale quality total dice wealthy aristocratic legendary mythical supply warning">
+            <summary>Battle scale, quality tags, and oversized-host warnings</summary>
+            <ul>
+              <li><b>Battle scale</b> is derived from <b>Total dice</b> only: Size dice plus STR dice before matchup, weather, doctrine, nearby, or manual modifiers.</li>
+              <li>Quality tags are a quick scale read for the current army, from <b>Squalid</b> up through <b>Mythical</b>.</li>
+              <li><b>Very Wealthy</b> and above show a Supply warning. This is advisory only in the current build and does not change battle math.</li>
+              <li>Class ceilings are checked when a battle starts, not when you save or import an army.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="War Report and auto-resolve" data-search-keywords="war report battle again auto resolve stop reason">
+            <summary>War Report, Battle Again, and Auto-Resolve</summary>
+            <ul>
+              <li>War Report opens after Battle when that setting is enabled.</li>
+              <li><b>Battle Again</b> runs one more round immediately.</li>
+              <li><b>Auto-Resolve Until Stop</b> loops rounds until a stop condition occurs.</li>
+              <li>Stop reasons include attacker defeated, defender defeated, mutual destruction, phenomena triggered, or safety limit reached.</li>
+            </ul>
+          </details>
+
+          <div class="helpBadgeRow">
+            <span class="badge gold">Compare-style</span>
+            <span class="badge gold">Quick total</span>
+            <span class="badge gold">Roll Details</span>
+            <span class="badge gold">Dice Comparisons</span>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="armies-factions" data-search-title="Armies and Factions" data-search-keywords="save as army update army loaded army faction modal">
+        <div class="cardHead">
+          <div class="sideTitle"><h2>Armies &amp; Factions</h2></div>
+        </div>
+        <div class="content">
+          <details data-search-title="Army records" data-search-keywords="save update loadedArmyId defeated army size zero">
+            <summary>Army records and Save vs Update behavior</summary>
+            <ul>
+              <li>Battle panel button changes label to <b>Update Army</b> when a saved army is loaded on that side.</li>
+              <li>Without a loaded army, button is <b>Save as Army</b>.</li>
+              <li>Armies with size <code>0</code> are shown as defeated in Armies list.</li>
+              <li>Saved armies now show <b>Total dice</b> and a derived <b>Quality</b> line for quick battle-scale reference.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="Quality tags and class ceilings" data-search-keywords="quality tags rebels bandits thieves standard class ceiling split reduce before battle">
+            <summary>Quality tags, class ceilings, and battle-start blocks</summary>
+            <ul>
+              <li>Quality is derived from <b>Total dice</b> only. Matchup, weather, doctrines, nearby effects, and manual dice changes do not change the quality tag.</li>
+              <li><b>Rebels</b> cannot exceed <b>Poor</b>. <b>Bandits</b> and <b>Thieves</b> cannot exceed <b>Average</b>.</li>
+              <li>Other <b>Standard</b> classes cannot exceed <b>Aristocratic</b> in the standard battle scale.</li>
+              <li>If a side exceeds its class ceiling, the simulator blocks the battle start and tells you to split or reduce the army before battle.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="Factions" data-search-keywords="new faction empty faction assign armies reassign">
+            <summary>Faction management behavior</summary>
+            <ul>
+              <li>New Faction modal supports empty factions and assigning existing armies before save.</li>
+              <li>Faction names are unique case-insensitively.</li>
+              <li>Assigning an army in faction flow is authoritative (army moves to the selected faction).</li>
+            </ul>
+          </details>
+
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="import-export" data-search-title="Import and Export" data-search-keywords="csv json zip headers doctrines elemental ammunition validation fail fast upsert">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Import / Export</h2>
+            <span class="helpUpdated">File guide</span>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">CSV import checks your file before applying changes. If there are errors, fix them and import again.</p>
+
+          <details open data-search-title="Armies CSV contract" data-search-keywords="name classId size str faction notes doctrines required headers">
+            <summary>Armies CSV: required headers, optional fields, doctrine format</summary>
+            <div class="helpSectionActions">
+              <button class="btn small" type="button" data-copy-target="csvArmiesExample">Copy armies.csv example</button>
+              <a class="btn small" href="assets/templates/war_table_armies_template.csv" download>Download template</a>
+            </div>
+            <table class="tbl" style="margin-top:8px;">
+              <thead><tr><th>Header</th><th>Required</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">name</td><td>Yes</td><td>Used to match existing army names (not case-sensitive)</td></tr>
+                <tr><td class="mono">classId</td><td>Yes</td><td>Valid class ID or resolvable class name alias</td></tr>
+                <tr><td class="mono">size</td><td>Yes</td><td>Whole number, 0 or higher</td></tr>
+                <tr><td class="mono">str</td><td>Yes</td><td>Whole number, 0 or higher</td></tr>
+                <tr><td class="mono">faction</td><td>No</td><td>Plain text</td></tr>
+                <tr><td class="mono">notes</td><td>No</td><td>Plain text</td></tr>
+                <tr><td class="mono">doctrines</td><td>No</td><td>Semicolon tokens, e.g. <code>heavy_artillery;elemental_ammunition:fire</code></td></tr>
+              </tbody>
+            </table>
+            <pre class="helpCode" id="csvArmiesExample"><code>name,classId,size,str,faction,notes,doctrines
+Iron Vanguard,infantry,150,120,Northwatch,"Frontline shield wall",heavy_protection;armor_piercing
+Storm Lances,cavalry,120,100,Northwatch,"Fast flanking cavalry",anti_air
+Arcane Battery,mages,80,140,Starfall Collegium,"Primary caster detachment",battlefield_weavers;elemental_ammunition:fire</code></pre>
+            <div class="helpNote">Duplicate doctrine tokens in one row fail validation. <code>elemental_ammunition</code> requires <code>:damageType</code>.</div>
+          </details>
+
+          <details data-search-title="Factions CSV contract" data-search-keywords="factions csv headers name notes">
+            <summary>Factions CSV: required headers and behavior</summary>
+            <div class="helpSectionActions">
+              <button class="btn small" type="button" data-copy-target="csvFactionsExample">Copy factions.csv example</button>
+              <a class="btn small" href="assets/templates/war_table_factions_template.csv" download>Download template</a>
+            </div>
+            <table class="tbl" style="margin-top:8px;">
+              <thead><tr><th>Header</th><th>Required</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">name</td><td>Yes</td><td>Must be unique in the file (not case-sensitive)</td></tr>
+                <tr><td class="mono">notes</td><td>No</td><td>Optional notes column for your own records</td></tr>
+              </tbody>
+            </table>
+            <pre class="helpCode" id="csvFactionsExample"><code>name,notes
+Northwatch,"Northern coalition armies"
+Starfall Collegium,"Mage-focused command"
+Free Companies,"Independent mercenary groups"</code></pre>
+          </details>
+
+          <details data-search-title="CSV bundle zip" data-search-keywords="zip bundle manifest armies.csv factions.csv">
+            <summary>CSV bundle ZIP requirements</summary>
+            <ul>
+              <li>Bundle must include <code>armies.csv</code>, <code>factions.csv</code>, and <code>manifest.json</code>.</li>
+              <li>If any required file is missing or invalid, import stops and no changes are applied.</li>
+              <li>Application order is factions, then armies (after full validation).</li>
+            </ul>
+          </details>
+
+          <details data-search-title="JSON full-state import/export" data-search-keywords="json full state settings history weather">
+            <summary>JSON full-state import/export behavior</summary>
+            <ul>
+              <li>Full export includes armies, factions, history, weather, settings, and battle draft data.</li>
+              <li>Full import checks army, settings, and weather values before applying.</li>
+              <li>If the file format is invalid, import is rejected with clear error feedback.</li>
+            </ul>
+          </details>
+
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="settings-reference" data-search-title="Settings Reference" data-search-keywords="resolution quick loss allow over cap doctrine override assist hinder war report weather themes">
+        <div class="cardHead"><div class="sideTitle"><h2>Settings Reference</h2></div></div>
+        <div class="content">
+          <p class="helpNote">Use this section to translate settings labels into practical behavior.</p>
+
+          <details open data-search-title="Battle rules settings" data-search-keywords="resolution mode quick loss preset caps doctrine eligibility assist hinder war report">
+            <summary>Battle Rules settings</summary>
+            <dl class="helpDl helpGlossaryRow">
+              <dt>Resolution mode</dt><dd><b>Compare-style</b> uses per-comparison resolution. <b>Quick</b> uses total comparison with configured loss preset.</dd>
+              <dt>Quick Total loss preset</dt><dd>Controls loser/tie loss values in Quick Total mode only. Compare-style follows the rules document directly.</dd>
+              <dt>Dice pool rules</dt><dd><b>Three-pool</b> uses Total dice → Usable dice → Dice to roll. <b>Legacy</b> keeps the shipped direct-cap behavior.</dd>
+              <dt>Dice caps</dt><dd>Enforce normal dice-cap behavior or allow over-cap flows where supported. In Three-pool mode, over-cap bypasses only the final Dice to roll cap.</dd>
+              <dt>Override Doctrine Eligibility</dt><dd>When enabled, doctrine picker shows all doctrine options regardless of class restrictions.</dd>
+              <dt>Assist/Hinder system</dt><dd>Master toggle for nearby assist/hinder effects in preview and battle math.</dd>
+              <dt>Assist/Hinder dice cap per side</dt><dd>Caps net assist/hinder dice delta per side; roll-manip effects are not capped by this number.</dd>
+              <dt>War Report popup after Battle</dt><dd>Shows/hides post-battle modal presentation. Battle/history still resolve regardless.</dd>
+            </dl>
+          </details>
+
+          <details data-search-title="Weather and themes settings" data-search-keywords="season climate turn lock weather phenomena chance intensity drift themes enabled strength">
+            <summary>Weather, season, and theme settings</summary>
+            <dl class="helpDl helpGlossaryRow">
+              <dt>Season / Climate / Turns per season</dt><dd>Drives weather randomization pools and turn progression behavior.</dd>
+              <dt>Current turn / Day starts / Night starts</dt><dd>Controls time-of-day context used by weather-sensitive checks.</dd>
+              <dt>Lock season / Lock weather</dt><dd>Prevents automated progression for the locked dimension.</dd>
+              <dt>Phenomena base chance</dt><dd>Base chance used when evaluating random phenomena trigger events.</dd>
+              <dt>Phenomena lock duration / Intensity drift mode</dt><dd>Controls persistence and intensity evolution once phenomena are active.</dd>
+              <dt>Theme toggles + Theme strength</dt><dd>Visual layer only. Does not alter battle mechanics.</dd>
+            </dl>
+          </details>
+
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="war-report-history" data-search-title="War Report and History" data-search-keywords="war report history roll details dice comparisons auto resolve stop reasons">
+        <div class="cardHead"><div class="sideTitle"><h2>War Report &amp; History</h2></div></div>
+        <div class="content">
+          <details open data-search-title="War Report details" data-search-keywords="weather used next weather defeated callout compare rows">
+            <summary>War Report details explained</summary>
+            <ul>
+              <li>Top banner shows canonical outcome precedence (victory/holds/defeated/mutual).</li>
+              <li>Summary rows show losses and updated sizes for both sides.</li>
+              <li>View Details includes weather used, next weather, roll details, dice comparisons (if compare mode), and math breakdown.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="History cards" data-search-keywords="mini war report expandable details audit">
+            <summary>History card behavior</summary>
+            <ul>
+              <li>History auto-saves after each battle.</li>
+              <li>Collapsed card = mini war report (headline + losses + updated sizes).</li>
+              <li>Expanded card includes context snapshots, rolls, comparisons, modifiers, and stop reason where present.</li>
+            </ul>
+          </details>
+
+          <details data-search-title="Auto-resolve stop reasons" data-search-keywords="attacker defeated defender defeated mutual destruction phenomena triggered safety limit">
+            <summary>Auto-resolve stop reasons (plain language)</summary>
+            <ul>
+              <li><b>Attacker defeated</b>: attacker size reached 0.</li>
+              <li><b>Defender defeated</b>: defender size reached 0.</li>
+              <li><b>Mutual destruction</b>: both sizes reached 0 in same resolution.</li>
+              <li><b>Strange Phenomenon triggered</b>: post-battle weather transition triggered new phenomena for next battle.</li>
+              <li><b>Safety limit reached</b>: protective max-round stop to avoid infinite loops.</li>
+            </ul>
+          </details>
+
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection helpFaq" id="faq" data-search-title="FAQ and Troubleshooting" data-search-keywords="faq import error no changes applied cannot battle updated created armies">
+        <div class="cardHead"><div class="sideTitle"><h2>FAQ / Troubleshooting</h2></div></div>
+        <div class="content">
+          <details data-search-title="Why did CSV import fail with no changes applied?" data-search-keywords="csv import failed no changes applied">
+            <summary>Why did CSV import fail with “No Changes Applied”?</summary>
+            <p>CSV imports are checked before changes are made. If any row has an error, fix the listed issues and re-import.</p>
+          </details>
+
+          <details data-search-title="Why was an army updated instead of created?" data-search-keywords="upsert name case insensitive updated created">
+            <summary>Why was an army updated instead of created?</summary>
+            <p>Armies CSV matches by army name (not case-sensitive). If the name already exists, that army is updated instead of creating a duplicate.</p>
+          </details>
+
+          <details data-search-title="Battle button is disabled" data-search-keywords="battle disabled validation attacker class size str commit minimum">
+            <summary>Battle button is disabled. What am I missing?</summary>
+            <p>Common blockers are missing classes/sizes/STR, invalid values, or compare-mode dice-to-roll rules not satisfied. Check the validation message directly above the battle controls.</p>
+          </details>
+
+          <details data-search-title="Auto-resolve stopped unexpectedly" data-search-keywords="auto resolve stopped phenomenon safety limit">
+            <summary>Auto-resolve stopped unexpectedly</summary>
+            <p>Open War Report status line for stop reason. It stops on defeat, newly triggered phenomena, or safety limit guardrail.</p>
+          </details>
+
+          <details data-search-title="Can I recover wiped data?" data-search-keywords="wipe data recover backup">
+            <summary>Can I recover wiped data?</summary>
+            <p>No built-in recovery exists after wipe. Export full state JSON regularly for backups before major changes.</p>
+          </details>
+
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="glossary" data-search-title="Glossary" data-search-keywords="glossary terms compare style quick mode commit war report phenomena command points morale supply influence">
+        <div class="cardHead"><div class="sideTitle"><h2>Glossary</h2></div></div>
+        <div class="content helpGlossaryRow">
+          <dl class="helpDl">
+            <dt data-search-title="Compare-style">Compare-style</dt>
+            <dd>Resolution mode that resolves battle through dice comparisons rather than a single total-only check.</dd>
+
+            <dt data-search-title="Quick mode">Quick mode</dt>
+            <dd>Simplified total-based resolution with configurable loss presets.</dd>
+
+            <dt data-search-title="Dice to roll">Dice to roll</dt>
+            <dd>Number of dice a side will actually roll in the current round.</dd>
+
+            <dt data-search-title="Usable dice">Usable dice</dt>
+            <dd>The current battle pool after the usable-dice cap and post-cap modifiers are applied.</dd>
+
+            <dt data-search-title="Total dice">Total dice</dt>
+            <dd>The base size-and-STR dice count before the usable-dice cap is applied in Three-pool mode.</dd>
+
+            <dt data-search-title="War Report">War Report</dt>
+            <dd>Post-battle modal summary with optional deep details and round chaining actions.</dd>
+
+            <dt data-search-title="Phenomena lock">Phenomena lock</dt>
+            <dd>Number of battles a triggered phenomenon remains active before returning to random progression.</dd>
+
+            <dt data-search-title="Assist/Hinder">Assist/Hinder</dt>
+            <dd>Nearby army system that applies explicit rules-authored support/pressure effects.</dd>
+
+            <dt data-search-title="Command Points">Command Points (CP)</dt>
+            <dd>Optional campaign-layer resource representing strategic coordination and high-level war leverage.</dd>
+
+            <dt data-search-title="Morale Meter">Morale Meter</dt>
+            <dd>Optional -5 to +5 campaign pressure tracker for cohesion and combat confidence.</dd>
+
+            <dt data-search-title="Supply Meter">Supply Meter</dt>
+            <dd>Optional -5 to +5 campaign tracker for logistics, readiness, and attrition pressure.</dd>
+
+            <dt data-search-title="Influence Meter">Influence Meter</dt>
+            <dd>Optional -5 to +5 tracker for political gravity, alliance pressure, and narrative visibility.</dd>
+
+          </dl>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="game-rules-placeholder" data-search-title="Game Rules Landing" data-search-keywords="game rules field manual quick rules full rulebook">
+        <div id="rules-landing"></div>
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Game Rules Field Manual</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">Use this section for quick table rulings, reminders, and short play-ready references. Keep play moving here, then open the full rulebook when you need complete wording.</p>
+          <div class="helpSectionActions">
+            <a class="btn primary" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Open Full Rulebook</a>
+            <span class="rulesHint">Opens the complete long-form rules text.</span>
+          </div>
+          <div class="rulesSubNav" aria-label="Game rules sub-navigation">
+            <a href="#rules-quick-start">Quick Start <span>→</span></a>
+            <a href="#rules-strategic-core">Strategic Core <span>→</span></a>
+            <a href="#rules-army-classes">Army Classes <span>→</span></a>
+            <a href="#rules-doctrines">Doctrines <span>→</span></a>
+            <a href="#rules-weather-terrain">Weather &amp; Terrain <span>→</span></a>
+            <a href="#rules-command-meters">Command Meters <span>→</span></a>
+            <a href="#rules-optional-mechanics">Optional Mechanics <span>→</span></a>
+            <a href="#rules-appendix">Quick Reference <span>→</span></a>
+          </div>
+          <div class="rulesSummaryGrid">
+            <div class="alert"><b>Fast answer first</b><br/>Every section starts with concise, table-use guidance.</div>
+            <div class="alert"><b>Depth on demand</b><br/>Open accordions for longer wording and examples when needed.</div>
+            <div class="alert"><b>Play-focused language</b><br/>Content is framed around what to do at the table and when.</div>
+            <div class="alert"><b>Full-book bridge</b><br/>Each major section links to the complete rulebook text.</div>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-quick-start" data-search-title="Rules Quick Start" data-search-keywords="war loop two layers stage strategic cinematic quick start key terms">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Quick Start</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">Use this when you need the table back in motion quickly. It covers the flow, terms, and what to resolve first.</p>
+          <div class="helpGrid3">
+            <div class="alert"><b>Two Layers</b><br/>Strategic Wargame layer (wide view) plus Cinematic Sequences (hero spotlight).</div>
+            <div class="alert"><b>War Loop</b><br/>Move phase, optional cinematic zoom-in, battle phase, consequences, repeat.</div>
+            <div class="alert"><b>Battle Core</b><br/>Build Total dice from Size + STR, shape Usable dice with modifiers, then choose Dice to roll.</div>
+          </div>
+          <details data-search-title="Quick Start full reference" data-search-keywords="how pc layer changes war strategic battles key terms">
+            <summary>Full reference: Quick Start and Chapter 1 overview</summary>
+            <ul>
+              <li>Strategic layer tracks fronts, movement, and major engagements.</li>
+              <li>Cinematic layer creates leverage through focused objectives, sabotage, assassinations, and rescue operations.</li>
+              <li>A stage is a complete pulse of war pressure where strategic outcomes and cinematic leverage inform each other.</li>
+              <li>GM can run strategic layer directly or share ownership with players; both are valid table modes.</li>
+            </ul>
+          </details>
+          <div class="helpBadgeRow">
+            <span class="badge gold">Stage</span>
+            <span class="badge gold">Strategic layer</span>
+            <span class="badge gold">Cinematic sequence</span>
+            <span class="badge gold">Leverage</span>
+          </div>
+          <div class="helpSectionActions">
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-strategic-core" data-search-title="Rules Strategic Core" data-search-keywords="build dice pool commit compare style defender ties caps attacker minimum aftermath movement">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Strategic Core</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">This is the high-use procedure for resolving strategic battles at the table.</p>
+          <div class="rulesTableWrap">
+            <table class="tbl">
+              <thead><tr><th>Step</th><th>What to do</th><th>Why it matters</th></tr></thead>
+              <tbody>
+                <tr><td>0</td><td>Set conditions (weather, time, context)</td><td>Conditions shape pool math before rolling.</td></tr>
+                <tr><td>1</td><td>Confirm attacker, defender, and engagement setup</td><td>Prevents mismatched assumptions before dice are chosen.</td></tr>
+                <tr><td>2</td><td>Build Total dice, Usable dice, and modifier-adjusted pools</td><td>This defines each side’s battle leverage.</td></tr>
+                <tr><td>3</td><td>Set dice to roll</td><td>Dice-to-roll choices trade certainty for flexibility.</td></tr>
+                <tr><td>4</td><td>Roll and resolve comparisons</td><td>Compares rolled power directly and determines losses.</td></tr>
+                <tr><td>5</td><td>Apply losses and decide continue/stop</td><td>Sets immediate outcome and next tactical choice.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details data-search-title="Strategic core worked example" data-search-keywords="size str cavalry pikes worked example dice cap">
+            <summary>Worked example: pool construction snapshot</summary>
+            <ul>
+              <li>Attacker Size 150 gives +3 dice; STR 120 gives +12 dice.</li>
+              <li>Defender Size 100 gives +2 dice; STR 80 gives +8 dice.</li>
+              <li>In Three-pool mode, start with Total dice from Size/STR, cap to attacker 12 / defender 10 for Usable dice, then apply the remaining dice modifiers.</li>
+              <li>Dice to roll defaults to attacker 10 / defender 8 unless override paths are active, then defender wins ties in compare-style resolution.</li>
+            </ul>
+          </details>
+          <details data-search-title="Campaign layer procedures" data-search-keywords="move phase declaration retreat occupation convert capture raze liberate">
+            <summary>Campaign procedures (movement, aftermath, occupation)</summary>
+            <ul>
+              <li>Move declarations, retreat handling, and occupation outcomes are usually adjudicated by the GM at campaign scale.</li>
+              <li>Aftermath options include convert, capture, raze, and liberate based on campaign goals and story stakes.</li>
+            </ul>
+          </details>
+          <div class="helpSectionActions">
+            <a class="btn small" href="fantasy-war-sim.html#tab-battle" target="_blank" rel="noopener noreferrer">Open Battle tab</a>
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+            <span class="rulesHint">Opens Fantasy War Sim directly to the Battle tab.</span>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-army-classes" data-search-title="Rules Army Classes" data-search-keywords="standard special faction classes immunities resistances vulnerabilities deadly weather terrain">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Army Classes</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">Army classes define battlefield identity, matchup pressure, and what each force wants to avoid.</p>
+          <details data-search-title="Standard army classes" data-search-keywords="archers assassins bandits builders cavalry gunners mages pikes rebels siege spies swords thieves hunters">
+            <summary>Standard classes (Non-Special)</summary>
+            <div class="rulesTableWrap">
+              <table class="tbl">
+                <thead><tr><th>Class</th><th>Best at</th><th>Watch out for</th></tr></thead>
+                <tbody>
+                  <tr><td>Archers</td><td>Ranged pressure and defensive support</td><td>Close-pressure classes and blocked lines of sight.</td></tr>
+                  <tr><td>Assassins</td><td>Hidden elimination and high-value disruption</td><td>Detection pressure and prolonged front-line trades.</td></tr>
+                  <tr><td>Bandits</td><td>Disruption and opportunistic tempo swings</td><td>Entrenched formations and disciplined defenses.</td></tr>
+                  <tr><td>Builders</td><td>Infrastructure support and siege preparation</td><td>Direct attrition battles without setup time.</td></tr>
+                  <tr><td>Cavalry</td><td>Mobility and breakthrough pressure</td><td>Pikes, chokepoints, and difficult terrain.</td></tr>
+                  <tr><td>Gunners</td><td>Projectile firepower and doctrine combos</td><td>Weather visibility penalties and close collapse.</td></tr>
+                  <tr><td>Mages</td><td>Arcane modifiers and flexible counterplay</td><td>Anti-magic pressure and high volatility events.</td></tr>
+                  <tr><td>Pikes</td><td>Anti-cavalry stance and line holding</td><td>Flanks and encirclement pressure.</td></tr>
+                  <tr><td>Rebels</td><td>Home-ground leverage and irregular war</td><td>Open-field wars of attrition away from support.</td></tr>
+                  <tr><td>Siege</td><td>Fortification pressure and structure breaking</td><td>Mobility loss and flank exposure.</td></tr>
+                  <tr><td>Spies</td><td>Information control and roll manipulation</td><td>Reveals, intel counters, and anti-hidden setups.</td></tr>
+                  <tr><td>Swords</td><td>Direct frontline engagement</td><td>Hard counters and layered ranged pressure.</td></tr>
+                  <tr><td>Thieves</td><td>STR theft and destabilization windows</td><td>Durable lines and anti-infiltration responses.</td></tr>
+                  <tr><td>Hunters</td><td>Tracking, skirmishing, and pursuit pressure</td><td>Heavy armor formations and urban choke fights.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+          <details data-search-title="Special army classes" data-search-keywords="fiends undead aerial cavalry vampires shield-brethren warforged mutants">
+            <summary>Special classes</summary>
+            <div class="helpBadgeRow">
+              <span class="badge gold">Fiends</span>
+              <span class="badge gold">Undead</span>
+              <span class="badge gold">Aerial Cavalry</span>
+              <span class="badge gold">Vampires</span>
+              <span class="badge gold">Shield-Brethren</span>
+              <span class="badge gold">Warforged</span>
+              <span class="badge gold">Mutants</span>
+            </div>
+          </details>
+          <details data-search-title="Special faction classes" data-search-keywords="snow elves fire cult grail arrio sisters drow forest fey mels army treants artemis hels legion">
+            <summary>Special faction classes</summary>
+            <div class="helpBadgeRow">
+              <span class="badge gold">Snow Elves</span>
+              <span class="badge gold">Fire Cult</span>
+              <span class="badge gold">Grail</span>
+              <span class="badge gold">Arrio Sisters</span>
+              <span class="badge gold">Drow</span>
+              <span class="badge gold">Forest Fey</span>
+              <span class="badge gold">Mel's Army</span>
+              <span class="badge gold">Treants</span>
+              <span class="badge gold">Artemis</span>
+              <span class="badge gold">Hel's Legion</span>
+            </div>
+          </details>
+          <details data-search-title="Class matchup interpretation" data-search-keywords="immunity resistance vulnerability deadly deadly doctrines preferred weather terrain">
+            <summary>How to interpret class matchup fields</summary>
+            <ul>
+              <li><b>Immunity</b> commonly maps to +3 dice, <b>Resistance</b> to +1, <b>Vulnerability</b> to -1, and <b>Deadly</b> to -3.</li>
+              <li><b>Deadly Doctrines</b> can trigger deadly penalties from doctrine presence rather than class type.</li>
+              <li>Preferred and undesired weather/terrain cues are useful for deciding deployment and commitment strategy before rolling.</li>
+            </ul>
+          </details>
+          <div class="helpSectionActions">
+            <a class="btn small" href="fantasy-war-sim.html#tab-armies" target="_blank" rel="noopener noreferrer">Open Armies tab</a>
+            <a class="btn small" href="fantasy-war-sim.html#tab-battle" target="_blank" rel="noopener noreferrer">Open Battle tab</a>
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+            <span class="rulesHint">Each link opens Fantasy War Sim on the matching tab.</span>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-doctrines" data-search-title="Rules Doctrines" data-search-keywords="augment trade quiet trade anti magic heavy artillery ward smiths baseline cost command points">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Doctrines</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">Doctrines are strategic directives. Pick them to shape how an army fights, what it trades away, and what pressure it can sustain.</p>
+          <details data-search-title="Doctrine categories and baseline cost" data-search-keywords="augment doctrines trade doctrines quiet trade baseline cost cp">
+            <summary>Doctrine categories and baseline cost rule</summary>
+            <ul>
+              <li><b>Augment doctrines</b> apply to specific armies.</li>
+              <li><b>Trade doctrines</b> apply as broader strategic toggles.</li>
+              <li><b>Quiet trade doctrines</b> are stealth/influence-oriented strategic policies.</li>
+              <li>Baseline CP cost is generally defined for size 1-100 and scales by additional 50-size increments.</li>
+            </ul>
+          </details>
+          <details data-search-title="Augment doctrine compendium" data-search-keywords="anti-air anti-magic heavy artillery fire artillery elemental ammunition armor piercing heavy protection battlefield weavers counterspell cadre wild surge license ritual artillery ward smiths soul binders spellthief detachment">
+            <summary>Augment doctrine compendium (high-use)</summary>
+            <div class="rulesTableWrap">
+              <table class="tbl">
+                <thead><tr><th>Doctrine</th><th>Use when</th><th>Benefit</th><th>Tradeoff</th></tr></thead>
+                <tbody>
+                  <tr><td>Anti-Air</td><td>Enemy air pressure is expected.</td><td>Deadly pressure vs aerial targets.</td><td>Higher supply and logistics burden.</td></tr>
+                  <tr><td>Anti-Magic</td><td>Enemy caster dominance is likely.</td><td>Strong anti-magic counter pressure.</td><td>Can reduce flexibility in mixed matchups.</td></tr>
+                  <tr><td>Heavy Artillery</td><td>You need range and siege pressure.</td><td>Higher die-step and structure threat.</td><td>Mobility loss and flank exposure.</td></tr>
+                  <tr><td>Fire Artillery</td><td>Weather/terrain favors fire pressure.</td><td>Fire-based deadly windows.</td><td>Cold/wet conditions can blunt impact.</td></tr>
+                  <tr><td>Elemental Ammunition</td><td>You can exploit enemy elemental weakness.</td><td>Chosen element overlays matchup math.</td><td>Backfires into resistances/immunities.</td></tr>
+                  <tr><td>Armor-Piercing</td><td>Enemy fortification/armor is central.</td><td>Punches through heavy defenses.</td><td>Follow-up strain after commitment.</td></tr>
+                  <tr><td>Heavy-Protection</td><td>You expect sustained incoming pressure.</td><td>Defensive shell and attrition stability.</td><td>Speed and maneuver penalties.</td></tr>
+                  <tr><td>Battlefield Weavers</td><td>You need weather-space control.</td><td>Zone weather influence and control.</td><td>Later-phase fatigue and vulnerability.</td></tr>
+                  <tr><td>Counterspell Cadre</td><td>Enemy arcane tempo is high.</td><td>Reduces hostile arcane effect tiers.</td><td>Narrow return when no caster pressure.</td></tr>
+                  <tr><td>Wild Surge License</td><td>You need high-risk burst momentum.</td><td>Die-step boost and volatility upside.</td><td>Complication risk and instability cost.</td></tr>
+                  <tr><td>Ritual Artillery</td><td>You can set up before engagement.</td><td>Prepared long-range ritual pressure.</td><td>Breaks under forced repositioning.</td></tr>
+                  <tr><td>Ward-Smiths</td><td>You need anti-deadly shielding.</td><td>Protective ward/zone guard support.</td><td>Opportunity cost after activation.</td></tr>
+                  <tr><td>Soul-Binders</td><td>Campaign pressure rewards risky scaling.</td><td>Potential CP and win-condition leverage.</td><td>Morale-side consequences if stalled.</td></tr>
+                  <tr><td>Spellthief Detachment</td><td>Enemy doctrine stack is predictable.</td><td>Temporary doctrine-copy pressure.</td><td>Follow-up vulnerability if mistimed.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+          <details data-search-title="Trade doctrines list" data-search-keywords="forced march better rations strict discipline clemency protocol no prisoners requisition authority propaganda bureau specialist training cadre black market quartermasters war levy shadow campaign espionage network deniable operations silent consolidation">
+            <summary>Trade and quiet-trade doctrine lists</summary>
+            <div class="helpBadgeRow">
+              <span class="badge gold">Forced March</span>
+              <span class="badge gold">Better Rations</span>
+              <span class="badge gold">Strict Discipline</span>
+              <span class="badge gold">Clemency Protocol</span>
+              <span class="badge gold">No Prisoners</span>
+              <span class="badge gold">Requisition Authority</span>
+              <span class="badge gold">Propaganda Bureau</span>
+              <span class="badge gold">Specialist Training Cadre</span>
+              <span class="badge gold">Black Market Quartermasters</span>
+              <span class="badge gold">War Levy</span>
+              <span class="badge gold">Shadow Campaign</span>
+              <span class="badge gold">Espionage Network</span>
+              <span class="badge gold">Deniable Operations</span>
+              <span class="badge gold">Silent Consolidation</span>
+            </div>
+            <p class="helpNote">Use these to shape campaign pressure, logistics, and political tempo when your table is running broader war-layer play.</p>
+          </details>
+          <div class="helpSectionActions">
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-weather-terrain" data-search-title="Rules Weather and Terrain" data-search-keywords="time of day weather conditions phenomena ashfall eclipse strange lights meteor shower magnetic storm elemental disturbance terrain table">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Weather &amp; Terrain</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">Weather and terrain are battle context multipliers. Treat them as strategic pressure, not just flavor.</p>
+          <details data-search-title="Time of day and weather condition overview" data-search-keywords="day night clear cloudy heavy clouds fog rain thunderstorm freezing snow blizzard dry scorching smog">
+            <summary>Condition overview and interpretation</summary>
+            <div class="helpGrid2">
+              <div class="alert"><b>Time of day overlay</b><br/>Day and night alter visibility/light context but are not weather tags by themselves.</div>
+              <div class="alert"><b>Weather stack</b><br/>Weather affects visibility, movement pressure, and matchup conditions in layered ways.</div>
+            </div>
+            <p class="helpNote">Core weather tags include clear, cloudy, heavy clouds, fog, rain, heavy rain, wind, thunderstorm, freezing, snow, blizzard, dry, scorching heat, smog/ash haze, and strange phenomena.</p>
+          </details>
+          <details data-search-title="Strange phenomena compendium" data-search-keywords="ashfall solar eclipse strange lights meteor shower malevolent storm wild magic storm magnetic storm elemental disturbance">
+            <summary>Strange phenomena list (full coverage)</summary>
+            <div class="rulesTableWrap">
+              <table class="tbl">
+                <thead><tr><th>Phenomenon</th><th>How it feels</th><th>At-table effect cue</th></tr></thead>
+                <tbody>
+                  <tr><td>Ashfall</td><td>Burned-sky pressure and visibility drag.</td><td>Plan for longer attrition and reduced clarity.</td></tr>
+                  <tr><td>Solar Eclipse</td><td>Daylight collapses into omen-dark conditions.</td><td>Treat many checks as night-like and uncertain.</td></tr>
+                  <tr><td>Strange Lights</td><td>Luminous anomalies distort normal cues.</td><td>Visibility and timing calls can shift unexpectedly.</td></tr>
+                  <tr><td>Meteor Shower</td><td>Sky hazard and falling-fire disruption.</td><td>Add urgency and movement-risk pressure.</td></tr>
+                  <tr><td>Malevolent Storm</td><td>Oppressive storm front with hostile momentum.</td><td>Expect broad pressure and failed coordination.</td></tr>
+                  <tr><td>Wild Magic Storm</td><td>Arcane instability with surge-level drama.</td><td>Magic outcomes spike; table events become volatile.</td></tr>
+                  <tr><td>Magnetic Storm</td><td>Directional/field interference and pull.</td><td>Target communication and formation friction.</td></tr>
+                  <tr><td>Elemental Disturbance</td><td>Conflicting elemental forces break stability.</td><td>Resolve element context carefully before commits.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+          <details data-search-title="Weather and terrain quick tables" data-search-keywords="winter spring summer fall weather table terrain table roads plains forest ruins cities fortresses bridge mountain pass trenches">
+            <summary>Weather table and terrain table quick reference</summary>
+            <p class="helpNote">Use these condensed tables for fast rulings. Open the full rulebook for expanded wording.</p>
+            <div class="rulesTableWrap">
+              <table class="tbl">
+                <thead><tr><th>Season</th><th>d100 highlights</th></tr></thead>
+                <tbody>
+                  <tr><td>Winter</td><td>Snow/Freezing common, blizzard rare, phenomena on 100.</td></tr>
+                  <tr><td>Spring</td><td>Rain/fog-heavy season, mixed overcast and winds, phenomena on 100.</td></tr>
+                  <tr><td>Summer</td><td>Clear/dry/scorching dominant, storms rare, phenomena on 100.</td></tr>
+                  <tr><td>Fall</td><td>Cloud/fog/wind blend with rain pockets, phenomena on 100.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="rulesTableWrap">
+              <table class="tbl">
+                <thead><tr><th>Terrain roll focus (d20)</th><th>Typical outcomes</th></tr></thead>
+                <tbody>
+                  <tr><td>1-4</td><td>Fortress, bridge, mountain pass, high ground</td></tr>
+                  <tr><td>5-8</td><td>Ruins, city, trenches, river routes</td></tr>
+                  <tr><td>9-13</td><td>Roads and open fields/plains</td></tr>
+                  <tr><td>14-18</td><td>Forest and forest-edge ambush terrain</td></tr>
+                  <tr><td>19-20</td><td>Industrial/scorched or GM regional signature terrain</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+          <div class="helpSectionActions">
+            <a class="btn small" href="fantasy-war-sim.html#tab-settings" target="_blank" rel="noopener noreferrer">Open Settings tab</a>
+            <a class="btn small" href="fantasy-war-sim.html#tab-battle" target="_blank" rel="noopener noreferrer">Open Battle tab</a>
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-command-meters" data-search-title="Rules Command Meters" data-search-keywords="command points morale supply influence optional war layer tiers">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Command Meters</h2>
+          </div>
+        </div>
+        <div class="content">
+          <p class="helpNote">These are optional campaign-layer controls for long-running war pressure and strategic pacing.</p>
+          <div class="rulesTableWrap">
+            <table class="tbl">
+              <thead><tr><th>Meter</th><th>Range</th><th>What it represents</th></tr></thead>
+              <tbody>
+                <tr><td>Command Points (CP)</td><td>Campaign resource</td><td>High-level coordination, emergency leverage, strategic exceptions.</td></tr>
+                <tr><td>Morale</td><td>-5 to +5</td><td>Cohesion, willingness to fight, resilience under pressure.</td></tr>
+                <tr><td>Supply</td><td>-5 to +5</td><td>Logistics, equipment readiness, route integrity, attrition risk.</td></tr>
+                <tr><td>Influence</td><td>-5 to +5</td><td>Political gravity, alliance pressure, narrative visibility.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <details data-search-title="Command meter tier behavior" data-search-keywords="inspired steady broken over supplied collapsing dominant irrelevant">
+            <summary>Tier behavior summary</summary>
+            <div class="rulesTableWrap">
+              <table class="tbl">
+                <thead><tr><th>Meter</th><th>High tier signal</th><th>Low tier signal</th></tr></thead>
+                <tbody>
+                  <tr><td>Morale</td><td>Momentum bonuses and cohesion stability</td><td>Attack friction, retreat risk, collapse pressure</td></tr>
+                  <tr><td>Supply</td><td>Operational tempo and reduced exhaustion pressure</td><td>Attrition, logistics penalties, movement breakdown</td></tr>
+                  <tr><td>Influence</td><td>Political leverage, ally pull, CP opportunities</td><td>Isolation, reduced support, weaker strategic leverage</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="helpNote">High-level tier labels in source include outcomes like Inspired/Broken (morale), Over-Supplied/Collapsing (supply), and Dominant/Irrelevant (influence).</p>
+          </details>
+          <div class="helpSectionActions">
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+            <span class="rulesHint">Optional rule layer. Ask the GM how it is tracked at your table.</span>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-optional-mechanics" data-search-title="Rules Optional Mechanics" data-search-keywords="cutscene dice impact help assist retreat split flank rest fortify fallen commander medals financial">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Optional Mechanics</h2>
+          </div>
+        </div>
+        <div class="content">
+          <details data-search-title="Optional cinematic mechanics" data-search-keywords="cutscene dice impact cinematic layer">
+            <summary>Cinematic optional mechanics</summary>
+            <ul>
+              <li><b>Cutscene:</b> spotlight dialogue beats in war scenes.</li>
+              <li><b>Dice impact:</b> cinematic outcomes can shift strategic dice quality and pressure.</li>
+            </ul>
+          </details>
+          <details data-search-title="Optional strategic mechanics" data-search-keywords="retreat split flanking rest fortify fallen commander medals help assist exhaustion">
+            <summary>Strategic optional mechanics</summary>
+            <ul>
+              <li>Includes retreat, split, flanking, rest, fortify, fallen commander handling, medals, financial overlays, and help/assist variants.</li>
+              <li>Many are map- and campaign-context dependent, so adjudication remains GM-led.</li>
+            </ul>
+          </details>
+          <div class="helpSectionActions">
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+            <span class="rulesHint">Optional Rule: confirm inclusion with your GM before play.</span>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+
+      <article class="card helpSection" id="rules-appendix" data-search-title="Rules Quick Reference Appendix" data-search-keywords="cinematic actions movement speeds battle dice pool limits modifier shorthand cheat sheet">
+        <div class="cardHead">
+          <div class="sideTitle">
+            <h2>Rules: Appendix / Quick Reference</h2>
+          </div>
+        </div>
+        <div class="content">
+          <div class="rulesTableWrap">
+            <table class="tbl">
+              <thead><tr><th>Quick reference</th><th>Summary</th></tr></thead>
+              <tbody>
+                <tr><td>Cinematic actions</td><td>Rally, Scene, and Cinematic Moment as rapid narrative tools.</td></tr>
+                <tr><td>Movement speeds</td><td>Reference distances by army type and phase cadence.</td></tr>
+                <tr><td>Battle caps</td><td>Attacker cap 10, defender cap 8 (with specific override paths).</td></tr>
+                <tr><td>Modifier shorthand</td><td>Immunity +3, Resistance +1, Vulnerability -1, Deadly -3.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="helpSectionActions">
+            <a class="btn small" href="fantasy-war-sim.html#tab-battle" target="_blank" rel="noopener noreferrer">Open Battle tab</a>
+            <a class="btn small" href="fantasy-war-sim.html#tab-history" target="_blank" rel="noopener noreferrer">Open History tab</a>
+            <a class="btn small" href="War_Encounter_Rules_2026_v4.html" target="_blank" rel="noopener noreferrer">Need full wording? Open Full Rulebook</a>
+          </div>
+          <a class="backTop" href="#helpTop">Back to top</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer aria-label="Footer">
+    <div>Fantasy War Sim Help Wiki &nbsp;•&nbsp; Quick Rules + Help Guides</div>
+    <div><a href="fantasy-war-sim.html">Return to Fantasy War Sim</a></div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const searchInput = $("helpSearchInput");
+  const searchResults = $("helpSearchResults");
+  const searchStatus = $("helpSearchStatus");
+  const contentRoot = document.querySelector(".helpContent");
+
+  let activeResultIndex = -1;
+  let renderedResults = [];
+  let debounceTimer = null;
+
+  const searchableElements = [
+    ...document.querySelectorAll("[data-search-title]"),
+    ...document.querySelectorAll(".helpFaq details"),
+    ...document.querySelectorAll("#glossary dt")
+  ];
+
+  const uniqueSearchables = Array.from(new Set(searchableElements));
+
+  const searchIndex = uniqueSearchables.map((el, idx) => {
+    const section = el.closest(".helpSection");
+    const id = el.id || section?.id || `search-item-${idx}`;
+    if (!el.id) el.id = id;
+    const title = (el.dataset.searchTitle || el.querySelector("h2,h3,summary,dt")?.textContent || "").trim();
+    const keywords = String(el.dataset.searchKeywords || "").trim();
+    const text = (el.dataset.searchText || el.textContent || "").replace(/\s+/g, " ").trim();
+    const sectionLabel = (section?.querySelector(".cardHead h2")?.textContent || "Section").trim();
+    return { id, title, keywords, text, sectionLabel, element: el };
+  });
+
+  function normalize(s) {
+    return String(s || "").toLowerCase().trim();
+  }
+
+  function tokenize(query) {
+    return normalize(query).split(/\s+/).filter(Boolean);
+  }
+
+  function scoreEntry(entry, terms) {
+    const title = normalize(entry.title);
+    const keywords = normalize(entry.keywords);
+    const text = normalize(entry.text);
+    let score = 0;
+    for (const t of terms) {
+      if (title.includes(t)) score += 12;
+      if (keywords.includes(t)) score += 7;
+      if (text.includes(t)) score += 3;
+      if (!title.includes(t) && !keywords.includes(t) && !text.includes(t)) return -1;
+    }
+    if (title.startsWith(terms[0])) score += 3;
+    return score;
+  }
+
+  function escapeRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function clearMarks() {
+    contentRoot.querySelectorAll("mark.helpMark").forEach((mark) => {
+      mark.replaceWith(document.createTextNode(mark.textContent || ""));
+    });
+  }
+
+  function highlightInNode(node, regex) {
+    const text = node.nodeValue;
+    if (!text || !regex.test(text)) return;
+    regex.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    text.replace(regex, (match, offset) => {
+      frag.appendChild(document.createTextNode(text.slice(last, offset)));
+      const m = document.createElement("mark");
+      m.className = "helpMark";
+      m.textContent = match;
+      frag.appendChild(m);
+      last = offset + match.length;
+      return match;
+    });
+    frag.appendChild(document.createTextNode(text.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  }
+
+  function applyMarks(terms) {
+    if (!terms.length) return;
+    const validTerms = terms.filter(t => t.length >= 2).slice(0, 5);
+    if (!validTerms.length) return;
+    const regex = new RegExp(`(${validTerms.map(escapeRegex).join("|")})`, "gi");
+    const candidates = contentRoot.querySelectorAll("p, li, td, dd, dt, h2, h3, summary");
+    for (const el of candidates) {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          if (node.parentElement && node.parentElement.closest("mark.helpMark")) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes = [];
+      let current;
+      while ((current = walker.nextNode())) nodes.push(current);
+      for (const node of nodes) highlightInNode(node, regex);
+    }
+  }
+
+  function openParentDetails(el) {
+    let cur = el;
+    while (cur) {
+      if (cur.tagName === "DETAILS") cur.open = true;
+      cur = cur.parentElement;
+    }
+  }
+
+  function focusTarget(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    document.querySelectorAll(".searchHit").forEach(el => el.classList.remove("searchHit"));
+    openParentDetails(target);
+    target.classList.add("searchHit");
+    if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    history.replaceState(null, "", `#${id}`);
+  }
+
+  function snippet(text, terms) {
+    const clean = String(text || "").replace(/\s+/g, " ").trim();
+    if (!clean) return "";
+    const t = terms[0] || "";
+    const idx = t ? clean.toLowerCase().indexOf(t) : 0;
+    if (idx < 0) return clean.slice(0, 120) + (clean.length > 120 ? "…" : "");
+    const start = Math.max(0, idx - 36);
+    const end = Math.min(clean.length, idx + 84);
+    return (start > 0 ? "…" : "") + clean.slice(start, end) + (end < clean.length ? "…" : "");
+  }
+
+  function renderResults(entries, terms) {
+    renderedResults = entries;
+    activeResultIndex = entries.length ? 0 : -1;
+    searchResults.innerHTML = "";
+
+    if (!terms.length) {
+      searchStatus.textContent = "Type to search sections, FAQs, and glossary terms.";
+      return;
+    }
+
+    if (!entries.length) {
+      searchStatus.textContent = "No matches found. Try terms like \"doctrine\", \"weather\", \"morale\", \"commit\", or \"war report\".";
+      return;
+    }
+
+    searchStatus.textContent = `${entries.length} result${entries.length === 1 ? "" : "s"} found.`;
+
+    entries.forEach((entry, idx) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "helpSearchResultBtn" + (idx === activeResultIndex ? " isActive" : "");
+      btn.dataset.target = entry.id;
+      btn.innerHTML = `<div class="helpSearchResultTitle">${entry.title || entry.sectionLabel}</div><div class="helpSearchResultMeta">${entry.sectionLabel} · ${snippet(entry.text, terms)}</div>`;
+      btn.addEventListener("click", () => {
+        clearMarks();
+        applyMarks(terms);
+        focusTarget(entry.id);
+      });
+      li.appendChild(btn);
+      searchResults.appendChild(li);
+    });
+  }
+
+  function rerenderActive() {
+    const btns = searchResults.querySelectorAll(".helpSearchResultBtn");
+    btns.forEach((b, i) => b.classList.toggle("isActive", i === activeResultIndex));
+  }
+
+  function runSearch() {
+    const terms = tokenize(searchInput.value);
+    clearMarks();
+
+    if (!terms.length) {
+      renderResults([], []);
+      document.querySelectorAll(".searchHit").forEach(el => el.classList.remove("searchHit"));
+      return;
+    }
+
+    const ranked = searchIndex
+      .map(entry => ({ entry, score: scoreEntry(entry, terms) }))
+      .filter(row => row.score >= 0)
+      .sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title))
+      .slice(0, 20)
+      .map(row => row.entry);
+
+    renderResults(ranked, terms);
+    applyMarks(terms);
+  }
+
+  searchInput?.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runSearch, 120);
+  });
+
+  searchInput?.addEventListener("keydown", (e) => {
+    if (!renderedResults.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeResultIndex = Math.min(renderedResults.length - 1, activeResultIndex + 1);
+      rerenderActive();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeResultIndex = Math.max(0, activeResultIndex - 1);
+      rerenderActive();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const hit = renderedResults[activeResultIndex >= 0 ? activeResultIndex : 0];
+      if (!hit) return;
+      focusTarget(hit.id);
+    }
+  });
+
+  document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-copy-target");
+      const pre = id ? document.getElementById(id) : null;
+      if (!pre) return;
+      const text = pre.innerText || pre.textContent || "";
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      } catch {
+        const old = btn.textContent;
+        btn.textContent = "Copy failed";
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

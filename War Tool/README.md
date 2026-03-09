@@ -1,59 +1,92 @@
-# War Table v3 - Quick Orientation
+# Fantasy War Sim
 
-War Table v3 is a local-first fantasy battle sandbox ("Fairgard Battle Engine") with transparent dice math, weather effects, doctrines, assist/hinder systems, battle history, and a War Report modal flow.
+Fantasy War Sim is a local-first fantasy battle simulator with transparent dice math, War Report staging/auto-battle flows, saved armies and factions, battle history, a War Room campaign dashboard, and browser-only persistence.
 
-This README is a fast orientation guide for developers and bots.  
-The detailed implementation contract lives in:
-- `assets/documentation/README_War_Table_v3_Dev_Guide.md`
+## Start Here
 
-## What This Project Contains
+- Main app: `fantasy-war-sim.html`
+- Help wiki: `fantasy-war-sim-help-wiki.html`
+- Full rulebook: `War_Encounter_Rules_2026_v4.html`
+- Incoming-dev handoff: `CLAUDE_HANDOFF.md`
+- Army logic roadmap: `assets/documentation/FANTASY_WAR_SIM_ARMY_LOGIC_STABILIZATION_ROADMAP.md`
+- Three-pool calibration PRD: `Fantasy-War-Sim_Three-Pool-Calibration-PRD.md`
+- Three-pool calibration roadmap: `assets/documentation/FANTASY_WAR_SIM_THREE_POOL_CALIBRATION_ROADMAP.md`
+- Rulebook suggestions log: `assets/documentation/RULEBOOK_SUGGESTIONS_LOG.md`
+- Canonical implementation contract: `assets/documentation/README_War_Table_v3_Dev_Guide.md`
+- Matchup logic guide: `assets/documentation/fantasy-war-sim-class-matchup-logic-guide.md`
+- Modifier pipeline guide: `assets/documentation/fantasy-war-sim-dice-modifier-logic-guide.md`
+- UX audit and remediation tracker: `tmp/docs/fantasy-war-sim-ux-audit-2026-03-08.md`
 
-- Main app: `War_Table_v3.html`
-- Help wiki: `War_Table_Help_Wiki.html`
-- Full rules page: `War_Encounter_Rules_2026_v4.html`
-- Core app styles: `assets/css/war-table-theme.css`
-- Runtime state theme routing: `assets/css/war-table-state-themes.css`
-- Help/rulebook layout styles:
-  - `assets/css/war-table-help.css`
-  - `assets/css/war-table-rulebook.css`
-- Long-form docs: `assets/documentation/`
+## Quick Start
 
-## Quick Start (Local)
-
-1. Open `War_Table_v3.html` in a browser.
-2. Open `War_Table_Help_Wiki.html` for quick rules/help.
-3. Optional: open `War_Encounter_Rules_2026_v4.html` for full rules text.
+1. Open `fantasy-war-sim.html` in a browser.
+2. Open `fantasy-war-sim-help-wiki.html` for quick rules/help.
+3. Run `npx playwright test --project=chromium-local` for the local regression suite.
 
 No backend or build step is required for normal usage.
 
-## Project Model at a Glance
+## Active Stabilization Lane
 
-- Architecture: static HTML + CSS + in-file JavaScript.
-- Persistence: browser `localStorage` (`warTableState`, schema v7).
-- App areas: Battle, Armies, Factions, History, Settings.
-- Battle engine entrypoint: `runBattleRound(options)`.
-- War Report flow:
-  - Staging-first when `showWarReportModal` is enabled.
-  - Single-result and auto-battle modes reuse the same battle engine path.
-  - Auto sessions are runtime-only and summarized in modal session blocks.
+- Current build label: `2026-03-08-three-pool-scale-p1`
+- Current execution lane: the local army-logic stabilization roadmap is complete through Fire Cult weather lock, the nearby-action audit, and the narrow Shield-Brethren follow-up, and the first three-pool calibration pass is now shipped in the app.
+- UX stabilization status: the low-risk Lane A slice from the March 8 audit is now shipped locally under the same build label:
+  - guidance-first first-run battle messaging
+  - targeted copy cleanup across Battle, Settings, and War Report
+  - consistent validation/status live-region semantics
+  - dirty-guard initial focus on `Stay`
+  - favicon/head asset hygiene
+- Remaining open items: hosted parity smoke once `WAR_TABLE_HOSTED_URL` is available, plus the documented Shield-Brethren cavalry-charge deferral.
+- Broader UX release lane: the audit's layout / IA / mobile continuity work remains open and should stay separate from the stabilization-safe slice.
+- Hosted parity: still blocked in this workspace until `WAR_TABLE_HOSTED_URL` is provided; local continuation remains explicitly waived in the drift log.
 
-## Read This First for Changes
+## Three-Pool Calibration Lane
 
-If you are editing behavior or UI contracts, start with:
-1. `War_Table_v3.html` (all runtime logic and event wiring)
-2. `assets/css/war-table-theme.css` (core visual system/layout)
-3. `assets/documentation/README_War_Table_v3_Dev_Guide.md` (source-of-truth contract)
+- Current scope: quality tags, class ceilings, future-facing Supply warnings, and rulebook-parity logging.
+- PRD / dev handoff: `Fantasy-War-Sim_Three-Pool-Calibration-PRD.md`
+- Roadmap: `assets/documentation/FANTASY_WAR_SIM_THREE_POOL_CALIBRATION_ROADMAP.md`
+- Rulebook parity log: `assets/documentation/RULEBOOK_SUGGESTIONS_LOG.md`
+- Status: phase-1/phase-2 simulator work is now shipped for quality tags, warnings, and pre-battle ceiling enforcement. Compact dice-label cleanup and later rulebook parity follow-up remain open.
 
-## High-Risk Areas (Do Not Change Casually)
+## War Room MVP
 
-- `runBattleRound` order (weather snapshot and post-battle weather advance timing).
-- War Report state transitions (`staging`, `single-result`, `auto-running`, `auto-stopped`).
-- Auto-battle stop lifecycle (`_warReportAutoRunning`, `_warReportAutoToken`, stop request flag).
-- History payload compatibility (renderer must stay null-safe for older entries).
-- Center engagement card containment CSS (`.battleGrid`, `.card.center`, `#resultHeadline`).
+- The app now includes a `War Room` tab immediately left of `Battle`.
+- Current shipped scope:
+  - faction relationship classification (`ally`, `neutral`, `enemy`)
+  - war status cards for ally / neutral / enemy army totals and defeated counts
+  - overall war signal derived from defeated-army ratios
+  - allied army breakdown with wins / losses, current vs original size/STR, and degradation percentages
+  - manual campaign meters for `cp`, `supply`, `morale`, and `influence`
+  - battle-turn / season / weather recap with session-scoped weather history
+- Persistence now includes a `war` block plus `originalSize` / `originalStr` on saved armies.
+- There is no Spy meter in the app or state model.
 
-## Ground Rules for Devs/Bots
+## Project Shape
 
-- Treat `assets/documentation/README_War_Table_v3_Dev_Guide.md` as canonical.
-- Document shipped behavior only; do not record planned behavior as implemented.
-- If behavior changes, update docs in the same change.
+- Architecture: static HTML + shared CSS + in-file JavaScript
+- Persistence: browser `localStorage` using `warTableState`
+- Main app shell: `fantasy-war-sim.html`
+- Shared theme: `assets/css/war-table-theme.css`
+- Tests: `tests/war-table.spec.js`
+
+## Canonical Docs
+
+- `CLAUDE_HANDOFF.md` for product/repo orientation
+- `assets/documentation/README_War_Table_v3_Dev_Guide.md` for shipped behavior contracts
+- `assets/documentation/FANTASY_WAR_SIM_ARMY_LOGIC_STABILIZATION_ROADMAP.md` for the current staged execution order
+- `Fantasy-War-Sim_Three-Pool-Calibration-PRD.md` for the next planning-only implementation handoff
+- `assets/documentation/FANTASY_WAR_SIM_THREE_POOL_CALIBRATION_ROADMAP.md` for the next planning-only staged execution order
+- `assets/documentation/RULEBOOK_SUGGESTIONS_LOG.md` for simulator-to-rulebook parity suggestions
+- `assets/documentation/ARCHITECTURE_INDEX_War_Table_v3.md` for section markers and high-traffic function anchors
+- `assets/documentation/fantasy-war-sim-class-matchup-logic-guide.md` for plain-English class-matchup mapping
+- `assets/documentation/fantasy-war-sim-dice-modifier-logic-guide.md` for plain-English modifier-pipeline mapping
+- `tmp/docs/fantasy-war-sim-ux-audit-2026-03-08.md` for the March 8 UX findings plus shipped/open remediation status
+
+## Legacy Compatibility Notes
+
+Some internal names intentionally still use legacy `warTable` naming:
+- `warTableState` storage key
+- `war-table-*` CSS filenames
+- `War_Table_v3.html` redirect fallback for old links/bookmarks
+- internal doc filenames under `assets/documentation/`
+
+Those identifiers are not a signal that the frontend rebrand is incomplete; most are kept for compatibility and to avoid unnecessary churn.
