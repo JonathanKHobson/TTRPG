@@ -1,0 +1,46 @@
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=612, maximum-scale=4.0"><title>fantasy-war-sim-one-page-summary.docx</title><style type="text/css">body
+{
+font-size:12;
+}
+div
+{
+margin-top: 0;
+margin-bottom: 0;
+}
+ p
+{
+margin-top: 0;
+margin-bottom: 0;
+line-height: 120%
+}
+ span
+{
+line-height: 120%
+}
+table
+{
+border-collapse: collapse;
+border-color: black;
+font-size:12;
+}
+td
+{
+word-wrap:break-word
+}
+</style></head><style type="text/css">
+.s0.s0.s0 {margin-left: 0; margin-top: 0;}
+.s1.s1.s1 {overflow:hidden; position:relative; word-wrap:break-word; width: 528; padding-left: 41; padding-right: 41; min-height: 844; padding-top: 36; padding-bottom: 36;}
+</style><body class="s0"><div class="s1"><style type="text/css">
+.s2.s2.s2 {font-size:14; font-family:"Aptos"; font-weight:bold;}
+.s3.s3.s3 {margin-bottom:2; text-align:center; margin-left:0; line-height:1.200000; margin-right:0; text-indent:0; margin-top:0;}
+</style><p class="s3"><span class="s2">Fantasy War Sim</span></p><style type="text/css">
+.s4.s4.s4 {font-size:9; font-family:"Aptos"; font-style:italic;}
+.s5.s5.s5 {margin-bottom:6; text-align:center; margin-left:0; line-height:1.200000; margin-right:0; text-indent:0; margin-top:0;}
+</style><p class="s5"><span class="s4">One-page app summary</span></p><style type="text/css">
+.s6.s6.s6 {padding-left:1px; padding-right:1px;}
+.s7.s7.s7 {font-size:10; font-family:"Aptos"; font-weight:bold;}
+.s8.s8.s8 {margin-bottom:0; text-align:left; margin-left:0; line-height:1.200000; margin-right:0; text-indent:0; margin-top:0;}
+.s9.s9.s9 {font-size:9; font-family:"Aptos";}
+.s10.s10.s10 {font-size:9; font-family:"Symbol"; min-width:-7;}
+.s11.s11.s11 {margin-bottom:0; text-align:left; margin-left:11; line-height:1.200000; margin-right:0; text-indent:-7; margin-top:0;}
+</style><table style="margin-left:0px;"><tr style="vertical-align:top;"><td class="s6"><div style="max-width:108px;"><p class="s8"><span class="s7">What it is</span></p></div></td><td class="s6"><div style="max-width:424px;"><p class="s8"><span class="s9">Fantasy War Sim is a local-first fantasy battle simulator with transparent dice math, War Report staging and auto-battle flows, saved armies and factions, battle history, and browser-only persistence. The shipped app is an offline-ready static web app with no backend or build step required for normal use.</span></p></div></td></tr><tr style="vertical-align:top;"><td class="s6"><div style="max-width:108px;"><p class="s8"><span class="s7">Who it's for</span></p></div></td><td class="s6"><div style="max-width:424px;"><p class="s8"><span class="s9">Not found in repo.</span></p></div></td></tr><tr style="vertical-align:top;"><td class="s6"><div style="max-width:108px;"><p class="s8"><span class="s7">What it does</span></p></div></td><td class="s6"><div style="max-width:424px;"><div class="s11"><span class="s10">• </span><span class="s9">Run local fantasy battles between attacker and defender armies.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Load saved armies or create new ones directly in the battle flow.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Save and manage army and faction data inside the app.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Inspect transparent dice math through pool summaries and breakdown views.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Use War Report staging for round setup, replay, and auto-battle control.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Review grouped battle history by session and turn, with export and clear actions.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Persist settings, weather, armies, factions, and history in browser localStorage.</span></div></div></td></tr><tr style="vertical-align:top;"><td class="s6"><div style="max-width:108px;"><p class="s8"><span class="s7">How it works</span></p></div></td><td class="s6"><div style="max-width:424px;"><div class="s11"><span class="s10">• </span><span class="s9">Main shell: fantasy-war-sim.html contains the UI structure, event wiring, runtime state, and battle logic.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Styling: assets/css/war-table-theme.css provides the base theme; assets/css/war-table-state-themes.css layers runtime weather, phenomena, and defeat visuals.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Supporting surfaces: fantasy-war-sim-help-wiki.html and War_Encounter_Rules_2026_v4.html are separate static HTML references with their own stylesheet layering.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Data flow: user input updates runtime state, battle resolution runs locally, then results and history are persisted to localStorage under warTableState and re-rendered.</span></div></div></td></tr><tr style="vertical-align:top;"><td class="s6"><div style="max-width:108px;"><p class="s8"><span class="s7">How to run</span></p></div></td><td class="s6"><div style="max-width:424px;"><div class="s11"><span class="s10">• </span><span class="s9">Open fantasy-war-sim.html in a browser.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Open fantasy-war-sim-help-wiki.html for quick rules and help.</span></div><div class="s11"><span class="s10">• </span><span class="s9">Run npx playwright test --project=chromium-local for the local regression suite.</span></div></div></td></tr></table></div></body></html>
