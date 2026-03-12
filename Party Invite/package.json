@@ -1,0 +1,20 @@
+{
+  "name": "ttrpg-party-invite",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run bundle:static && vite",
+    "build": "npm run bundle:static",
+    "preview": "vite preview",
+    "bundle:static": "esbuild src/main.js --bundle --platform=browser --format=iife --outfile=assets/app.js --loader:.css=css"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^4.4.1",
+    "canvas-confetti": "^1.9.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9",
+    "vite": "^7.1.5"
+  }
+}
