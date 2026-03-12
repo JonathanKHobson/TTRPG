@@ -1,5 +1,4 @@
 import { eventContent } from "../data/content.js";
-import { assetCatalog } from "../data/assetCatalog.js";
 import { getInviteGuests } from "../data/guests.js";
 
 function renderCelebrationPieces(scope, { balloons = [], confetti = [], sparks = [] }) {
@@ -15,9 +14,6 @@ function renderCelebrationPieces(scope, { balloons = [], confetti = [], sparks =
 function renderAtmosphere() {
   return `
     <div class="landing-atmosphere" aria-hidden="true">
-      <img class="landing-parchment-texture" src="${assetCatalog.textures.parchmentFolded}" alt="" />
-      <img class="landing-frame-overlay" src="${assetCatalog.borders.fantasyFrameLandscapeGold}" alt="" />
-      <img class="landing-hero-character" src="${assetCatalog.characters.amberElfRogue}" alt="" />
       ${renderCelebrationPieces("landing", {
         balloons: ["a", "b", "c", "d", "e", "f", "g"],
         confetti: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"],
@@ -30,9 +26,6 @@ function renderAtmosphere() {
 function renderInviteAtmosphere() {
   return `
     <div class="invite-atmosphere" aria-hidden="true">
-      <img class="invite-guardian-character" src="${assetCatalog.characters.gladranWingedGuardianWide}" alt="" />
-      <img class="invite-loot-accent" src="${assetCatalog.loot.treasurePileRuby}" alt="" />
-      <img class="invite-purse-accent" src="${assetCatalog.loot.coinPurseRed}" alt="" />
       ${renderCelebrationPieces("invite", {
         balloons: ["a", "b", "c", "d"],
         confetti: ["a", "b", "c", "d", "e", "f", "g", "h"],
@@ -43,11 +36,9 @@ function renderInviteAtmosphere() {
 }
 
 function renderScrollBody({ stage, selectedGuest }) {
-  const scrollPaperStyle = `style="--scroll-paper-texture: url('${assetCatalog.textures.parchmentFolded}')"`;
-
   if (stage === "scroll-reveal") {
     return `
-      <div class="scroll-paper scroll-paper-loading" ${scrollPaperStyle}>
+      <div class="scroll-paper scroll-paper-loading">
         <p class="scroll-kicker">Processing Record</p>
         <h2>${selectedGuest?.displayName ?? "Adventurer"}</h2>
         <p class="scroll-copy">${eventContent.satireTagline}</p>
@@ -56,7 +47,7 @@ function renderScrollBody({ stage, selectedGuest }) {
   }
 
   return `
-    <div class="scroll-paper scroll-paper-ready" ${scrollPaperStyle}>
+    <div class="scroll-paper scroll-paper-ready">
       <p class="scroll-kicker">${eventContent.scrollHeadline}</p>
       <h2>${selectedGuest?.displayName ?? "Adventurer"}</h2>
       <p class="scroll-copy">${eventContent.personalizedLead}</p>

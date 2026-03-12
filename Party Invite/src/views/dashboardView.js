@@ -1,5 +1,4 @@
 import { eventContent, partyTabs } from "../data/content.js";
-import { assetCatalog } from "../data/assetCatalog.js";
 import { renderActivitiesView } from "./activitiesView.js";
 import { renderDetailsView } from "./detailsView.js";
 import { renderGroceriesView } from "./groceriesView.js";
@@ -33,14 +32,6 @@ function renderDashboardCelebration(area) {
 
   return `
     <div class="dashboard-celebration dashboard-celebration-${area}" aria-hidden="true">
-      ${
-        area === "meta"
-          ? `
-              <img class="dashboard-frame-art" src="${assetCatalog.borders.fantasyFrameLandscape}" alt="" />
-              <img class="dashboard-gem-art" src="${assetCatalog.loot.gemPrismatic}" alt="" />
-            `
-          : ""
-      }
       ${balloons.map((name) => `<span class="dashboard-balloon dashboard-balloon-${name}"></span>`).join("")}
       ${confetti.map((name) => `<span class="dashboard-confetti dashboard-confetti-${name}"></span>`).join("")}
       <span class="dashboard-spark dashboard-spark-${sparkName}"></span>

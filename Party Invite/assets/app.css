@@ -663,10 +663,7 @@ summary:focus-visible {
     linear-gradient(
       180deg,
       rgba(255, 246, 223, 0.96),
-      rgba(245, 224, 170, 0.96)),
-    var(--scroll-paper-texture);
-  background-position: center;
-  background-size: cover;
+      rgba(245, 224, 170, 0.96));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 18px 34px rgba(0, 0, 0, 0.18);
   font-variant: normal;
 }

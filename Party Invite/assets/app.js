@@ -967,36 +967,6 @@
     return guests.filter((guest) => !guest.hiddenFromInvite);
   }
 
-  // src/data/assetCatalog.js
-  var imageRoot = "/assets/images";
-  function imagePath(relativePath) {
-    return `${imageRoot}/${relativePath}`;
-  }
-  var assetCatalog = {
-    characters: {
-      amberElfRogue: imagePath("characters/amber-elf-rogue.png"),
-      mycostarMushroomDruid: imagePath("characters/mycostar-mushroom-druid.png"),
-      gladranWingedGuardian: imagePath("characters/gladran-winged-guardian.png"),
-      gladranWingedGuardianWide: imagePath("characters/variants/gladran-winged-guardian-wide.png")
-    },
-    borders: {
-      fantasyFrameLandscapeGold: imagePath("borders/fantasy-frame-landscape-gold.png"),
-      fantasyFrameLandscape: imagePath("borders/fantasy-frame-landscape.png"),
-      fantasyFrameSquare: imagePath("borders/fantasy-frame-square.png")
-    },
-    loot: {
-      coinPileGold: imagePath("loot/coin-pile-gold.png"),
-      treasurePileRuby: imagePath("loot/treasure-pile-ruby.png"),
-      gemGreen: imagePath("loot/gem-green.png"),
-      gemPrismatic: imagePath("loot/gem-prismatic.png"),
-      coinPurseRed: imagePath("loot/coin-purse-red.png"),
-      coinBagsCorners: imagePath("loot/coin-bags-corners.png")
-    },
-    textures: {
-      parchmentFolded: imagePath("textures/parchment-folded.png")
-    }
-  };
-
   // src/data/activities.js
   var locationFilterOptions = [
     "At the House",
@@ -2424,10 +2394,6 @@
     const sparkName = area === "header" ? "a" : "b";
     return `
     <div class="dashboard-celebration dashboard-celebration-${area}" aria-hidden="true">
-      ${area === "meta" ? `
-              <img class="dashboard-frame-art" src="${assetCatalog.borders.fantasyFrameLandscape}" alt="" />
-              <img class="dashboard-gem-art" src="${assetCatalog.loot.gemPrismatic}" alt="" />
-            ` : ""}
       ${balloons.map((name) => `<span class="dashboard-balloon dashboard-balloon-${name}"></span>`).join("")}
       ${confetti.map((name) => `<span class="dashboard-confetti dashboard-confetti-${name}"></span>`).join("")}
       <span class="dashboard-spark dashboard-spark-${sparkName}"></span>
@@ -2556,9 +2522,6 @@
   function renderAtmosphere() {
     return `
     <div class="landing-atmosphere" aria-hidden="true">
-      <img class="landing-parchment-texture" src="${assetCatalog.textures.parchmentFolded}" alt="" />
-      <img class="landing-frame-overlay" src="${assetCatalog.borders.fantasyFrameLandscapeGold}" alt="" />
-      <img class="landing-hero-character" src="${assetCatalog.characters.amberElfRogue}" alt="" />
       ${renderCelebrationPieces("landing", {
       balloons: ["a", "b", "c", "d", "e", "f", "g"],
       confetti: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"],
@@ -2570,9 +2533,6 @@
   function renderInviteAtmosphere() {
     return `
     <div class="invite-atmosphere" aria-hidden="true">
-      <img class="invite-guardian-character" src="${assetCatalog.characters.gladranWingedGuardianWide}" alt="" />
-      <img class="invite-loot-accent" src="${assetCatalog.loot.treasurePileRuby}" alt="" />
-      <img class="invite-purse-accent" src="${assetCatalog.loot.coinPurseRed}" alt="" />
       ${renderCelebrationPieces("invite", {
       balloons: ["a", "b", "c", "d"],
       confetti: ["a", "b", "c", "d", "e", "f", "g", "h"],
@@ -2582,10 +2542,9 @@
   `;
   }
   function renderScrollBody({ stage, selectedGuest }) {
-    const scrollPaperStyle = `style="--scroll-paper-texture: url('${assetCatalog.textures.parchmentFolded}')"`;
     if (stage === "scroll-reveal") {
       return `
-      <div class="scroll-paper scroll-paper-loading" ${scrollPaperStyle}>
+      <div class="scroll-paper scroll-paper-loading">
         <p class="scroll-kicker">Processing Record</p>
         <h2>${selectedGuest?.displayName ?? "Adventurer"}</h2>
         <p class="scroll-copy">${eventContent.satireTagline}</p>
@@ -2593,7 +2552,7 @@
     `;
     }
     return `
-    <div class="scroll-paper scroll-paper-ready" ${scrollPaperStyle}>
+    <div class="scroll-paper scroll-paper-ready">
       <p class="scroll-kicker">${eventContent.scrollHeadline}</p>
       <h2>${selectedGuest?.displayName ?? "Adventurer"}</h2>
       <p class="scroll-copy">${eventContent.personalizedLead}</p>
