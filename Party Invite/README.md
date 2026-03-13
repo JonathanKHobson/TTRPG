@@ -25,23 +25,34 @@ If you change the source files under [`src`](/Volumes/KyleSSD/Websites/Party%20I
 
 ## Sync behavior
 
-The app supports three sync modes:
+The app supports two sync modes:
 
 - `local`: default and safest for direct-open use; data persists on the current device
-- `apps-script`: hosted-only live sync through a deployed Google Apps Script web app
-- `emailjs`: hosted fallback that emails changes to Kyle instead of live-sharing them
+- `apps-script`: hosted live sync through a deployed Google Apps Script web app, with email notifications on every guest mutation
 
 When the site is opened directly from disk, it intentionally falls back to local persistence.
+
+When the site is hosted on GitHub Pages, use [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) to point the app at the deployed Apps Script URL. The static build does not reliably consume `VITE_*` config once bundled for direct-open shipping, so the hosted runtime config file is the source of truth.
 
 ## Google Apps Script deployment
 
 1. Create a Google Sheet.
 2. Open `Extensions -> Apps Script`.
 3. Paste [`google-apps-script/Code.gs`](/Volumes/KyleSSD/Websites/Party%20Invite/google-apps-script/Code.gs) into the editor.
-4. Deploy as a web app with access set so the invite site can reach it.
-5. Copy the deployed URL into `VITE_APPS_SCRIPT_URL`.
+4. Optional but recommended: in `Project Settings -> Script Properties`, add `NOTIFICATION_EMAIL=composer01@gmail.com`.
+5. Deploy as a web app with access set so the invite site can reach it.
+6. Copy the deployed URL into [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) as `appsScriptUrl`.
+7. Keep `syncMode: "apps-script"` in [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) for the hosted GitHub Pages version.
 
 Apps Script is best treated as a hosted-mode enhancement, not a requirement for the desktop-open version.
+
+The script now:
+
+- persists shared state in Sheets
+- assigns a mutation id to each guest action
+- retries notification emails safely without duplicating stored data
+- can replay cached pending browser mutations after the site reconnects
+- attempts a one-time backfill from a guest's locally cached invite state when hosted sync is first enabled
 
 The script creates and uses these tabs:
 
@@ -51,3 +62,10 @@ The script creates and uses these tabs:
 - `activity_suggestions`
 - `guest_details`
 - `event_audit`
+
+## Shipping to GitHub Pages
+
+1. Make source edits under [`src`](/Volumes/KyleSSD/Websites/Party%20Invite/src).
+2. Rebuild the shipped bundle with `npm run build`.
+3. Confirm [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) contains the deployed Apps Script URL.
+4. Commit the updated `Party Invite/` files to the [`JonathanKHobson/TTRPG`](https://github.com/JonathanKHobson/TTRPG) repo.

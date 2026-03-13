@@ -733,7 +733,6 @@
     safetyNote: "Allergy and dietary notes are stored here for coordination, but Kyle still needs direct confirmation for anything safety-critical.",
     syncLabels: {
       "apps-script": "Live coordination",
-      emailjs: "Request-by-email mode",
       local: "Saved on this device"
     }
   };
@@ -1100,32 +1099,32 @@
     if (activity.locationGroup !== void 0) {
       return activity.locationGroup;
     }
-    const location2 = activity.location?.toLowerCase() ?? "";
-    if (!location2 || /tbd/.test(location2)) {
+    const location = activity.location?.toLowerCase() ?? "";
+    if (!location || /tbd/.test(location)) {
       return null;
     }
     if (activity.category === "Day Trips") {
       return "Day Trip / Out of Town";
     }
-    if (location2.includes("kyle's house")) {
+    if (location.includes("kyle's house")) {
       return "At the House";
     }
-    if (location2.includes("mesa / scottsdale / chandler")) {
+    if (location.includes("mesa / scottsdale / chandler")) {
       return "Mesa / East Valley";
     }
-    if (/west valley|glendale/.test(location2)) {
+    if (/west valley|glendale/.test(location)) {
       return "West Valley";
     }
-    if (/scottsdale/.test(location2)) {
+    if (/scottsdale/.test(location)) {
       return "Scottsdale / North Scottsdale";
     }
-    if (/tempe|chandler|gilbert/.test(location2)) {
+    if (/tempe|chandler|gilbert/.test(location)) {
       return "Tempe / Chandler / Gilbert";
     }
-    if (/mesa|east valley|near east mesa|peralta|coon bluff|phon d\. sutton|butcher jones/.test(location2)) {
+    if (/mesa|east valley|near east mesa|peralta|coon bluff|phon d\. sutton|butcher jones/.test(location)) {
       return "Mesa / East Valley";
     }
-    if (/phoenix|papago park|downtown phoenix|central phoenix|south mountain/.test(location2)) {
+    if (/phoenix|papago park|downtown phoenix|central phoenix|south mountain/.test(location)) {
       return "Phoenix / Central City";
     }
     return "Day Trip / Out of Town";
@@ -2724,251 +2723,11 @@
     window.localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(state));
   }
 
-  // node_modules/@emailjs/browser/es/models/EmailJSResponseStatus.js
-  var EmailJSResponseStatus = class {
-    constructor(_status = 0, _text = "Network Error") {
-      this.status = _status;
-      this.text = _text;
-    }
-  };
-
-  // node_modules/@emailjs/browser/es/utils/createWebStorage/createWebStorage.js
-  var createWebStorage = () => {
-    if (typeof localStorage === "undefined")
-      return;
-    return {
-      get: (key) => Promise.resolve(localStorage.getItem(key)),
-      set: (key, value) => Promise.resolve(localStorage.setItem(key, value)),
-      remove: (key) => Promise.resolve(localStorage.removeItem(key))
-    };
-  };
-
-  // node_modules/@emailjs/browser/es/store/store.js
-  var store = {
-    origin: "https://api.emailjs.com",
-    blockHeadless: false,
-    storageProvider: createWebStorage()
-  };
-
-  // node_modules/@emailjs/browser/es/utils/buildOptions/buildOptions.js
-  var buildOptions = (options) => {
-    if (!options)
-      return {};
-    if (typeof options === "string") {
-      return {
-        publicKey: options
-      };
-    }
-    if (options.toString() === "[object Object]") {
-      return options;
-    }
-    return {};
-  };
-
-  // node_modules/@emailjs/browser/es/methods/init/init.js
-  var init = (options, origin = "https://api.emailjs.com") => {
-    if (!options)
-      return;
-    const opts = buildOptions(options);
-    store.publicKey = opts.publicKey;
-    store.blockHeadless = opts.blockHeadless;
-    store.storageProvider = opts.storageProvider;
-    store.blockList = opts.blockList;
-    store.limitRate = opts.limitRate;
-    store.origin = opts.origin || origin;
-  };
-
-  // node_modules/@emailjs/browser/es/api/sendPost.js
-  var sendPost = async (url, data, headers = {}) => {
-    const response = await fetch(store.origin + url, {
-      method: "POST",
-      headers,
-      body: data
-    });
-    const message = await response.text();
-    const responseStatus = new EmailJSResponseStatus(response.status, message);
-    if (response.ok) {
-      return responseStatus;
-    }
-    throw responseStatus;
-  };
-
-  // node_modules/@emailjs/browser/es/utils/validateParams/validateParams.js
-  var validateParams = (publicKey, serviceID, templateID) => {
-    if (!publicKey || typeof publicKey !== "string") {
-      throw "The public key is required. Visit https://dashboard.emailjs.com/admin/account";
-    }
-    if (!serviceID || typeof serviceID !== "string") {
-      throw "The service ID is required. Visit https://dashboard.emailjs.com/admin";
-    }
-    if (!templateID || typeof templateID !== "string") {
-      throw "The template ID is required. Visit https://dashboard.emailjs.com/admin/templates";
-    }
-  };
-
-  // node_modules/@emailjs/browser/es/utils/validateTemplateParams/validateTemplateParams.js
-  var validateTemplateParams = (templateParams) => {
-    if (templateParams && templateParams.toString() !== "[object Object]") {
-      throw "The template params have to be the object. Visit https://www.emailjs.com/docs/sdk/send/";
-    }
-  };
-
-  // node_modules/@emailjs/browser/es/utils/isHeadless/isHeadless.js
-  var isHeadless = (navigator2) => {
-    return navigator2.webdriver || !navigator2.languages || navigator2.languages.length === 0;
-  };
-
-  // node_modules/@emailjs/browser/es/errors/headlessError/headlessError.js
-  var headlessError = () => {
-    return new EmailJSResponseStatus(451, "Unavailable For Headless Browser");
-  };
-
-  // node_modules/@emailjs/browser/es/utils/validateBlockListParams/validateBlockListParams.js
-  var validateBlockListParams = (list, watchVariable) => {
-    if (!Array.isArray(list)) {
-      throw "The BlockList list has to be an array";
-    }
-    if (typeof watchVariable !== "string") {
-      throw "The BlockList watchVariable has to be a string";
-    }
-  };
-
-  // node_modules/@emailjs/browser/es/utils/isBlockedValueInParams/isBlockedValueInParams.js
-  var isBlockListDisabled = (options) => {
-    return !options.list?.length || !options.watchVariable;
-  };
-  var getValue = (data, name) => {
-    return data instanceof FormData ? data.get(name) : data[name];
-  };
-  var isBlockedValueInParams = (options, params) => {
-    if (isBlockListDisabled(options))
-      return false;
-    validateBlockListParams(options.list, options.watchVariable);
-    const value = getValue(params, options.watchVariable);
-    if (typeof value !== "string")
-      return false;
-    return options.list.includes(value);
-  };
-
-  // node_modules/@emailjs/browser/es/errors/blockedEmailError/blockedEmailError.js
-  var blockedEmailError = () => {
-    return new EmailJSResponseStatus(403, "Forbidden");
-  };
-
-  // node_modules/@emailjs/browser/es/utils/validateLimitRateParams/validateLimitRateParams.js
-  var validateLimitRateParams = (throttle, id) => {
-    if (typeof throttle !== "number" || throttle < 0) {
-      throw "The LimitRate throttle has to be a positive number";
-    }
-    if (id && typeof id !== "string") {
-      throw "The LimitRate ID has to be a non-empty string";
-    }
-  };
-
-  // node_modules/@emailjs/browser/es/utils/isLimitRateHit/isLimitRateHit.js
-  var getLeftTime = async (id, throttle, storage) => {
-    const lastTime = Number(await storage.get(id) || 0);
-    return throttle - Date.now() + lastTime;
-  };
-  var isLimitRateHit = async (defaultID, options, storage) => {
-    if (!options.throttle || !storage) {
-      return false;
-    }
-    validateLimitRateParams(options.throttle, options.id);
-    const id = options.id || defaultID;
-    const leftTime = await getLeftTime(id, options.throttle, storage);
-    if (leftTime > 0) {
-      return true;
-    }
-    await storage.set(id, Date.now().toString());
-    return false;
-  };
-
-  // node_modules/@emailjs/browser/es/errors/limitRateError/limitRateError.js
-  var limitRateError = () => {
-    return new EmailJSResponseStatus(429, "Too Many Requests");
-  };
-
-  // node_modules/@emailjs/browser/es/methods/send/send.js
-  var send = async (serviceID, templateID, templateParams, options) => {
-    const opts = buildOptions(options);
-    const publicKey = opts.publicKey || store.publicKey;
-    const blockHeadless = opts.blockHeadless || store.blockHeadless;
-    const storageProvider = opts.storageProvider || store.storageProvider;
-    const blockList = { ...store.blockList, ...opts.blockList };
-    const limitRate = { ...store.limitRate, ...opts.limitRate };
-    if (blockHeadless && isHeadless(navigator)) {
-      return Promise.reject(headlessError());
-    }
-    validateParams(publicKey, serviceID, templateID);
-    validateTemplateParams(templateParams);
-    if (templateParams && isBlockedValueInParams(blockList, templateParams)) {
-      return Promise.reject(blockedEmailError());
-    }
-    if (await isLimitRateHit(location.pathname, limitRate, storageProvider)) {
-      return Promise.reject(limitRateError());
-    }
-    const params = {
-      lib_version: "4.4.1",
-      user_id: publicKey,
-      service_id: serviceID,
-      template_id: templateID,
-      template_params: templateParams
-    };
-    return sendPost("/api/v1.0/email/send", JSON.stringify(params), {
-      "Content-type": "application/json"
-    });
-  };
-
-  // node_modules/@emailjs/browser/es/utils/validateForm/validateForm.js
-  var validateForm = (form) => {
-    if (!form || form.nodeName !== "FORM") {
-      throw "The 3rd parameter is expected to be the HTML form element or the style selector of the form";
-    }
-  };
-
-  // node_modules/@emailjs/browser/es/methods/sendForm/sendForm.js
-  var findHTMLForm = (form) => {
-    return typeof form === "string" ? document.querySelector(form) : form;
-  };
-  var sendForm = async (serviceID, templateID, form, options) => {
-    const opts = buildOptions(options);
-    const publicKey = opts.publicKey || store.publicKey;
-    const blockHeadless = opts.blockHeadless || store.blockHeadless;
-    const storageProvider = store.storageProvider || opts.storageProvider;
-    const blockList = { ...store.blockList, ...opts.blockList };
-    const limitRate = { ...store.limitRate, ...opts.limitRate };
-    if (blockHeadless && isHeadless(navigator)) {
-      return Promise.reject(headlessError());
-    }
-    const currentForm = findHTMLForm(form);
-    validateParams(publicKey, serviceID, templateID);
-    validateForm(currentForm);
-    const formData = new FormData(currentForm);
-    if (isBlockedValueInParams(blockList, formData)) {
-      return Promise.reject(blockedEmailError());
-    }
-    if (await isLimitRateHit(location.pathname, limitRate, storageProvider)) {
-      return Promise.reject(limitRateError());
-    }
-    formData.append("lib_version", "4.4.1");
-    formData.append("service_id", serviceID);
-    formData.append("template_id", templateID);
-    formData.append("user_id", publicKey);
-    return sendPost("/api/v1.0/email/send-form", formData);
-  };
-
-  // node_modules/@emailjs/browser/es/index.js
-  var es_default = {
-    init,
-    send,
-    sendForm,
-    EmailJSResponseStatus
-  };
-
   // src/lib/sync.js
   var import_meta = {};
   var SHARED_CACHE_KEY = "ttrpg-shared-cache-v1";
+  var PENDING_MUTATIONS_KEY = "ttrpg-shared-pending-mutations-v1";
+  var BACKFILL_COMPLETED_KEY = "ttrpg-shared-backfill-completed-v1";
   var ENV = (() => {
     try {
       return import_meta.env ?? {};
@@ -3009,6 +2768,265 @@
   }
   function saveSharedCache(sharedState) {
     window.localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(sharedState));
+  }
+  function loadPendingMutations() {
+    return safeParse2(window.localStorage.getItem(PENDING_MUTATIONS_KEY), []);
+  }
+  function savePendingMutations(mutations) {
+    if (!mutations.length) {
+      window.localStorage.removeItem(PENDING_MUTATIONS_KEY);
+      return;
+    }
+    window.localStorage.setItem(PENDING_MUTATIONS_KEY, JSON.stringify(mutations));
+  }
+  function queuePendingMutation(type, payload) {
+    const queued = mergePendingMutations(loadPendingMutations(), [{ type, payload }]);
+    savePendingMutations(queued);
+    return queued.length;
+  }
+  function hasCompletedBackfill() {
+    return window.localStorage.getItem(BACKFILL_COMPLETED_KEY) === "true";
+  }
+  function markBackfillCompleted() {
+    window.localStorage.setItem(BACKFILL_COMPLETED_KEY, "true");
+  }
+  function getRuntimeConfig() {
+    if (typeof window === "undefined") {
+      return {};
+    }
+    return window.PARTY_INVITE_CONFIG && typeof window.PARTY_INVITE_CONFIG === "object" ? window.PARTY_INVITE_CONFIG : {};
+  }
+  function getConfigValue(runtimeKey, envKey) {
+    const runtimeValue = getRuntimeConfig()[runtimeKey];
+    if (typeof runtimeValue === "string") {
+      const trimmed = runtimeValue.trim();
+      if (trimmed) {
+        return trimmed;
+      }
+    } else if (runtimeValue) {
+      return runtimeValue;
+    }
+    return ENV[envKey];
+  }
+  function getConfiguredAppsScriptUrl() {
+    return getConfigValue("appsScriptUrl", "VITE_APPS_SCRIPT_URL");
+  }
+  function createMutationId(type) {
+    const randomPart = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    return `${type}-${randomPart}`;
+  }
+  function enrichPayload(type, payload) {
+    const guest = payload.guestId ? getGuestById(payload.guestId) : null;
+    return {
+      ...payload,
+      mutationId: payload.mutationId ?? createMutationId(type),
+      guestName: payload.guestName ?? guest?.displayName ?? "Guest",
+      pageUrl: payload.pageUrl ?? window.location.href,
+      submittedAt: payload.submittedAt ?? (/* @__PURE__ */ new Date()).toISOString(),
+      source: payload.source ?? "party-invite"
+    };
+  }
+  function getMutationKey(entry) {
+    if (entry.payload?.mutationId) {
+      return entry.payload.mutationId;
+    }
+    return `${entry.type}:${JSON.stringify(entry.payload)}`;
+  }
+  function mergePendingMutations(...groups) {
+    const merged = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const group of groups) {
+      for (const entry of group) {
+        if (!entry?.type || !entry.payload) {
+          continue;
+        }
+        const key = getMutationKey(entry);
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        merged.push(entry);
+      }
+    }
+    return merged;
+  }
+  function makeEntry(type, payload) {
+    return {
+      type,
+      payload: enrichPayload(type, payload)
+    };
+  }
+  function getComparableKey(record, fields) {
+    return fields.map((field) => {
+      const value = record?.[field];
+      return `${field}:${typeof value === "string" ? value : JSON.stringify(value)}`;
+    }).join("|");
+  }
+  function createBackfillMutations(localSharedState, remoteSharedState) {
+    const mutations = [];
+    const local = reconcileSharedState(localSharedState);
+    const remote = reconcileSharedState(remoteSharedState);
+    for (const [itemId, guestId] of Object.entries(local.groceries.claims ?? {})) {
+      if (!guestId || remote.groceries.claims[itemId]) {
+        continue;
+      }
+      mutations.push(
+        makeEntry("claimGrocery", {
+          guestId,
+          itemId,
+          action: "claim",
+          source: "cached-backfill"
+        })
+      );
+    }
+    for (const [itemId, helperIds] of Object.entries(local.groceries.payHelpers ?? {})) {
+      const remoteHelpers = new Set(remote.groceries.payHelpers[itemId] ?? []);
+      for (const guestId of helperIds ?? []) {
+        if (!guestId || remoteHelpers.has(guestId)) {
+          continue;
+        }
+        mutations.push(
+          makeEntry("groceryContribution", {
+            guestId,
+            itemId,
+            helpingPay: true,
+            source: "cached-backfill"
+          })
+        );
+      }
+    }
+    for (const [itemId, requests] of Object.entries(local.groceries.editRequests ?? {})) {
+      const remoteKeys = new Set(
+        (remote.groceries.editRequests[itemId] ?? []).map(
+          (request) => getComparableKey(request, ["guestId", "note", "createdAt"])
+        )
+      );
+      for (const request of requests ?? []) {
+        const key = getComparableKey(request, ["guestId", "note", "createdAt"]);
+        if (remoteKeys.has(key) || !request?.guestId || !request?.note) {
+          continue;
+        }
+        mutations.push(
+          makeEntry("groceryEditRequest", {
+            guestId: request.guestId,
+            itemId,
+            note: request.note,
+            submittedAt: request.createdAt,
+            source: "cached-backfill"
+          })
+        );
+      }
+    }
+    const remoteAdditions = new Set(
+      (remote.groceries.additions ?? []).map(
+        (item) => getComparableKey(item, ["section", "label", "note", "createdBy", "createdAt"])
+      )
+    );
+    for (const item of local.groceries.additions ?? []) {
+      const key = getComparableKey(item, ["section", "label", "note", "createdBy", "createdAt"]);
+      if (remoteAdditions.has(key) || !item?.createdBy || !item?.label) {
+        continue;
+      }
+      mutations.push(
+        makeEntry("addGroceryItem", {
+          guestId: item.createdBy,
+          section: item.section,
+          label: item.label,
+          note: item.note ?? "",
+          submittedAt: item.createdAt,
+          source: "cached-backfill"
+        })
+      );
+    }
+    for (const [activityId, voterIds] of Object.entries(local.activities.votes ?? {})) {
+      const remoteVoters = new Set(remote.activities.votes[activityId] ?? []);
+      for (const guestId of voterIds ?? []) {
+        if (!guestId || remoteVoters.has(guestId)) {
+          continue;
+        }
+        mutations.push(
+          makeEntry("voteActivity", {
+            guestId,
+            activityId,
+            source: "cached-backfill"
+          })
+        );
+      }
+    }
+    const remoteSuggestions = new Set(
+      (remote.activities.suggestions ?? []).map(
+        (activity) => getComparableKey(activity, ["title", "category", "description", "createdBy", "createdAt"])
+      )
+    );
+    for (const activity of local.activities.suggestions ?? []) {
+      const description = activity.note || activity.description || "";
+      const key = getComparableKey(
+        {
+          title: activity.title,
+          category: activity.category,
+          description,
+          createdBy: activity.createdBy,
+          createdAt: activity.createdAt
+        },
+        ["title", "category", "description", "createdBy", "createdAt"]
+      );
+      if (remoteSuggestions.has(key) || !activity?.createdBy || !activity?.title) {
+        continue;
+      }
+      mutations.push(
+        makeEntry("suggestActivity", {
+          guestId: activity.createdBy,
+          title: activity.title,
+          category: activity.category,
+          note: description,
+          submittedAt: activity.createdAt,
+          source: "cached-backfill"
+        })
+      );
+    }
+    for (const [guestId, details] of Object.entries(local.guestDetails ?? {})) {
+      const remoteDetails = remote.guestDetails[guestId];
+      const localUpdatedAt = Date.parse(details?.updatedAt ?? "") || 0;
+      const remoteUpdatedAt = Date.parse(remoteDetails?.updatedAt ?? "") || 0;
+      if (!guestId || localUpdatedAt <= remoteUpdatedAt) {
+        continue;
+      }
+      mutations.push(
+        makeEntry("saveGuestDetails", {
+          guestId,
+          dietaryFlags: details.dietaryFlags ?? [],
+          dietaryNotes: details.dietaryNotes ?? "",
+          allergyNotes: details.allergyNotes ?? "",
+          messageToKyle: details.messageToKyle ?? "",
+          submittedAt: details.updatedAt,
+          source: "cached-backfill"
+        })
+      );
+    }
+    return mutations;
+  }
+  async function flushPendingMutations(request, initialSharedState, pendingMutations) {
+    let sharedState = reconcileSharedState(initialSharedState);
+    const remaining = [];
+    let flushedCount = 0;
+    for (const entry of pendingMutations) {
+      try {
+        const result = await request(entry.type, entry.payload, "POST");
+        sharedState = reconcileSharedState(result.sharedState ?? sharedState);
+        if (String(result.emailStatus ?? "").startsWith("failed")) {
+          remaining.push(entry);
+          continue;
+        }
+        flushedCount += 1;
+      } catch {
+        remaining.push(entry);
+      }
+    }
+    return {
+      sharedState,
+      flushedCount,
+      remaining
+    };
   }
   function mergeSharedState(sharedState) {
     return {
@@ -3171,15 +3189,12 @@
     if (window.location.protocol === "file:") {
       return "local";
     }
-    const forcedMode = ENV.VITE_SYNC_MODE;
+    const forcedMode = getConfigValue("syncMode", "VITE_SYNC_MODE");
     if (forcedMode) {
       return forcedMode;
     }
-    if (ENV.VITE_APPS_SCRIPT_URL) {
+    if (getConfiguredAppsScriptUrl()) {
       return "apps-script";
-    }
-    if (ENV.VITE_EMAILJS_PUBLIC_KEY && ENV.VITE_EMAILJS_SERVICE_ID && ENV.VITE_EMAILJS_TEMPLATE_ID) {
-      return "emailjs";
     }
     return "local";
   }
@@ -3188,9 +3203,6 @@
       const requestUrl = method === "GET" ? `${baseUrl}?action=${encodeURIComponent(action)}` : baseUrl;
       const response = await fetch(requestUrl, {
         method,
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: method === "GET" ? void 0 : JSON.stringify({ action, ...payload })
       });
       if (!response.ok) {
@@ -3201,50 +3213,64 @@
     return {
       mode: "apps-script",
       async bootstrap() {
+        const localSharedState = reconcileSharedState(loadSharedCache());
         const result = await request("bootstrap", {}, "GET");
-        const sharedState = reconcileSharedState(result.sharedState ?? getDefaultSharedState());
+        let sharedState = reconcileSharedState(result.sharedState ?? getDefaultSharedState());
+        let pendingMutations = loadPendingMutations();
+        if (!hasCompletedBackfill()) {
+          pendingMutations = mergePendingMutations(
+            createBackfillMutations(localSharedState, sharedState),
+            pendingMutations
+          );
+          savePendingMutations(pendingMutations);
+          markBackfillCompleted();
+        }
+        let flushedCount = 0;
+        if (pendingMutations.length) {
+          const flushResult = await flushPendingMutations(request, sharedState, pendingMutations);
+          sharedState = flushResult.sharedState;
+          flushedCount = flushResult.flushedCount;
+          savePendingMutations(flushResult.remaining);
+          pendingMutations = flushResult.remaining;
+        }
         saveSharedCache(sharedState);
         return {
           mode: "apps-script",
-          sharedState
+          sharedState,
+          flushedCount,
+          pendingCount: pendingMutations.length
         };
       },
       async mutate(type, payload, optimisticSharedState) {
-        const result = await request(type, payload, "POST");
-        const sharedState = reconcileSharedState(result.sharedState ?? optimisticSharedState);
-        saveSharedCache(sharedState);
-        return { sharedState };
-      }
-    };
-  }
-  function createEmailClient() {
-    const publicKey = ENV.VITE_EMAILJS_PUBLIC_KEY;
-    const serviceId = ENV.VITE_EMAILJS_SERVICE_ID;
-    const templateId = ENV.VITE_EMAILJS_TEMPLATE_ID;
-    es_default.init({
-      publicKey
-    });
-    return {
-      mode: "emailjs",
-      async bootstrap() {
-        const sharedState = reconcileSharedState(loadSharedCache());
-        saveSharedCache(sharedState);
-        return {
-          mode: "emailjs",
-          sharedState
-        };
-      },
-      async mutate(type, payload, optimisticSharedState) {
+        const enrichedPayload = enrichPayload(type, payload);
         const sharedState = reconcileSharedState(optimisticSharedState);
-        saveSharedCache(sharedState);
-        await es_default.send(serviceId, templateId, {
-          action: type,
-          payload: JSON.stringify(payload, null, 2),
-          page: window.location.href,
-          userAgent: navigator.userAgent,
-          submittedAt: (/* @__PURE__ */ new Date()).toISOString()
-        });
-        return { sharedState };
+        try {
+          const result = await request(type, enrichedPayload, "POST");
+          const nextSharedState = reconcileSharedState(result.sharedState ?? optimisticSharedState);
+          const emailFailed = String(result.emailStatus ?? "").startsWith("failed");
+          if (emailFailed) {
+            const pendingCount = queuePendingMutation(type, enrichedPayload);
+            saveSharedCache(nextSharedState);
+            return {
+              sharedState: nextSharedState,
+              queued: true,
+              pendingCount,
+              queuedMessage: "Saved and queued. We'll keep retrying until the email goes through."
+            };
+          }
+          saveSharedCache(nextSharedState);
+          return { sharedState: nextSharedState };
+        } catch (error) {
+          saveSharedCache(sharedState);
+          const pendingCount = queuePendingMutation(type, enrichedPayload);
+          return {
+            sharedState,
+            queued: true,
+            pendingCount,
+            queuedMessage: "Saved on this device. We'll retry live sync automatically.",
+            queueReason: error.message
+          };
+        }
       }
     };
   }
@@ -3270,11 +3296,9 @@
   }
   function createSyncClient() {
     const mode = getConfiguredMode();
-    if (mode === "apps-script" && ENV.VITE_APPS_SCRIPT_URL) {
-      return createAppsScriptClient(ENV.VITE_APPS_SCRIPT_URL);
-    }
-    if (mode === "emailjs" && ENV.VITE_EMAILJS_PUBLIC_KEY && ENV.VITE_EMAILJS_SERVICE_ID && ENV.VITE_EMAILJS_TEMPLATE_ID) {
-      return createEmailClient();
+    const appsScriptUrl = getConfiguredAppsScriptUrl();
+    if (mode === "apps-script" && appsScriptUrl) {
+      return createAppsScriptClient(appsScriptUrl);
     }
     return createLocalClient();
   }
@@ -3433,10 +3457,11 @@
     async function bootstrap() {
       try {
         const result = await syncClient.bootstrap();
+        const syncNotice = result.flushedCount && result.pendingCount ? `Recovered ${result.flushedCount} cached updates. ${result.pendingCount} still waiting to sync.` : result.flushedCount ? `Recovered ${result.flushedCount} cached updates.` : result.pendingCount ? `${result.pendingCount} cached updates are still waiting to sync.` : "";
         commit({
           ...state,
           syncMode: result.mode,
-          syncNotice: "",
+          syncNotice,
           syncError: "",
           lastSyncedAt: (/* @__PURE__ */ new Date()).toISOString(),
           shared: result.sharedState
@@ -3458,6 +3483,14 @@
       });
       try {
         const result = await syncClient.mutate(type, payload, optimisticSharedState);
+        if (result.queued) {
+          updateShared(result.sharedState, {
+            syncError: "",
+            syncNotice: ""
+          });
+          setEphemeralNotice(result.queuedMessage);
+          return;
+        }
         updateShared(result.sharedState, {
           syncError: "",
           lastSyncedAt: (/* @__PURE__ */ new Date()).toISOString(),

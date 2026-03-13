@@ -7,6 +7,19 @@ const SHEET_TABS = {
   eventAudit: "event_audit"
 };
 
+const TAB_HEADERS = {
+  groceryClaims: ["itemId", "claimedBy", "updatedAt", "contributionHelpers", "editRequests"],
+  groceryAdditions: ["itemId", "section", "label", "note", "createdBy", "createdAt"],
+  activityVotes: ["activityId", "voterIds", "updatedAt"],
+  activitySuggestions: ["activityId", "title", "category", "note", "createdBy", "createdAt"],
+  guestDetails: ["guestId", "dietaryFlags", "dietaryNotes", "allergyNotes", "messageToKyle", "updatedAt"],
+  eventAudit: ["mutationId", "action", "guestId", "guestName", "payload", "emailStatus", "createdAt", "updatedAt"]
+};
+
+const DEFAULT_NOTIFICATION_EMAIL = "composer01@gmail.com";
+const EMAIL_STATUS_PENDING = "pending";
+const EMAIL_STATUS_SENT = "sent";
+
 function doGet(e) {
   const action = e.parameter.action || "bootstrap";
 
@@ -24,10 +37,33 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  const payload = JSON.parse(e.postData.contents || "{}");
+  const payload = parsePayload(e);
   const action = payload.action;
 
   ensureTabs();
+
+  if (!action) {
+    return jsonResponse({
+      ok: false,
+      error: "Missing POST action"
+    });
+  }
+
+  payload.mutationId = payload.mutationId || "server-" + new Date().getTime();
+  payload.submittedAt = payload.submittedAt || new Date().toISOString();
+  payload.guestName = payload.guestName || "Guest";
+
+  const existingAudit = getAuditRecord(payload.mutationId);
+  if (existingAudit) {
+    const emailStatus = retryNotificationIfNeeded(action, payload, existingAudit);
+
+    return jsonResponse({
+      ok: true,
+      alreadyProcessed: true,
+      emailStatus: emailStatus,
+      sharedState: buildSharedState()
+    });
+  }
 
   switch (action) {
     case "claimGrocery":
@@ -58,12 +94,25 @@ function doPost(e) {
       });
   }
 
-  writeAudit(action, payload.guestId || "system", JSON.stringify(payload));
+  writeAudit(action, payload, EMAIL_STATUS_PENDING);
+  const emailStatus = sendNotificationSafely(action, payload);
+  updateAuditEmailStatus(payload.mutationId, emailStatus);
 
   return jsonResponse({
     ok: true,
+    emailStatus: emailStatus,
     sharedState: buildSharedState()
   });
+}
+
+function parsePayload(e) {
+  const raw = e && e.postData && e.postData.contents ? e.postData.contents : "{}";
+
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    return e && e.parameter ? e.parameter : {};
+  }
 }
 
 function jsonResponse(payload) {
@@ -82,23 +131,39 @@ function getOrCreateTab(name, headers) {
 
   if (!tab) {
     tab = sheet.insertSheet(name);
-    tab.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
 
+  ensureTabHeaders(tab, headers);
   return tab;
 }
 
-function ensureTabs() {
-  getOrCreateTab(SHEET_TABS.groceryClaims, ["itemId", "claimedBy", "updatedAt", "contributionHelpers", "editRequests"]);
-  getOrCreateTab(SHEET_TABS.groceryAdditions, ["itemId", "section", "label", "note", "createdBy", "createdAt"]);
-  getOrCreateTab(SHEET_TABS.activityVotes, ["activityId", "voterIds", "updatedAt"]);
-  getOrCreateTab(SHEET_TABS.activitySuggestions, ["activityId", "title", "category", "note", "createdBy", "createdAt"]);
-  getOrCreateTab(SHEET_TABS.guestDetails, ["guestId", "dietaryFlags", "dietaryNotes", "allergyNotes", "messageToKyle", "updatedAt"]);
-  getOrCreateTab(SHEET_TABS.eventAudit, ["action", "guestId", "payload", "createdAt"]);
+function ensureTabHeaders(tab, headers) {
+  if (!tab.getLastRow()) {
+    tab.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return;
+  }
+
+  const currentHeaders = tab.getRange(1, 1, 1, Math.max(tab.getLastColumn(), headers.length)).getValues()[0];
+  const needsUpdate = headers.some(function (header, index) {
+    return currentHeaders[index] !== header;
+  });
+
+  if (needsUpdate || tab.getLastColumn() < headers.length) {
+    tab.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
 }
 
-function upsertRow(sheetName, matchColumnIndex, matchValue, rowValues) {
-  const tab = getOrCreateTab(sheetName, rowValues.map(function (_, index) {
+function ensureTabs() {
+  getOrCreateTab(SHEET_TABS.groceryClaims, TAB_HEADERS.groceryClaims);
+  getOrCreateTab(SHEET_TABS.groceryAdditions, TAB_HEADERS.groceryAdditions);
+  getOrCreateTab(SHEET_TABS.activityVotes, TAB_HEADERS.activityVotes);
+  getOrCreateTab(SHEET_TABS.activitySuggestions, TAB_HEADERS.activitySuggestions);
+  getOrCreateTab(SHEET_TABS.guestDetails, TAB_HEADERS.guestDetails);
+  getOrCreateTab(SHEET_TABS.eventAudit, TAB_HEADERS.eventAudit);
+}
+
+function upsertRow(sheetName, matchColumnIndex, matchValue, rowValues, headers) {
+  const tab = getOrCreateTab(sheetName, headers || rowValues.map(function (_, index) {
     return "column_" + (index + 1);
   }));
   const values = tab.getDataRange().getValues();
@@ -118,8 +183,174 @@ function upsertRow(sheetName, matchColumnIndex, matchValue, rowValues) {
   }
 }
 
+function getAuditRecord(mutationId) {
+  if (!mutationId) {
+    return null;
+  }
+
+  const rows = getOrCreateTab(SHEET_TABS.eventAudit, TAB_HEADERS.eventAudit).getDataRange().getValues();
+
+  for (let index = 1; index < rows.length; index += 1) {
+    if (rows[index][0] === mutationId) {
+      return {
+        rowIndex: index + 1,
+        mutationId: rows[index][0],
+        action: rows[index][1],
+        guestId: rows[index][2],
+        guestName: rows[index][3],
+        payload: rows[index][4],
+        emailStatus: rows[index][5],
+        createdAt: rows[index][6],
+        updatedAt: rows[index][7]
+      };
+    }
+  }
+
+  return null;
+}
+
+function writeAudit(action, payload, emailStatus) {
+  upsertRow(
+    SHEET_TABS.eventAudit,
+    1,
+    payload.mutationId,
+    [
+      payload.mutationId,
+      action,
+      payload.guestId || "system",
+      payload.guestName || "",
+      JSON.stringify(payload),
+      emailStatus,
+      payload.submittedAt || new Date().toISOString(),
+      new Date().toISOString()
+    ],
+    TAB_HEADERS.eventAudit
+  );
+}
+
+function updateAuditEmailStatus(mutationId, emailStatus) {
+  const audit = getAuditRecord(mutationId);
+  if (!audit) {
+    return;
+  }
+
+  getOrCreateTab(SHEET_TABS.eventAudit, TAB_HEADERS.eventAudit)
+    .getRange(audit.rowIndex, 6, 1, 2)
+    .setValues([[emailStatus, new Date().toISOString()]]);
+}
+
+function retryNotificationIfNeeded(action, payload, audit) {
+  if (!audit || audit.emailStatus === EMAIL_STATUS_SENT) {
+    return audit ? audit.emailStatus : EMAIL_STATUS_SENT;
+  }
+
+  const emailStatus = sendNotificationSafely(action, payload);
+  updateAuditEmailStatus(payload.mutationId, emailStatus);
+  return emailStatus;
+}
+
+function sendNotificationSafely(action, payload) {
+  try {
+    sendNotificationEmail(action, payload);
+    return EMAIL_STATUS_SENT;
+  } catch (error) {
+    return "failed: " + error.message;
+  }
+}
+
+function getNotificationEmail() {
+  const configured = PropertiesService.getScriptProperties().getProperty("NOTIFICATION_EMAIL");
+  return configured || DEFAULT_NOTIFICATION_EMAIL;
+}
+
+function sendNotificationEmail(action, payload) {
+  const recipient = getNotificationEmail();
+  const subject = "Party Invite: " + action + " from " + (payload.guestName || "Guest");
+  const body = buildNotificationBody(action, payload);
+
+  MailApp.sendEmail({
+    to: recipient,
+    subject: subject,
+    body: body,
+    name: "Party Invite"
+  });
+}
+
+function buildNotificationBody(action, payload) {
+  const details = getActionDetails(action, payload);
+  const lines = [
+    "Party Invite update received.",
+    "",
+    "Action: " + action,
+    "Guest: " + (payload.guestName || "Guest"),
+    "Guest ID: " + (payload.guestId || "unknown"),
+    "Submitted at: " + (payload.submittedAt || new Date().toISOString()),
+    "Page: " + (payload.pageUrl || ""),
+    "Source: " + (payload.source || "party-invite")
+  ];
+
+  if (details.length) {
+    lines.push("");
+    lines.push("Details:");
+    details.forEach(function (detail) {
+      lines.push("- " + detail);
+    });
+  }
+
+  lines.push("");
+  lines.push("Raw payload:");
+  lines.push(JSON.stringify(payload, null, 2));
+
+  return lines.join("\n");
+}
+
+function getActionDetails(action, payload) {
+  switch (action) {
+    case "claimGrocery":
+      return [
+        "Item ID: " + payload.itemId,
+        "Action: " + (payload.action === "unclaim" ? "Released claim" : "Claimed item")
+      ];
+    case "groceryContribution":
+      return [
+        "Item ID: " + payload.itemId,
+        payload.helpingPay ? "Marked as helping pay." : "Removed themselves from helping pay."
+      ];
+    case "groceryEditRequest":
+      return [
+        "Item ID: " + payload.itemId,
+        "Note: " + (payload.note || "")
+      ];
+    case "addGroceryItem":
+      return [
+        "Section: " + (payload.section || ""),
+        "Label: " + (payload.label || ""),
+        "Note: " + (payload.note || "")
+      ];
+    case "voteActivity":
+      return [
+        "Activity ID: " + payload.activityId
+      ];
+    case "suggestActivity":
+      return [
+        "Title: " + (payload.title || ""),
+        "Category: " + (payload.category || ""),
+        "Note: " + (payload.note || "")
+      ];
+    case "saveGuestDetails":
+      return [
+        "Dietary flags: " + JSON.stringify(payload.dietaryFlags || []),
+        "Dietary notes: " + (payload.dietaryNotes || ""),
+        "Allergy notes: " + (payload.allergyNotes || ""),
+        "Message to Kyle: " + (payload.messageToKyle || "")
+      ];
+    default:
+      return [];
+  }
+}
+
 function writeGroceryClaim(payload) {
-  const tab = getOrCreateTab(SHEET_TABS.groceryClaims, ["itemId", "claimedBy", "updatedAt", "contributionHelpers", "editRequests"]);
+  const tab = getOrCreateTab(SHEET_TABS.groceryClaims, TAB_HEADERS.groceryClaims);
   const values = tab.getDataRange().getValues();
   let helperIds = [];
   let editRequests = [];
@@ -131,17 +362,23 @@ function writeGroceryClaim(payload) {
     }
   }
 
-  upsertRow(SHEET_TABS.groceryClaims, 1, payload.itemId, [
+  upsertRow(
+    SHEET_TABS.groceryClaims,
+    1,
     payload.itemId,
-    payload.action === "claim" ? payload.guestId : "",
-    new Date().toISOString(),
-    JSON.stringify(helperIds),
-    JSON.stringify(editRequests)
-  ]);
+    [
+      payload.itemId,
+      payload.action === "claim" ? payload.guestId : "",
+      payload.submittedAt || new Date().toISOString(),
+      JSON.stringify(helperIds),
+      JSON.stringify(editRequests)
+    ],
+    TAB_HEADERS.groceryClaims
+  );
 }
 
 function writeGroceryContribution(payload) {
-  const tab = getOrCreateTab(SHEET_TABS.groceryClaims, ["itemId", "claimedBy", "updatedAt", "contributionHelpers", "editRequests"]);
+  const tab = getOrCreateTab(SHEET_TABS.groceryClaims, TAB_HEADERS.groceryClaims);
   const values = tab.getDataRange().getValues();
   let claimedBy = "";
   let helperIds = [];
@@ -163,17 +400,23 @@ function writeGroceryContribution(payload) {
     helperIds.push(payload.guestId);
   }
 
-  upsertRow(SHEET_TABS.groceryClaims, 1, payload.itemId, [
+  upsertRow(
+    SHEET_TABS.groceryClaims,
+    1,
     payload.itemId,
-    claimedBy,
-    new Date().toISOString(),
-    JSON.stringify(helperIds),
-    JSON.stringify(editRequests)
-  ]);
+    [
+      payload.itemId,
+      claimedBy,
+      payload.submittedAt || new Date().toISOString(),
+      JSON.stringify(helperIds),
+      JSON.stringify(editRequests)
+    ],
+    TAB_HEADERS.groceryClaims
+  );
 }
 
 function writeGroceryEditRequest(payload) {
-  const tab = getOrCreateTab(SHEET_TABS.groceryClaims, ["itemId", "claimedBy", "updatedAt", "contributionHelpers", "editRequests"]);
+  const tab = getOrCreateTab(SHEET_TABS.groceryClaims, TAB_HEADERS.groceryClaims);
   const values = tab.getDataRange().getValues();
   let claimedBy = "";
   let helperIds = [];
@@ -190,32 +433,38 @@ function writeGroceryEditRequest(payload) {
   editRequests.push({
     guestId: payload.guestId,
     note: payload.note,
-    createdAt: new Date().toISOString()
+    createdAt: payload.submittedAt || new Date().toISOString()
   });
 
-  upsertRow(SHEET_TABS.groceryClaims, 1, payload.itemId, [
+  upsertRow(
+    SHEET_TABS.groceryClaims,
+    1,
     payload.itemId,
-    claimedBy,
-    new Date().toISOString(),
-    JSON.stringify(helperIds),
-    JSON.stringify(editRequests)
-  ]);
+    [
+      payload.itemId,
+      claimedBy,
+      payload.submittedAt || new Date().toISOString(),
+      JSON.stringify(helperIds),
+      JSON.stringify(editRequests)
+    ],
+    TAB_HEADERS.groceryClaims
+  );
 }
 
 function writeGroceryAddition(payload) {
-  const itemId = "guest-" + new Date().getTime();
-  getOrCreateTab(SHEET_TABS.groceryAdditions, ["itemId", "section", "label", "note", "createdBy", "createdAt"]).appendRow([
-    itemId,
+  const createdAt = payload.submittedAt || new Date().toISOString();
+  getOrCreateTab(SHEET_TABS.groceryAdditions, TAB_HEADERS.groceryAdditions).appendRow([
+    "guest-" + new Date().getTime(),
     payload.section,
     payload.label,
     payload.note || "",
     payload.guestId,
-    new Date().toISOString()
+    createdAt
   ]);
 }
 
 function writeActivityVote(payload) {
-  const tab = getOrCreateTab(SHEET_TABS.activityVotes, ["activityId", "voterIds", "updatedAt"]);
+  const tab = getOrCreateTab(SHEET_TABS.activityVotes, TAB_HEADERS.activityVotes);
   const values = tab.getDataRange().getValues();
   let voterIds = [];
 
@@ -229,42 +478,46 @@ function writeActivityVote(payload) {
     voterIds.push(payload.guestId);
   }
 
-  upsertRow(SHEET_TABS.activityVotes, 1, payload.activityId, [
+  upsertRow(
+    SHEET_TABS.activityVotes,
+    1,
     payload.activityId,
-    JSON.stringify(voterIds),
-    new Date().toISOString()
-  ]);
+    [
+      payload.activityId,
+      JSON.stringify(voterIds),
+      payload.submittedAt || new Date().toISOString()
+    ],
+    TAB_HEADERS.activityVotes
+  );
 }
 
 function writeActivitySuggestion(payload) {
-  getOrCreateTab(SHEET_TABS.activitySuggestions, ["activityId", "title", "category", "note", "createdBy", "createdAt"]).appendRow([
+  const createdAt = payload.submittedAt || new Date().toISOString();
+  getOrCreateTab(SHEET_TABS.activitySuggestions, TAB_HEADERS.activitySuggestions).appendRow([
     "suggested-" + new Date().getTime(),
     payload.title,
     payload.category,
     payload.note || "",
     payload.guestId,
-    new Date().toISOString()
+    createdAt
   ]);
 }
 
 function writeGuestDetails(payload) {
-  upsertRow(SHEET_TABS.guestDetails, 1, payload.guestId, [
+  upsertRow(
+    SHEET_TABS.guestDetails,
+    1,
     payload.guestId,
-    JSON.stringify(payload.dietaryFlags || []),
-    payload.dietaryNotes || "",
-    payload.allergyNotes || "",
-    payload.messageToKyle || "",
-    new Date().toISOString()
-  ]);
-}
-
-function writeAudit(action, guestId, payload) {
-  getOrCreateTab(SHEET_TABS.eventAudit, ["action", "guestId", "payload", "createdAt"]).appendRow([
-    action,
-    guestId,
-    payload,
-    new Date().toISOString()
-  ]);
+    [
+      payload.guestId,
+      JSON.stringify(payload.dietaryFlags || []),
+      payload.dietaryNotes || "",
+      payload.allergyNotes || "",
+      payload.messageToKyle || "",
+      payload.submittedAt || new Date().toISOString()
+    ],
+    TAB_HEADERS.guestDetails
+  );
 }
 
 function buildSharedState() {
@@ -278,7 +531,7 @@ function buildSharedState() {
 }
 
 function buildGroceriesState() {
-  const rows = getOrCreateTab(SHEET_TABS.groceryClaims, ["itemId", "claimedBy", "updatedAt", "contributionHelpers", "editRequests"])
+  const rows = getOrCreateTab(SHEET_TABS.groceryClaims, TAB_HEADERS.groceryClaims)
     .getDataRange()
     .getValues()
     .slice(1);
@@ -297,7 +550,7 @@ function buildGroceriesState() {
     }
   });
 
-  const additions = getOrCreateTab(SHEET_TABS.groceryAdditions, ["itemId", "section", "label", "note", "createdBy", "createdAt"])
+  const additions = getOrCreateTab(SHEET_TABS.groceryAdditions, TAB_HEADERS.groceryAdditions)
     .getDataRange()
     .getValues()
     .slice(1)
@@ -324,11 +577,11 @@ function buildGroceriesState() {
 }
 
 function buildActivitiesState() {
-  const voteRows = getOrCreateTab(SHEET_TABS.activityVotes, ["activityId", "voterIds", "updatedAt"])
+  const voteRows = getOrCreateTab(SHEET_TABS.activityVotes, TAB_HEADERS.activityVotes)
     .getDataRange()
     .getValues()
     .slice(1);
-  const suggestionRows = getOrCreateTab(SHEET_TABS.activitySuggestions, ["activityId", "title", "category", "note", "createdBy", "createdAt"])
+  const suggestionRows = getOrCreateTab(SHEET_TABS.activitySuggestions, TAB_HEADERS.activitySuggestions)
     .getDataRange()
     .getValues()
     .slice(1);
@@ -364,7 +617,7 @@ function buildActivitiesState() {
 }
 
 function buildGuestDetailsState() {
-  const rows = getOrCreateTab(SHEET_TABS.guestDetails, ["guestId", "dietaryFlags", "dietaryNotes", "allergyNotes", "messageToKyle", "updatedAt"])
+  const rows = getOrCreateTab(SHEET_TABS.guestDetails, TAB_HEADERS.guestDetails)
     .getDataRange()
     .getValues()
     .slice(1);
