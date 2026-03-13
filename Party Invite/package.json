@@ -10,6 +10,7 @@
     "bundle:static": "esbuild src/main.js --bundle --platform=browser --format=iife --outfile=assets/app.js --loader:.css=css"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "canvas-confetti": "^1.9.3"
   },
   "devDependencies": {

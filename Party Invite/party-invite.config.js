@@ -1,5 +1,8 @@
 window.PARTY_INVITE_CONFIG = {
-  syncMode: "apps-script",
-  // Paste the deployed Google Apps Script web app URL here before shipping.
+  syncMode: "emailjs",
+  notificationEmail: "Composer01@gmail.com",
+  emailjsPublicKey: "DpN9hLocoU__4dYVX",
+  emailjsServiceId: "service_9wx16fe",
+  emailjsTemplateId: "template_hjbmxbn",
   appsScriptUrl: ""
 };

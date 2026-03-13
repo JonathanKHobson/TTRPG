@@ -1,3 +1,4 @@
+import emailjs from "@emailjs/browser";
 import { activities } from "../data/activities.js";
 import { groceries } from "../data/groceries.js";
 import { getGuestById } from "../data/guests.js";
@@ -177,7 +178,7 @@ function getComparableKey(record, fields) {
     .join("|");
 }
 
-function createBackfillMutations(localSharedState, remoteSharedState) {
+function createBackfillMutations(localSharedState, remoteSharedState = getDefaultSharedState()) {
   const mutations = [];
   const local = reconcileSharedState(localSharedState);
   const remote = reconcileSharedState(remoteSharedState);
@@ -575,6 +576,14 @@ function getConfiguredMode() {
     return "apps-script";
   }
 
+  if (
+    getConfigValue("emailjsPublicKey", "VITE_EMAILJS_PUBLIC_KEY") &&
+    getConfigValue("emailjsServiceId", "VITE_EMAILJS_SERVICE_ID") &&
+    getConfigValue("emailjsTemplateId", "VITE_EMAILJS_TEMPLATE_ID")
+  ) {
+    return "emailjs";
+  }
+
   return "local";
 }
 
@@ -671,6 +680,97 @@ function createAppsScriptClient(baseUrl) {
   };
 }
 
+function createEmailClient() {
+  const publicKey = getConfigValue("emailjsPublicKey", "VITE_EMAILJS_PUBLIC_KEY");
+  const serviceId = getConfigValue("emailjsServiceId", "VITE_EMAILJS_SERVICE_ID");
+  const templateId = getConfigValue("emailjsTemplateId", "VITE_EMAILJS_TEMPLATE_ID");
+  const notificationEmail = getConfigValue("notificationEmail", "VITE_NOTIFICATION_EMAIL");
+
+  emailjs.init({
+    publicKey
+  });
+
+  async function sendEmail(entry) {
+    await emailjs.send(serviceId, templateId, {
+      action: entry.type,
+      guest_name: entry.payload.guestName,
+      guest_id: entry.payload.guestId ?? "",
+      message: JSON.stringify(entry.payload, null, 2),
+      payload: JSON.stringify(entry.payload, null, 2),
+      email: entry.payload.email ?? "",
+      page: entry.payload.pageUrl,
+      ua: navigator.userAgent,
+      ts: entry.payload.submittedAt,
+      submitted_at: entry.payload.submittedAt,
+      source: entry.payload.source,
+      to_email: notificationEmail ?? "",
+      recipient_email: notificationEmail ?? ""
+    });
+  }
+
+  return {
+    mode: "emailjs",
+    async bootstrap() {
+      const localSharedState = reconcileSharedState(loadSharedCache());
+      let sharedState = localSharedState;
+      let pendingMutations = loadPendingMutations();
+
+      if (!hasCompletedBackfill()) {
+        pendingMutations = mergePendingMutations(
+          createBackfillMutations(localSharedState),
+          pendingMutations
+        );
+        savePendingMutations(pendingMutations);
+        markBackfillCompleted();
+      }
+
+      let flushedCount = 0;
+      const remaining = [];
+
+      for (const entry of pendingMutations) {
+        try {
+          await sendEmail(entry);
+          flushedCount += 1;
+        } catch {
+          remaining.push(entry);
+        }
+      }
+
+      savePendingMutations(remaining);
+      saveSharedCache(sharedState);
+
+      return {
+        mode: "emailjs",
+        sharedState,
+        flushedCount,
+        pendingCount: remaining.length
+      };
+    },
+    async mutate(type, payload, optimisticSharedState) {
+      const enrichedPayload = enrichPayload(type, payload);
+      const sharedState = reconcileSharedState(optimisticSharedState);
+      const entry = { type, payload: enrichedPayload };
+
+      saveSharedCache(sharedState);
+
+      try {
+        await sendEmail(entry);
+        return { sharedState };
+      } catch (error) {
+        const pendingCount = queuePendingMutation(type, enrichedPayload);
+
+        return {
+          sharedState,
+          queued: true,
+          pendingCount,
+          queuedMessage: "Saved and queued. We'll retry the email automatically.",
+          queueReason: error.message
+        };
+      }
+    }
+  };
+}
+
 function createLocalClient() {
   return {
     mode: "local",
@@ -698,6 +798,15 @@ export function createSyncClient() {
 
   if (mode === "apps-script" && appsScriptUrl) {
     return createAppsScriptClient(appsScriptUrl);
+  }
+
+  if (
+    mode === "emailjs" &&
+    getConfigValue("emailjsPublicKey", "VITE_EMAILJS_PUBLIC_KEY") &&
+    getConfigValue("emailjsServiceId", "VITE_EMAILJS_SERVICE_ID") &&
+    getConfigValue("emailjsTemplateId", "VITE_EMAILJS_TEMPLATE_ID")
+  ) {
+    return createEmailClient();
   }
 
   return createLocalClient();

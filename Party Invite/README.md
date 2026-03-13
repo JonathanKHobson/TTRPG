@@ -25,14 +25,33 @@ If you change the source files under [`src`](/Volumes/KyleSSD/Websites/Party%20I
 
 ## Sync behavior
 
-The app supports two sync modes:
+The app supports three sync modes:
 
 - `local`: default and safest for direct-open use; data persists on the current device
-- `apps-script`: hosted live sync through a deployed Google Apps Script web app, with email notifications on every guest mutation
+- `emailjs`: hosted email notifications for guest submissions on GitHub Pages
+- `apps-script`: optional hosted live sync through a deployed Google Apps Script web app
 
 When the site is opened directly from disk, it intentionally falls back to local persistence.
 
-When the site is hosted on GitHub Pages, use [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) to point the app at the deployed Apps Script URL. The static build does not reliably consume `VITE_*` config once bundled for direct-open shipping, so the hosted runtime config file is the source of truth.
+When the site is hosted on GitHub Pages, use [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) as the source of truth for hosted sync/email settings. The static build does not reliably consume `VITE_*` config once bundled for direct-open shipping.
+
+The current hosted setup uses EmailJS with queued retries and one-time backfill from cached local submissions on the same device.
+
+## EmailJS hosted setup
+
+[`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) is currently configured with:
+
+- `syncMode: "emailjs"`
+- public key `DpN9hLocoU__4dYVX`
+- service id `service_9wx16fe`
+- template id `template_hjbmxbn`
+- notification email metadata `Composer01@gmail.com`
+
+Important:
+
+- the actual destination email is ultimately controlled by the EmailJS template/service setup
+- the app also passes `to_email` and `recipient_email` template params with `Composer01@gmail.com`
+- if you want a different recipient, change [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) and confirm the EmailJS template uses that variable
 
 ## Google Apps Script deployment
 
@@ -67,5 +86,5 @@ The script creates and uses these tabs:
 
 1. Make source edits under [`src`](/Volumes/KyleSSD/Websites/Party%20Invite/src).
 2. Rebuild the shipped bundle with `npm run build`.
-3. Confirm [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) contains the deployed Apps Script URL.
+3. Confirm [`party-invite.config.js`](/Volumes/KyleSSD/Websites/Party%20Invite/party-invite.config.js) contains the intended hosted EmailJS or Apps Script settings.
 4. Commit the updated `Party Invite/` files to the [`JonathanKHobson/TTRPG`](https://github.com/JonathanKHobson/TTRPG) repo.
