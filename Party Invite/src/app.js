@@ -190,10 +190,19 @@ export async function initApp(root) {
   async function bootstrap() {
     try {
       const result = await syncClient.bootstrap();
+      const syncNotice =
+        result.flushedCount && result.pendingCount
+          ? `Recovered ${result.flushedCount} cached updates. ${result.pendingCount} still waiting to sync.`
+          : result.flushedCount
+            ? `Recovered ${result.flushedCount} cached updates.`
+            : result.pendingCount
+              ? `${result.pendingCount} cached updates are still waiting to sync.`
+              : "";
+
       commit({
         ...state,
         syncMode: result.mode,
-        syncNotice: "",
+        syncNotice,
         syncError: "",
         lastSyncedAt: new Date().toISOString(),
         shared: result.sharedState
@@ -218,6 +227,16 @@ export async function initApp(root) {
 
     try {
       const result = await syncClient.mutate(type, payload, optimisticSharedState);
+
+      if (result.queued) {
+        updateShared(result.sharedState, {
+          syncError: "",
+          syncNotice: ""
+        });
+        setEphemeralNotice(result.queuedMessage);
+        return;
+      }
+
       updateShared(result.sharedState, {
         syncError: "",
         lastSyncedAt: new Date().toISOString(),

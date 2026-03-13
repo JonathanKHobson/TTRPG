@@ -41,7 +41,7 @@ export const eventContent = {
     "Allergy and dietary notes are stored here for coordination, but Kyle still needs direct confirmation for anything safety-critical.",
   syncLabels: {
     "apps-script": "Live coordination",
-    emailjs: "Request-by-email mode",
+    emailjs: "Email notifications enabled",
     local: "Saved on this device"
   }
 };
